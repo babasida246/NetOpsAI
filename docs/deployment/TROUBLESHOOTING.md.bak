@@ -1,0 +1,393 @@
+# Hospital IT Gateway - Troubleshooting Guide
+
+## Quick Diagnostics
+
+```bash
+# 1. Check container status
+docker-compose ps
+
+# 2. Check logs
+docker-compose logs --tail=50
+
+# 3. Run validation
+./scripts/validate-deployment.sh
+
+# 4. Check health endpoint
+curl http://localhost:3000/health
+```
+
+## Common Issues
+
+### 1. Container Won't Start
+
+#### Symptoms
+- Container exits immediately
+- Status shows "Exit 1" or similar
+
+#### Solutions
+
+```bash
+# Check logs
+docker-compose logs gateway-api
+
+# Check if port is in use
+netstat -tulpn | grep 3000
+
+# Free the port
+# On Linux:
+sudo kill $(sudo lsof -t -i:3000)
+# On Windows (PowerShell):
+Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess
+
+# Restart container
+docker-compose restart gateway-api
+```
+
+### 2. Database Connection Failed
+
+#### Symptoms
+- "ECONNREFUSED 127.0.0.1:5432"
+- "connection refused"
+
+#### Solutions
+
+```bash
+# Check if postgres is running
+docker-compose ps postgres
+
+# Check postgres logs
+docker-compose logs postgres
+
+# Restart postgres
+docker-compose restart postgres
+
+# Wait and check health
+sleep 10
+docker exec hospital-gateway-postgres pg_isready
+
+# Verify connection string
+docker exec hospital-gateway-api printenv DATABASE_URL
+```
+
+### 3. Redis Connection Failed
+
+#### Symptoms
+- "ECONNREFUSED" to Redis
+- "NOAUTH Authentication required"
+
+#### Solutions
+
+```bash
+# Check if redis is running
+docker-compose ps redis
+
+# Test redis connection
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD ping
+
+# Restart redis
+docker-compose restart redis
+
+# Clear redis (caution: data loss)
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD FLUSHALL
+```
+
+### 4. Build Failures
+
+#### Symptoms
+- "npm ERR!" or "pnpm ERR!"
+- Dependency resolution failures
+
+#### Solutions
+
+```bash
+# Clean everything
+docker-compose down -v
+docker system prune -a
+
+# Remove local artifacts
+rm -rf node_modules
+rm -rf packages/*/node_modules
+rm -rf apps/*/node_modules
+rm pnpm-lock.yaml
+
+# Rebuild
+pnpm install
+pnpm build
+docker-compose build --no-cache
+```
+
+### 5. Out of Memory
+
+#### Symptoms
+- "FATAL ERROR: Reached heap limit"
+- Container OOM killed
+
+#### Solutions
+
+```bash
+# Check memory usage
+docker stats --no-stream
+
+# Increase Node.js memory in docker-compose.yml:
+environment:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+
+# Or increase container limits:
+deploy:
+  resources:
+    limits:
+      memory: 4G
+
+# Restart with new settings
+docker-compose up -d
+```
+
+### 6. Permission Denied
+
+#### Symptoms
+- "EACCES: permission denied"
+- Cannot write to volume
+
+#### Solutions
+
+```bash
+# Fix file permissions (Linux/Mac)
+sudo chown -R $USER:$USER .
+chmod -R 755 .
+
+# Fix script permissions
+chmod +x scripts/*.sh
+
+# Fix volume permissions
+docker-compose down
+sudo chown -R 1001:1001 ./logs
+docker-compose up -d
+```
+
+### 7. Network Issues
+
+#### Symptoms
+- Services can't communicate
+- "Name does not resolve"
+
+#### Solutions
+
+```bash
+# Recreate network
+docker-compose down
+docker network prune
+docker-compose up -d
+
+# Check network
+docker network inspect hospital-gateway-network
+
+# Test internal connectivity
+docker exec hospital-gateway-api ping postgres
+docker exec hospital-gateway-api ping redis
+```
+
+### 8. Slow Performance
+
+#### Symptoms
+- High response times
+- Timeouts
+
+#### Solutions
+
+```bash
+# Check resource usage
+docker stats
+
+# Check database queries
+docker exec hospital-gateway-postgres psql -U postgres -d hospital_gateway \
+  -c "SELECT * FROM pg_stat_activity WHERE state = 'active';"
+
+# Enable query logging
+# Add to postgres command in docker-compose.yml:
+command: postgres -c log_statement=all -c log_duration=on
+
+# Restart
+docker-compose restart postgres
+
+# Check slow queries
+docker-compose logs postgres | grep "duration:"
+```
+
+### 9. Health Check Failures
+
+#### API Unhealthy
+
+```bash
+# Check API logs
+docker-compose logs gateway-api
+
+# Check internal health
+docker exec hospital-gateway-api node -e "
+  fetch('http://localhost:3000/health')
+    .then(r => r.json())
+    .then(console.log)
+    .catch(console.error)
+"
+
+# Restart API
+docker-compose restart gateway-api
+```
+
+#### Database Unhealthy
+
+```bash
+# Check postgres status
+docker exec hospital-gateway-postgres pg_isready -U postgres
+
+# Check connections
+docker exec hospital-gateway-postgres psql -U postgres \
+  -c "SELECT count(*) FROM pg_stat_activity;"
+
+# Restart if stuck
+docker-compose restart postgres
+```
+
+### 10. SSL/TLS Issues
+
+#### Symptoms
+- SSL handshake errors
+- Certificate errors
+
+#### Solutions
+
+```bash
+# Generate self-signed cert for testing
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout docker/nginx/ssl/key.pem \
+  -out docker/nginx/ssl/cert.pem \
+  -subj "/CN=localhost"
+
+# Check certificate
+openssl x509 -in docker/nginx/ssl/cert.pem -text -noout
+
+# Restart nginx
+docker-compose restart nginx
+```
+
+## Diagnostic Commands
+
+### Container Inspection
+
+```bash
+# Detailed container info
+docker inspect hospital-gateway-api
+
+# Environment variables
+docker exec hospital-gateway-api env
+
+# Running processes
+docker exec hospital-gateway-api ps aux
+
+# Disk usage
+docker exec hospital-gateway-api df -h
+```
+
+### Database Diagnostics
+
+```bash
+# Active connections
+docker exec hospital-gateway-postgres psql -U postgres -c \
+  "SELECT * FROM pg_stat_activity;"
+
+# Database size
+docker exec hospital-gateway-postgres psql -U postgres -c \
+  "SELECT pg_size_pretty(pg_database_size('hospital_gateway'));"
+
+# Table sizes
+docker exec hospital-gateway-postgres psql -U postgres -d hospital_gateway -c \
+  "SELECT relname, pg_size_pretty(pg_total_relation_size(relid))
+   FROM pg_catalog.pg_statio_user_tables
+   ORDER BY pg_total_relation_size(relid) DESC;"
+```
+
+### Redis Diagnostics
+
+```bash
+# Memory usage
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD INFO memory
+
+# Key count
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD DBSIZE
+
+# Slow log
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD SLOWLOG GET 10
+```
+
+### Network Diagnostics
+
+```bash
+# List networks
+docker network ls
+
+# Inspect network
+docker network inspect hospital-gateway-network
+
+# DNS resolution test
+docker exec hospital-gateway-api nslookup postgres
+```
+
+## Recovery Procedures
+
+### Full Reset
+
+```bash
+# Stop everything
+docker-compose down -v
+
+# Remove all containers, images, volumes
+docker system prune -a --volumes
+
+# Rebuild from scratch
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Database Reset
+
+```bash
+# Stop services
+docker-compose stop gateway-api gateway-mcp
+
+# Drop and recreate database
+docker exec hospital-gateway-postgres psql -U postgres -c \
+  "DROP DATABASE IF EXISTS hospital_gateway;"
+docker exec hospital-gateway-postgres psql -U postgres -c \
+  "CREATE DATABASE hospital_gateway;"
+
+# Restart services (migrations will run)
+docker-compose up -d
+```
+
+### Cache Clear
+
+```bash
+# Clear Redis
+docker exec hospital-gateway-redis redis-cli -a $REDIS_PASSWORD FLUSHALL
+
+# Restart API to rebuild caches
+docker-compose restart gateway-api
+```
+
+## Getting Help
+
+1. **Check logs first**: `docker-compose logs -f`
+2. **Run validation**: `./scripts/validate-deployment.sh`
+3. **Review this guide**: Search for your error message
+4. **Check health**: `curl http://localhost:3000/health`
+5. **Search issues**: GitHub issues for similar problems
+6. **Open new issue**: Include logs and environment info
+
+### When Reporting Issues
+
+Include:
+- Docker version: `docker --version`
+- Docker Compose version: `docker compose version`
+- OS and version
+- Full error message
+- Relevant logs: `docker-compose logs --tail=100`
+- Steps to reproduce

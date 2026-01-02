@@ -1,0 +1,161 @@
+/**
+ * Demo script for Phase 5 Tool Registry
+ * 
+ * Run with: npx tsx scripts/demo-tools.ts
+ */
+
+import { ToolRegistry, echoTool, timeNowTool } from '../packages/tools/src/index.js'
+import { registerLogTools } from '../packages/mcp-servers/core/log-aggregator/src/index.js'
+import { registerSQLTools } from '../packages/mcp-servers/core/sql-ops/src/index.js'
+import { registerNetworkTools } from '../packages/mcp-servers/core/network-change/src/index.js'
+
+async function demo() {
+    console.log('🚀 Starting Tool Demo...\n')
+
+    // Create and setup registry
+    const registry = new ToolRegistry()
+
+    // Register core tools
+    registry.register(echoTool)
+    registry.register(timeNowTool)
+
+    // Register MCP tools
+    registerLogTools(registry)
+    registerSQLTools(registry)
+    registerNetworkTools(registry)
+
+    console.log('📦 Registered Tools:', registry.list().map(t => t.name).join(', '))
+    console.log()
+
+    // Demo context
+    const ctx = {
+        userId: 'demo-user',
+        correlationId: 'demo-001'
+    }
+
+    // Scenario 1: Echo Tool
+    console.log('=== Scenario 1: Echo Tool ===')
+    try {
+        const result = await registry.invoke('echo', {
+            message: 'Hello from NetOpsAI!'
+        }, ctx)
+        console.log('Result:', JSON.stringify(result.output, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 2: Time Now Tool
+    console.log('=== Scenario 2: Time Now Tool ===')
+    try {
+        const result = await registry.invoke('time_now', {
+            timezone: 'Asia/Ho_Chi_Minh'
+        }, ctx)
+        console.log('Result:', JSON.stringify(result.output, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 3: Get Logs (Zabbix mock)
+    console.log('=== Scenario 3: Get Logs ===')
+    try {
+        const result = await registry.invoke('get_logs', {
+            source: 'zabbix',
+            timeRange: {
+                start: new Date(Date.now() - 3600000).toISOString(),
+                end: new Date().toISOString()
+            },
+            limit: 5
+        }, ctx)
+        console.log('Result:', JSON.stringify(result.output, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 4: Analyze SQL Query
+    console.log('=== Scenario 4: Analyze SQL Query ===')
+    try {
+        const result = await registry.invoke('analyze_query', {
+            query: 'SELECT * FROM patients WHERE created_at > NOW() - INTERVAL 1 DAY'
+        }, ctx)
+        console.log('Result:', JSON.stringify(result.output, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 5: Generate VLAN Config (FortiGate)
+    console.log('=== Scenario 5: Generate FortiGate VLAN Config ===')
+    try {
+        const result = await registry.invoke('generate_vlan_config', {
+            deviceType: 'fortigate',
+            vlanId: 50,
+            subnet: '10.50.0.0/24',
+            name: 'Internal_Medicine',
+            description: 'VLAN for Internal Medicine Department'
+        }, ctx)
+        console.log('Config:\n', result.output.config)
+        console.log('\nRollback:\n', result.output.rollback)
+        console.log('\nValidation:', JSON.stringify(result.output.validation, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 6: Generate VLAN Config (MikroTik)
+    console.log('=== Scenario 6: Generate MikroTik VLAN Config ===')
+    try {
+        const result = await registry.invoke('generate_vlan_config', {
+            deviceType: 'mikrotik',
+            vlanId: 60,
+            subnet: '10.60.0.0/24',
+            name: 'Lab_Network',
+            description: 'VLAN for Laboratory'
+        }, ctx)
+        console.log('Config:\n', result.output.config)
+        console.log('\nRollback:\n', result.output.rollback)
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Scenario 7: Summarize Logs
+    console.log('=== Scenario 7: Summarize Logs ===')
+    try {
+        const mockLogs = [
+            { message: 'High CPU usage on HIS server', severity: 'warning', timestamp: new Date().toISOString() },
+            { message: 'High CPU usage on PACS server', severity: 'warning', timestamp: new Date().toISOString() },
+            { message: 'Database connection pool exhausted', severity: 'error', timestamp: new Date().toISOString() },
+            { message: 'High memory usage on RIS server', severity: 'warning', timestamp: new Date().toISOString() },
+            { message: 'Network timeout to backup server', severity: 'error', timestamp: new Date().toISOString() },
+        ]
+
+        const result = await registry.invoke('summarize_logs', {
+            logs: mockLogs,
+            focusOn: 'patterns'
+        }, ctx)
+        console.log('Result:', JSON.stringify(result.output, null, 2))
+        console.log('Duration:', result.duration, 'ms')
+    } catch (error: any) {
+        console.error('Error:', error.message)
+    }
+    console.log()
+
+    // Stats
+    console.log('=== Tool Execution Stats ===')
+    const stats = registry.getExecutionStats()
+    console.log(JSON.stringify(stats, null, 2))
+
+    console.log('\n✅ Demo Complete!')
+}
+
+demo().catch(console.error)
+

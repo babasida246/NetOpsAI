@@ -1,0 +1,28 @@
+{
+    "name": "@apps/gateway-cli",
+    "version": "1.0.0",
+    "type": "module",
+    "private": true,
+    "bin": {
+        "gateway-cli": "./dist/index.js"
+    },
+    "scripts": {
+        "dev": "tsx src/index.ts",
+        "build": "tsup src/index.ts --format esm",
+        "test": "echo 'No tests for CLI yet'"
+    },
+    "dependencies": {
+        "@infra/postgres": "workspace:*",
+        "@infra/redis": "workspace:*",
+        "@config/core": "workspace:*",
+        "commander": "^11.1.0",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "tsx": "^4.7.0",
+        "tsup": "^8.0.0",
+        "typescript": "^5.3.0",
+        "vitest": "^1.0.0"
+    }
+}

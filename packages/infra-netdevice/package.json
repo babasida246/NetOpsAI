@@ -1,0 +1,33 @@
+{
+    "name": "@infra/netdevice",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./parsers": {
+            "import": "./dist/parsers/index.js",
+            "types": "./dist/parsers/index.d.ts"
+        },
+        "./collectors": {
+            "import": "./dist/collectors/index.js",
+            "types": "./dist/collectors/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "dependencies": {
+        "@contracts/shared": "workspace:*"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.3",
+        "vitest": "^1.2.0"
+    }
+}

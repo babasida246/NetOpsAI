@@ -1,0 +1,111 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '10'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build all packages
+        run: pnpm -r run build
+      
+      - name: Create changelog
+        id: changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          git log $(git describe --tags --abbrev=0 HEAD^)..HEAD --pretty=format:"- %s (%h)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            
+            ## Docker Images
+            - `ghcr.io/${{ github.repository }}/gateway-api:${{ github.ref_name }}`
+            - `ghcr.io/${{ github.repository }}/gateway-mcp:${{ github.ref_name }}`
+            - `ghcr.io/${{ github.repository }}/web-ui:${{ github.ref_name }}`
+          draft: false
+          prerelease: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push gateway-api
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/gateway-api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/gateway-api:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}/gateway-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push gateway-mcp
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/gateway-mcp/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/gateway-mcp:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}/gateway-mcp:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push web-ui
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: apps/web-ui/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/web-ui:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}/web-ui:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

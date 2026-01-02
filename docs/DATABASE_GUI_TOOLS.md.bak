@@ -1,0 +1,100 @@
+# Database & Cache Management Tools
+
+## pgAdmin (PostgreSQL)
+- **URL**: http://localhost:5050
+- **Login**: 
+  - Email: `admin@example.com`
+  - Password: `admin` (hoặc giá trị từ `PGADMIN_DEFAULT_PASSWORD`)
+- **Kết nối tự động**: Server "Hospital Gateway - PostgreSQL" đã được cấu hình sẵn
+- **Thông tin kết nối**:
+  - Host: `postgres`
+  - Port: `5432`
+  - Database: `hospital_gateway`
+  - Username: `postgres`
+  - Password: Sử dụng giá trị từ `POSTGRES_PASSWORD` trong file `.env`
+
+### Sử dụng pgAdmin:
+1. Mở trình duyệt tại http://localhost:5050
+2. Đăng nhập với thông tin trên
+3. Server "Hospital Gateway - PostgreSQL" sẽ xuất hiện trong danh sách
+4. Click vào server và nhập password PostgreSQL để kết nối
+
+## RedisInsight (Redis)
+- **URL**: http://localhost:8001
+- **Kết nối**: Tự động thêm database "Hospital Gateway Redis"
+- **Thông tin kết nối**:
+  - Host: `redis`
+  - Port: `6379`
+  - Password: Giá trị từ `REDIS_PASSWORD` trong file `.env`
+
+### Sử dụng RedisInsight:
+1. Mở trình duyệt tại http://localhost:8001
+2. Database "Hospital Gateway Redis" sẽ tự động được thêm
+3. Click vào database để bắt đầu quản lý Redis
+
+## Khởi động Services
+
+```bash
+# Khởi động tất cả services bao gồm GUI tools
+docker-compose up -d
+
+# Chỉ khởi động pgAdmin và RedisInsight
+docker-compose up -d pgadmin redisinsight
+
+# Xem logs
+docker-compose logs -f pgadmin
+docker-compose logs -f redisinsight
+```
+
+## Tính năng
+
+### pgAdmin:
+- ✅ Quản lý databases, schemas, tables
+- ✅ Thực thi SQL queries
+- ✅ Backup và restore
+- ✅ Xem query performance
+- ✅ Quản lý users và permissions
+- ✅ Visual query builder
+
+### RedisInsight:
+- ✅ Browser keys với search và filter
+- ✅ CLI tích hợp
+- ✅ Profiler để monitor commands
+- ✅ Slow log analyzer
+- ✅ Memory analysis
+- ✅ Pub/Sub monitoring
+
+## Troubleshooting
+
+### pgAdmin không hiển thị server:
+```bash
+# Kiểm tra file servers.json đã được mount
+docker exec hospital-pgadmin cat /pgadmin4/servers.json
+
+# Restart pgAdmin
+docker-compose restart pgadmin
+```
+
+### RedisInsight không kết nối được:
+```bash
+# Kiểm tra Redis đang chạy
+docker-compose ps redis
+
+# Test kết nối Redis
+docker exec hospital-gateway-redis redis-cli -a ${REDIS_PASSWORD} ping
+
+# Restart RedisInsight
+docker-compose restart redisinsight
+```
+
+### Reset mật khẩu pgAdmin:
+```bash
+# Dừng pgAdmin
+docker-compose stop pgadmin
+
+# Xóa data
+docker volume rm hospital_pgadmin_data
+
+# Khởi động lại
+docker-compose up -d pgadmin
+```

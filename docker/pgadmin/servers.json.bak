@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Hospital Gateway - PostgreSQL",
+            "Group": "Hospital IT Gateway",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "hospital_gateway",
+            "Username": "postgres",
+            "SSLMode": "prefer",
+            "Comment": "Auto-configured connection to Hospital Gateway database"
+        }
+    }
+}

@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: 'NetOpsAI Gateway Dashboards'
+    orgId: 1
+    folder: 'NetOpsAI Gateway'
+    folderUid: netopsai-gateway
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana/dashboards
+

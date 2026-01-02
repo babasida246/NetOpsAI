@@ -1,0 +1,311 @@
+### Test Auth - Register
+
+# Success case
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "username": "testuser",
+  "password": "SecurePass123"
+}
+
+###
+
+# Duplicate email
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "username": "testuser2",
+  "password": "SecurePass123"
+}
+
+###
+
+# Duplicate username
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test2@example.com",
+  "username": "testuser",
+  "password": "SecurePass123"
+}
+
+###
+
+# Invalid email
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "invalidemail",
+  "username": "testuser3",
+  "password": "SecurePass123"
+}
+
+###
+
+# Weak password (< 6 chars)
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test4@example.com",
+  "username": "testuser4",
+  "password": "123"
+}
+
+###
+
+# Missing required fields
+POST http://localhost:3000/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test5@example.com"
+}
+
+###
+
+### Test Auth - Login
+
+# Success case (use credentials from successful registration)
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+# Wrong password
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "WrongPassword"
+}
+
+###
+
+# User not found
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+# Invalid email format
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "invalidemail",
+  "password": "SecurePass123"
+}
+
+###
+
+# Missing credentials
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "test@example.com"
+}
+
+###
+
+### Test Auth - Refresh Token
+
+# Valid refresh token (get from login response first)
+POST http://localhost:3000/auth/refresh HTTP/1.1
+Content-Type: application/json
+
+{
+  "refreshToken": "REPLACE_WITH_ACTUAL_REFRESH_TOKEN"
+}
+
+###
+
+# Invalid refresh token
+POST http://localhost:3000/auth/refresh HTTP/1.1
+Content-Type: application/json
+
+{
+  "refreshToken": "invalid_token_xyz"
+}
+
+###
+
+### Test Auth - Logout
+
+# Logout with valid token
+POST http://localhost:3000/auth/logout HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{}
+
+###
+
+# Logout without auth header
+POST http://localhost:3000/auth/logout HTTP/1.1
+Content-Type: application/json
+
+{}
+
+###
+
+### Test Conversations - Create
+
+# Success case
+POST http://localhost:3000/conversations HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{
+  "title": "Test Conversation"
+}
+
+###
+
+# Missing title
+POST http://localhost:3000/conversations HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{}
+
+###
+
+### Test Conversations - List
+
+# Get all conversations (with pagination)
+GET http://localhost:3000/conversations?page=1&pageSize=10 HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+# Empty list (new user)
+GET http://localhost:3000/conversations HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+### Test Conversations - Get by ID
+
+# Valid ID
+GET http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+# Invalid UUID format
+GET http://localhost:3000/conversations/invalid-id HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+# Not found ID
+GET http://localhost:3000/conversations/00000000-0000-0000-0000-000000000000 HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+### Test Conversations - Update
+
+# Success case
+PATCH http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{
+  "title": "Updated Title"
+}
+
+###
+
+# Not found
+PATCH http://localhost:3000/conversations/00000000-0000-0000-0000-000000000000 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{
+  "title": "Updated Title"
+}
+
+###
+
+### Test Conversations - Delete
+
+# Success case
+DELETE http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+# Not found
+DELETE http://localhost:3000/conversations/00000000-0000-0000-0000-000000000000 HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+### Test Messages - List
+
+# Get messages for conversation
+GET http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID/messages HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+# Conversation not found
+GET http://localhost:3000/conversations/00000000-0000-0000-0000-000000000000/messages HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+###
+
+### Test Messages - Send
+
+# Success case
+POST http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{
+  "content": "Hello, this is a test message",
+  "role": "user"
+}
+
+###
+
+# Invalid conversation
+POST http://localhost:3000/conversations/00000000-0000-0000-0000-000000000000/messages HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+
+{
+  "content": "Test message",
+  "role": "user"
+}
+
+###
+
+### Test Messages - Stream (SSE)
+
+# Stream messages (Server-Sent Events)
+GET http://localhost:3000/conversations/REPLACE_WITH_CONVERSATION_ID/messages/REPLACE_WITH_MESSAGE_ID/stream HTTP/1.1
+Authorization: Bearer REPLACE_WITH_ACCESS_TOKEN
+Accept: text/event-stream
+
+###

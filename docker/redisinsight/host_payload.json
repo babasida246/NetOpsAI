@@ -1,0 +1,7 @@
+{
+    "name": "NetOpsAI Gateway Redis",
+    "host": "redis",
+    "port": 6379,
+    "password": "redis_dev_123",
+    "tls": false
+}

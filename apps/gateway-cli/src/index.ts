@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander'
+import { statusCommand } from './commands/status.js'
+import { seedCommand } from './commands/seed.js'
+
+const program = new Command()
+
+program
+    .name('gateway-cli')
+    .description('NetOpsAI CLI')
+    .version('1.0.0')
+
+program
+    .command('status')
+    .description('Check system status')
+    .action(statusCommand)
+
+program
+    .command('seed')
+    .description('Seed database with model configs')
+    .action(seedCommand)
+
+program.parse()
+

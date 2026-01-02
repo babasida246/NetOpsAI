@@ -1,0 +1,68 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs (commented out for Dockerfile.simple which needs dist)
+# **/dist
+*.tsbuildinfo
+
+# Test files
+**/*.test.ts
+**/*.spec.ts
+**/coverage
+**/.nyc_output
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker
+
+# Documentation (optional, remove if needed in container)
+docs/
+*.md
+!README.md
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Scripts (not needed in container)
+scripts/
+
+# Development tools
+vitest.config.ts
+.eslintrc*
+.prettierrc*
+tsconfig.*.json
+!tsconfig.base.json
+
+# Test fixtures
+packages/testing/
+**/__tests__/
+**/__mocks__/
+
+# Prompts
+*_prompt.md
+phase*.md

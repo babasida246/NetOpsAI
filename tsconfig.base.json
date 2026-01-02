@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@domain/*": ["./packages/domain/src/*"],
+      "@application/*": ["./packages/application/src/*"],
+      "@contracts/*": ["./packages/contracts/src/*"],
+      "@config/*": ["./packages/config/src/*"],
+      "@infra/postgres": ["./packages/infra-postgres/src"],
+      "@infra/redis": ["./packages/infra-redis/src"],
+      "@infra/vector": ["./packages/infra-vector/src"],
+      "@providers": ["./packages/providers/src"],
+      "@tools": ["./packages/tools/src"],
+      "@mcp/*": ["./packages/mcp-servers/*/src"],
+      "@observability": ["./packages/observability/src"],
+      "@security": ["./packages/security/src"],
+      "@testing": ["./packages/testing/src"]
+    }
+  }
+}

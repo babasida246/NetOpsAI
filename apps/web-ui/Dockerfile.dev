@@ -1,0 +1,22 @@
+# Development Dockerfile for hot-reload
+FROM node:20-alpine
+
+RUN npm install -g pnpm@8
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
+
+# Install all dependencies
+COPY packages ./packages
+COPY apps/web-ui/package.json ./apps/web-ui/
+
+RUN pnpm install --frozen-lockfile
+
+EXPOSE 5173
+
+WORKDIR /app/apps/web-ui
+
+CMD ["pnpm", "dev", "--host"]

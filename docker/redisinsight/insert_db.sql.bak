@@ -1,0 +1,4 @@
+INSERT INTO database_instance
+    (id, host, port, name, password, tls, connectionType, db, encryption, modules)
+VALUES
+    ('hospital-gateway-redis', 'redis', 6379, 'Hospital Gateway Redis', 'redis_dev_123', 0, 'STANDALONE', 0, 'PLAIN', '[]');

@@ -1,0 +1,29 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Docker volumes
+postgres_data/
+redis_data/
+prometheus_data/
+grafana_data/
+loki_data/
+
+# SSL certificates (add separately)
+docker/nginx/ssl/*.pem
+docker/nginx/ssl/*.crt
+docker/nginx/ssl/*.key
+!docker/nginx/ssl/.gitkeep
+
+# Environment files (production secrets)
+.env.production
+.env.staging
+.env.local
+
+# Backups
+*.sql
+*.sql.gz
+*.rdb
+backups/

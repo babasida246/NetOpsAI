@@ -1,0 +1,14 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "NetOpsAI Gateway - PostgreSQL",
+            "Group": "NetOpsAI",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "netopsai_gateway",
+            "Username": "postgres",
+            "SSLMode": "prefer",
+            "Comment": "Auto-configured connection to NetOpsAI Gateway database"
+        }
+    }
+}

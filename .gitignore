@@ -1,0 +1,38 @@
+node_modules/
+dist/
+.env
+.env.production
+.env.staging
+.env.local
+*.log
+coverage/
+.DS_Store
+
+# Build artifacts
+*.tsbuildinfo
+.nyc_output/
+
+# Docker volumes (if created locally)
+postgres_data/
+redis_data/
+
+# SSL certificates
+docker/nginx/ssl/*.pem
+docker/nginx/ssl/*.crt
+docker/nginx/ssl/*.key
+!docker/nginx/ssl/.gitkeep
+
+# Logs directory
+logs/
+
+# Backups
+*.sql
+*.sql.gz
+*.rdb
+backups/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

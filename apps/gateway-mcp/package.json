@@ -1,0 +1,33 @@
+{
+    "name": "@apps/gateway-mcp",
+    "version": "1.0.0",
+    "type": "module",
+    "private": true,
+    "bin": {
+        "gateway-mcp": "./dist/server.js"
+    },
+    "scripts": {
+        "dev": "tsx src/server.ts",
+        "build": "tsup src/server.ts --format esm",
+        "start": "node dist/server.js",
+        "test": "echo 'No tests for MCP yet'"
+    },
+    "dependencies": {
+        "@application/core": "workspace:*",
+        "@domain/core": "workspace:*",
+        "@contracts/shared": "workspace:*",
+        "@config/core": "workspace:*",
+        "@infra/postgres": "workspace:*",
+        "@infra/redis": "workspace:*",
+        "@providers/llm": "workspace:*",
+        "@observability/logger": "workspace:*",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "tsx": "^4.7.0",
+        "tsup": "^8.0.0",
+        "typescript": "^5.3.0",
+        "vitest": "^1.0.0"
+    }
+}

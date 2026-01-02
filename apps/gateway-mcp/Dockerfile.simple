@@ -1,0 +1,41 @@
+# Simple Dockerfile for gateway-mcp - Assumes code is already built
+FROM node:20-alpine AS runner
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+WORKDIR /app
+
+# Copy all sources FIRST (needed for workspace resolution)
+COPY packages packages/
+COPY packages/mcp-servers packages/mcp-servers/
+COPY apps/gateway-mcp apps/gateway-mcp/
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json packages/
+COPY packages/mcp-servers/core/*/package.json packages/mcp-servers/core/
+COPY apps/gateway-mcp/package.json apps/gateway-mcp/
+
+# Install ALL dependencies (needed for pnpm workspace resolution)
+RUN pnpm install --frozen-lockfile
+
+# Copy built artifacts (already copied above with full packages)
+# Note: dist folders are already in packages/ from previous COPY
+COPY --chown=nodejs:nodejs apps/gateway-mcp/dist apps/gateway-mcp/dist
+
+# Switch to non-root user
+USER nodejs
+
+# Expose port (MCP uses stdio, but we may add HTTP later)
+EXPOSE 3001
+
+# Set environment
+ENV NODE_ENV=production
+
+# Start MCP server
+CMD ["node", "apps/gateway-mcp/dist/server.js"]

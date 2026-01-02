@@ -1,0 +1,10 @@
+{
+    "name": "@infra/vector",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "echo 'Phase 3: Vector not implemented yet'"
+    }
+}
