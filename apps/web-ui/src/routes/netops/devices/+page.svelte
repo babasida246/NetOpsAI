@@ -153,7 +153,7 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
           {devices.length} devices
           {#if Object.keys(vendorCounts()).length > 0}
-            • {Object.entries(vendorCounts()).map(([v, c]) => `${c} ${v}`).join(' • ')}
+            - {Object.entries(vendorCounts()).map(([v, c]) => `${c} ${v}`).join(' - ')}
           {/if}
         </p>
       </div>
@@ -411,3 +411,4 @@ core-sw-01,cisco,C9300,17.6.3,HQ,core,192.168.1.1</pre>
     </div>
   </svelte:fragment>
 </Modal>
+

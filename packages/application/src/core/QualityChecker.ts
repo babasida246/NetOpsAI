@@ -37,7 +37,7 @@ export class QualityChecker {
             .join(' ').length
 
         // Short but valid answers (e.g., "4" for "2+2?") are acceptable
-        if (responseLength > 0 && responseLength < 20) return 0.7 // Short but valid
+        if (responseLength > 0 && responseLength < 20) return 0.3 // Very short answer
         if (responseLength < 50) return 0.6 // Brief
         if (responseLength > requestLength * 2) return 0.9 // Detailed
         return 0.8 // Adequate

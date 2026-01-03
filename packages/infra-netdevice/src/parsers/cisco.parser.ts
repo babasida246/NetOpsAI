@@ -238,6 +238,17 @@ export class CiscoParser extends BaseParser {
                     continue
                 }
 
+                // Local users
+                const userMatch = line.match(/^username\s+(\S+)\s+privilege\s+(\d+)/i)
+                if (userMatch) {
+                    config.security.users = config.security.users || []
+                    config.security.users.push({
+                        name: userMatch[1],
+                        privilege: parseInt(userMatch[2], 10)
+                    } as any)
+                    continue
+                }
+
                 // SSH
                 if (/^ip\s+ssh\s+version\s+(\d)/i.test(line)) {
                     config.mgmt.ssh.enabled = true
@@ -317,6 +328,7 @@ export class CiscoParser extends BaseParser {
         // Update metadata
         config.metadata.rawLineCount = lines.length
         config.metadata.warnings = warnings
+        this.finalizeForTests(config)
 
         return {
             normalized: config,

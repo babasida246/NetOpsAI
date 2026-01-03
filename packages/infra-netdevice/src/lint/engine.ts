@@ -55,16 +55,29 @@ export class LintEngine {
         let rulesPassed = 0
         let rulesFailed = 0
         let rulesSkipped = 0
+        let rulesEvaluated = 0
 
         for (const rule of rules) {
+            if ((rule as any).enabled === false) {
+                rulesSkipped++
+                continue
+            }
             // Check vendor scope
-            if (rule.vendorScope.length > 0 && !rule.vendorScope.includes(context.config.device.vendor)) {
+            const vendorScope = rule.vendorScope || []
+            if (vendorScope.length > 0 && !vendorScope.includes(context.config.device.vendor)) {
                 rulesSkipped++
                 continue
             }
 
             try {
                 const result = this.evaluateRule(rule, context)
+
+                if ((result as any).skipped) {
+                    rulesSkipped++
+                    continue
+                }
+
+                rulesEvaluated++
 
                 if (result.passed) {
                     rulesPassed++
@@ -73,12 +86,12 @@ export class LintEngine {
                     findings.push({
                         id: `finding-${Date.now()}-${Math.random().toString(36).substr(2, 8)}`,
                         ruleId: rule.id,
-                        ruleName: rule.title,
-                        severity: rule.severity,
-                        message: result.message || rule.description || rule.title,
+                        ruleName: (rule as any).name || rule.title,
+                        severity: (rule as any).severity || 'low',
+                        message: result.message || rule.description || (rule as any).name || rule.title,
                         path: result.path,
                         value: result.value,
-                        remediation: rule.remediation,
+                        remediation: (rule as any).remediation,
                         waived: false
                     })
                 }
@@ -90,12 +103,12 @@ export class LintEngine {
         }
 
         // Calculate summary
-        const summary = this.calculateSummary(findings)
+        const summary = this.calculateSummary(findings, rules.length)
 
         return {
             findings,
             summary,
-            rulesEvaluated: rules.length,
+            rulesEvaluated,
             rulesPassed,
             rulesFailed,
             rulesSkipped,
@@ -104,24 +117,24 @@ export class LintEngine {
     }
 
     /**
-     * Evaluate a single rule
+     * Evaluate a single rule (supports legacy and simplified rule shapes)
      */
-    private evaluateRule(rule: LintRule, context: LintContext): RuleResult {
-        const { match } = rule
+    private evaluateRule(rule: any, context: LintContext): RuleResult {
+        const type = rule.type || rule.match?.type
+        if (!rule.enabled) return { passed: true, skipped: true } as any
 
-        switch (match.type) {
-            case 'jsonpath':
-                return this.evaluateJsonPath(match, context.config)
-
-            case 'regex':
-                return this.evaluateRegex(match, context.config)
-
-            case 'custom':
-                return this.evaluateCustom(match, context.config)
-
-            default:
-                return { passed: true }
+        if (type === 'match') {
+            const path = rule.path || rule.match?.path
+            const condition = rule.condition || rule.match
+            return this.evaluateMatch(path, condition, context.config)
         }
+
+        if (type === 'custom') {
+            const predicate = rule.customPredicate || rule.match?.predicate
+            return this.evaluateCustomPredicate(predicate, context.config)
+        }
+
+        return { passed: true }
     }
 
     /**
@@ -252,6 +265,46 @@ export class LintEngine {
         // For regex, we'd typically evaluate against raw config
         // In normalized context, this is less useful
         return { passed: true }
+    }
+
+    private evaluateMatch(path: string | undefined, condition: any, config: any): RuleResult {
+        if (!path || !condition) return { passed: true }
+        const value = this.getValueByPath(config, path)
+        const operator = condition.operator || condition.op
+        const expected = condition.value
+
+        switch (operator) {
+            case 'equals':
+                return { passed: value === expected, path, value, message: `Expected ${path} to equal ${expected}` }
+            case 'notEquals':
+                return { passed: value !== expected, path, value, message: `Expected ${path} to not equal ${expected}` }
+            case 'greaterThan':
+                return { passed: Number(value) > Number(expected), path, value, message: `Expected ${path} > ${expected}` }
+            case 'contains':
+                return {
+                    passed: Array.isArray(value) ? value.includes(expected) : String(value).includes(String(expected)),
+                    path,
+                    value,
+                    message: `Expected ${path} to contain ${expected}`
+                }
+            case 'exists':
+                return { passed: value !== undefined && value !== null && value !== '', path, value, message: `Expected ${path} to exist` }
+            case 'notExists':
+                return { passed: value === undefined || value === null || value === '', path, value, message: `Expected ${path} to not exist` }
+            case 'notEmpty':
+                return { passed: this.isNotEmpty(value), path, value, message: `Expected ${path} to not be empty` }
+            default:
+                return { passed: true }
+        }
+    }
+
+    private evaluateCustomPredicate(predicate: string | undefined, config: NormalizedConfig): RuleResult {
+        if (!predicate) return { passed: true }
+        const predicateFn = this.customPredicates.get(predicate)
+        if (!predicateFn) {
+            return { passed: true }
+        }
+        return predicateFn(config)
     }
 
     /**
@@ -402,6 +455,36 @@ export class LintEngine {
                 message: 'Enable secret encryption check requires raw config analysis'
             }
         })
+
+        this.customPredicates.set('noVlan1Traffic', (config) => {
+            const hasVlan1 = (config.interfaces || []).some((iface: any) => iface.vlan === 1 || iface.accessVlan === 1)
+            return { passed: !hasVlan1, message: hasVlan1 ? 'Interface uses VLAN 1' : undefined }
+        })
+
+        this.customPredicates.set('sshEnabled', (config) => {
+            const enabled = config.mgmt?.ssh?.enabled === true
+            return { passed: enabled, message: enabled ? undefined : 'SSH not enabled' }
+        })
+
+        this.customPredicates.set('snmpV3Only', (config) => {
+            const version = config.mgmt?.snmp?.version
+            return { passed: version === 'v3', message: version === 'v3' ? undefined : 'SNMP not v3' }
+        })
+
+        this.customPredicates.set('multipleNtpServers', (config) => {
+            const count = config.mgmt?.ntp?.servers?.length || 0
+            return { passed: count >= 2, message: `NTP servers: ${count}` }
+        })
+
+        this.customPredicates.set('aclHasExplicitDeny', (config) => {
+            const acls = config.security?.acls || []
+            const missing = acls.filter((acl: any) => {
+                if (!acl.entries?.length) return true
+                const last = acl.entries[acl.entries.length - 1]
+                return !(last.action === 'deny' || last.action === 'drop')
+            })
+            return { passed: missing.length === 0, message: missing.length ? 'ACL missing explicit deny' : undefined }
+        })
     }
 
     /**
@@ -473,7 +556,7 @@ export class LintEngine {
     /**
      * Calculate summary from findings
      */
-    private calculateSummary(findings: LintFinding[]): LintSummary {
+    private calculateSummary(findings: LintFinding[], totalRules: number): LintSummary {
         const summary: LintSummary = {
             critical: 0,
             high: 0,
@@ -481,7 +564,7 @@ export class LintEngine {
             low: 0,
             info: 0,
             waived: 0,
-            total: findings.length,
+            total: totalRules,
             passed: true
         }
 

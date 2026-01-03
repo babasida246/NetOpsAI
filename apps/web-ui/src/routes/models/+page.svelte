@@ -7,24 +7,121 @@
     listProviders,
     listOrchestrationRules,
     updateModelPriority,
+    createModel,
+    deleteModel,
+    updateModelConfig,
     createOrchestrationRule,
     updateOrchestrationRule,
     deleteOrchestrationRule,
+    updateProvider,
+    createProvider,
+    deleteProvider,
+    getModelHistory,
+    getProviderHistory,
+    listUsageLogs,
+    checkProviderHealth,
+    listOpenRouterRemoteModels,
+    importOpenRouterModel,
+    getOpenRouterAccountActivity,
+    getOpenRouterCredits,
     type ModelConfig,
     type AIProvider,
-    type OrchestrationRule
+    type OrchestrationRule,
+    type UsageHistoryEntry,
+    type UsageLogEntry,
+    type ProviderHealth,
+    type RemoteOpenRouterModel
   } from '$lib/api/chat';
 
   let models = $state<ModelConfig[]>([]);
   let providers = $state<AIProvider[]>([]);
   let orchestrationRules = $state<OrchestrationRule[]>([]);
   let loading = $state(false);
-  let selectedTab = $state<'models' | 'providers' | 'orchestration'>('models');
+  let selectedTab = $state<'models' | 'providers' | 'orchestration' | 'openrouter'>('models');
+  let modelSearch = $state('');
+  let modelStatusFilter = $state<'all' | 'active' | 'inactive' | 'deprecated'>('all');
+  let modelProviderFilter = $state('all');
+  let modelGroupBy = $state<'none' | 'provider' | 'status'>('none');
+  let providerSearch = $state('');
+  let providerStatusFilter = $state<'all' | 'active' | 'maintenance' | 'inactive'>('all');
+  const summary = $derived({
+    activeModels: models.filter(m => m.enabled).length,
+    providers: providers.length,
+    rules: orchestrationRules.length
+  });
+  const sortedModels = $derived(models.slice().sort((a, b) => a.priority - b.priority));
+  const filteredModels = $derived(
+    sortedModels.filter(m => {
+      const search = modelSearch.trim().toLowerCase();
+      const searchHit =
+        !search ||
+        m.id.toLowerCase().includes(search) ||
+        m.displayName?.toLowerCase().includes(search) ||
+        m.provider.toLowerCase().includes(search);
+      const statusHit = modelStatusFilter === 'all' || m.status === modelStatusFilter;
+      const providerHit = modelProviderFilter === 'all' || m.provider === modelProviderFilter;
+      return searchHit && statusHit && providerHit;
+    })
+  );
+  const groupedModels = $derived(() => {
+    const groups: Record<string, ModelConfig[]> = {};
+    if (modelGroupBy === 'none') return groups;
+    filteredModels.forEach(m => {
+      const key = modelGroupBy === 'provider' ? m.provider : m.status || 'unknown';
+      groups[key] = groups[key] ? [...groups[key], m] : [m];
+    });
+    return groups;
+  });
+  const sortedRules = $derived(orchestrationRules.slice().sort((a, b) => a.priority - b.priority));
+  const modelSelectOptions = $derived(sortedModels.map(m => ({ id: m.id, label: m.displayName || m.id })));
+  const filteredProviders = $derived(
+    providers.filter(p => {
+      const search = providerSearch.trim().toLowerCase();
+      const searchHit = !search || p.name?.toLowerCase().includes(search) || p.id.toLowerCase().includes(search);
+      const statusHit = providerStatusFilter === 'all' || p.status === providerStatusFilter;
+      return searchHit && statusHit;
+    })
+  );
   
   // Modal states
   let showOrchestrationModal = $state(false);
   let showDiagramModal = $state(false);
   let editingRule = $state<OrchestrationRule | null>(null);
+  let showCreateModel = $state(false);
+  let showCreateProvider = $state(false);
+  let newModel = $state({
+    id: '',
+    provider: '',
+    displayName: '',
+    description: '',
+    tier: 0,
+    priority: 100,
+    enabled: true
+  });
+  let newProvider = $state({
+    id: '',
+    name: '',
+    apiEndpoint: '',
+    status: 'active'
+  });
+  let modelHistory = $state<Record<string, UsageHistoryEntry[]>>({});
+  let providerHistory = $state<Record<string, UsageHistoryEntry[]>>({});
+  let usageLogs = $state<UsageLogEntry[]>([]);
+  let loadingModelHistory = $state<string | null>(null);
+  let loadingProviderHistory = $state<string | null>(null);
+  let providerHealth = $state<Record<string, ProviderHealth | null>>({});
+  let loadingHealth = $state<string | null>(null);
+  let openRouterModels = $state<RemoteOpenRouterModel[]>([]);
+  let loadingOpenRouterModels = $state(false);
+  let openRouterSearch = $state('');
+  let openRouterAccount: any = $state(null);
+  let openRouterCredits: any = $state(null);
+  let importingModel = $state(false);
+  let importPriority = $state(100);
+  let remotePage = $state(1);
+  let remoteLimit = $state(20);
+  let showImportModal = $state(false);
+  let selectedRemote: RemoteOpenRouterModel | null = $state(null);
   
   // Form state
   let ruleForm = $state({
@@ -38,6 +135,10 @@
 
   let mermaidDiagram = $state('');
   let diagramContainer: HTMLElement;
+  let editingModelId = $state<string | null>(null);
+  let modelEdit = $state<Partial<ModelConfig>>({});
+  let editingProviderId = $state<string | null>(null);
+  let providerEdit = $state<Partial<AIProvider>>({});
 
   onMount(async () => {
     await loadData();
@@ -64,14 +165,19 @@
   async function loadData() {
     loading = true;
     try {
-      const [modelsRes, providersRes, rulesRes] = await Promise.all([
+      const [modelsRes, providersRes, rulesRes, logsRes] = await Promise.all([
         listModels(),
         listProviders(),
-        listOrchestrationRules()
+        listOrchestrationRules(),
+        listUsageLogs(20)
       ]);
       models = modelsRes.data;
       providers = providersRes.data;
       orchestrationRules = rulesRes.data;
+      usageLogs = logsRes.data;
+      if (providers.some(p => p.id === 'openrouter')) {
+        await loadOpenRouterExtras();
+      }
     } catch (error) {
       console.error('Failed to load data:', error);
     } finally {
@@ -89,6 +195,167 @@
       await loadData();
     } catch (error) {
       console.error('Failed to update priority:', error);
+    }
+  }
+
+  async function handleCreateModel() {
+    try {
+      await createModel({
+        ...newModel,
+        tier: Number(newModel.tier) || 0,
+        priority: Number(newModel.priority) || 100
+      } as any);
+      newModel = { id: '', provider: '', displayName: '', description: '', tier: 0, priority: 100, enabled: true };
+      showCreateModel = false;
+      await loadData();
+    } catch (error) {
+      console.error('Failed to create model', error);
+    }
+  }
+
+  async function handleDeleteModel(modelId: string) {
+    if (!confirm('Delete this model?')) return;
+    await deleteModel(modelId);
+    await loadData();
+  }
+
+  async function handleCreateProvider() {
+    try {
+      await createProvider({ ...newProvider } as any);
+      newProvider = { id: '', name: '', apiEndpoint: '', status: 'active' };
+      showCreateProvider = false;
+      await loadData();
+    } catch (error) {
+      console.error('Failed to create provider', error);
+    }
+  }
+
+  async function handleDeleteProvider(providerId: string) {
+    if (!confirm('Delete this provider?')) return;
+    await deleteProvider(providerId);
+    await loadData();
+  }
+
+  async function loadModelHistoryEntries(modelId: string) {
+    if (modelHistory[modelId]) return;
+    loadingModelHistory = modelId;
+    const res = await getModelHistory(modelId, 30);
+    modelHistory = { ...modelHistory, [modelId]: res.data };
+    loadingModelHistory = null;
+  }
+
+  async function loadProviderHistoryEntries(providerId: string) {
+    if (providerHistory[providerId]) return;
+    loadingProviderHistory = providerId;
+    const res = await getProviderHistory(providerId, 30);
+    providerHistory = { ...providerHistory, [providerId]: res.data };
+    loadingProviderHistory = null;
+  }
+
+  async function handleHealthCheck(providerId: string) {
+    loadingHealth = providerId;
+    try {
+      const res = await checkProviderHealth(providerId);
+      providerHealth = { ...providerHealth, [providerId]: res };
+    } catch (error) {
+      console.error('Health check failed', error);
+    } finally {
+      loadingHealth = null;
+    }
+  }
+
+  async function loadOpenRouterExtras() {
+    const hasOpenRouter = providers.some(p => p.id === 'openrouter');
+    if (!hasOpenRouter) return;
+    loadingOpenRouterModels = true;
+    try {
+      const [modelsRes, accountRes, creditRes] = await Promise.all([
+        listOpenRouterRemoteModels(openRouterSearch, remotePage, remoteLimit),
+        getOpenRouterAccountActivity().catch(() => null),
+        getOpenRouterCredits().catch(() => null)
+      ]);
+      openRouterModels = modelsRes.data;
+      openRouterAccount = accountRes;
+      openRouterCredits = creditRes;
+    } catch (error) {
+      console.warn('OpenRouter data unavailable (ignored for UI)', error);
+    } finally {
+      loadingOpenRouterModels = false;
+    }
+  }
+
+  function openImportModal(remote: RemoteOpenRouterModel) {
+    selectedRemote = remote;
+    showImportModal = true;
+  }
+
+  async function handleImportRemote(modelId: string) {
+    importingModel = true;
+    try {
+      await importOpenRouterModel(modelId, Number(importPriority) || undefined);
+      await loadData();
+    } catch (error) {
+      console.error('Failed to import model', error);
+    } finally {
+      importingModel = false;
+    }
+  }
+
+  async function openModelEdit(model: ModelConfig) {
+    editingModelId = model.id;
+    modelEdit = {
+      description: model.description || '',
+      tier: model.tier,
+      contextWindow: model.contextWindow,
+      maxTokens: model.maxTokens,
+      costPer1kInput: model.costPer1kInput,
+      costPer1kOutput: model.costPer1kOutput,
+      enabled: model.enabled,
+      supportsStreaming: model.supportsStreaming,
+      supportsFunctions: model.supportsFunctions,
+      supportsVision: model.supportsVision,
+      priority: model.priority,
+      status: model.status,
+      displayName: model.displayName
+    };
+    showOrchestrationModal = false;
+  }
+
+  async function saveModelEdit() {
+    if (!editingModelId) return;
+    try {
+      await updateModelConfig(editingModelId, modelEdit);
+      editingModelId = null;
+      modelEdit = {};
+      await loadData();
+    } catch (error) {
+      console.error('Failed to update model', error);
+    }
+  }
+
+  async function openProviderEdit(provider: AIProvider) {
+    editingProviderId = provider.id;
+    providerEdit = {
+      name: provider.name,
+      description: provider.description,
+      apiEndpoint: provider.apiEndpoint,
+      authType: provider.authType,
+      rateLimitPerMinute: provider.rateLimitPerMinute,
+      status: provider.status,
+      creditsRemaining: provider.creditsRemaining,
+      tokensUsed: provider.tokensUsed
+    };
+  }
+
+  async function saveProviderEdit() {
+    if (!editingProviderId) return;
+    try {
+      await updateProvider(editingProviderId, providerEdit as any);
+      editingProviderId = null;
+      providerEdit = {};
+      await loadData();
+    } catch (error) {
+      console.error('Failed to update provider', error);
     }
   }
 
@@ -194,220 +461,763 @@
   });
 </script>
 
-<div class="container mx-auto p-6">
-  <div class="mb-6">
-    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">AI Model Management</h1>
-    <p class="text-gray-600 dark:text-gray-400">Configure models, providers, and orchestration strategies</p>
+<div class="w-full mx-auto p-4 sm:p-6 lg:p-8 xl:p-10 space-y-6">
+  <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 text-white rounded-3xl p-6 lg:p-8 shadow-xl">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-wide text-blue-200 font-semibold">Model control</p>
+        <h1 class="text-3xl font-bold">AI Model Management</h1>
+        <p class="text-sm text-blue-100/80 mt-2">Configure models, providers, and orchestration in one place.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-3 w-full sm:w-auto text-left sm:text-right">
+        <div class="bg-white/10 rounded-xl p-3">
+          <p class="text-xs text-blue-100/80">Active models</p>
+          <p class="text-xl font-semibold">{summary.activeModels}</p>
+        </div>
+        <div class="bg-white/10 rounded-xl p-3">
+          <p class="text-xs text-blue-100/80">Providers</p>
+          <p class="text-xl font-semibold">{summary.providers}</p>
+        </div>
+        <div class="bg-white/10 rounded-xl p-3">
+          <p class="text-xs text-blue-100/80">Rules</p>
+          <p class="text-xl font-semibold">{summary.rules}</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Tabs -->
-  <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
-    <nav class="flex gap-4">
+  <div class="bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+    <div class="flex flex-wrap items-center gap-3 px-4 lg:px-6 py-3 border-b border-slate-200 dark:border-slate-800">
       <button
         onclick={() => selectedTab = 'models'}
-        class="pb-3 px-4 {selectedTab === 'models' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}"
+        class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors {selectedTab === 'models' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
-        <Settings class="w-5 h-5 inline-block mr-2" />
+        <Settings class="w-4 h-4 inline mr-2" />
         Models ({models.length})
       </button>
       <button
         onclick={() => selectedTab = 'providers'}
-        class="pb-3 px-4 {selectedTab === 'providers' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}"
+        class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors {selectedTab === 'providers' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
-        <Zap class="w-5 h-5 inline-block mr-2" />
+        <Zap class="w-4 h-4 inline mr-2" />
         Providers ({providers.length})
       </button>
       <button
         onclick={() => selectedTab = 'orchestration'}
-        class="pb-3 px-4 {selectedTab === 'orchestration' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}"
+        class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors {selectedTab === 'orchestration' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
-        <TrendingUp class="w-5 h-5 inline-block mr-2" />
+        <TrendingUp class="w-4 h-4 inline mr-2" />
         Orchestration ({orchestrationRules.length})
       </button>
-    </nav>
-  </div>
-
-  {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <Spinner size="12" />
+      <button
+        onclick={() => { selectedTab = 'openrouter'; loadOpenRouterExtras(); }}
+        class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors {selectedTab === 'openrouter' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
+      >
+        <Zap class="w-4 h-4 inline mr-2" />
+        OpenRouter
+      </button>
     </div>
-  {:else if selectedTab === 'models'}
-    <!-- Models List -->
-    <div class="grid gap-4">
-      {#each models.sort((a, b) => a.priority - b.priority) as model}
-        <Card class="p-4">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{model.id}</h3>
-                <Badge color={model.enabled ? 'green' : 'gray'}>{model.status}</Badge>
-                <Badge color="blue">Tier {model.tier}</Badge>
-                <Badge color="purple">Priority {model.priority}</Badge>
-              </div>
-              
-              {#if model.description}
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{model.description}</p>
-              {/if}
 
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div>
-                  <span class="text-gray-500">Provider:</span>
-                  <span class="ml-2 font-medium">{model.provider}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">Context:</span>
-                  <span class="ml-2 font-medium">{model.contextWindow?.toLocaleString() || 'N/A'}</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">Input:</span>
-                  <span class="ml-2 font-medium">${model.costPer1kInput || 'N/A'}/1K</span>
-                </div>
-                <div>
-                  <span class="text-gray-500">Output:</span>
-                  <span class="ml-2 font-medium">${model.costPer1kOutput || 'N/A'}/1K</span>
-                </div>
-              </div>
+    <div class="p-4 lg:p-6">
+      {#if loading}
+        <div class="flex items-center justify-center py-12">
+          <Spinner size="12" />
+        </div>
+      {:else if selectedTab === 'models'}
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div class="text-sm text-slate-500">Active models: {summary.activeModels}</div>
+          <div class="flex gap-2">
+            <Button size="sm" color="light" onclick={() => showCreateModel = !showCreateModel}>
+              <Plus class="w-4 h-4 mr-1" /> {showCreateModel ? 'Close' : 'New model'}
+            </Button>
+          </div>
+        </div>
 
-              <div class="flex gap-2 mt-3">
-                {#if model.supportsStreaming}
-                  <Badge color="indigo">Streaming</Badge>
-                {/if}
-                {#if model.supportsFunctions}
-                  <Badge color="purple">Functions</Badge>
-                {/if}
-                {#if model.supportsVision}
-                  <Badge color="pink">Vision</Badge>
-                {/if}
+        {#if showCreateModel}
+          <Card class="p-4 border border-slate-200 dark:border-slate-800 mb-4">
+            <div class="grid md:grid-cols-3 gap-3">
+              <div>
+                <Label>ID</Label>
+                <Input bind:value={newModel.id} placeholder="provider/model-id" />
+              </div>
+              <div>
+                <Label>Provider</Label>
+                <Input bind:value={newModel.provider} placeholder="openai" />
+              </div>
+              <div>
+                <Label>Display name</Label>
+                <Input bind:value={newModel.displayName} placeholder="Friendly name" />
+              </div>
+              <div>
+                <Label>Tier</Label>
+                <Input type="number" bind:value={newModel.tier} />
+              </div>
+              <div>
+                <Label>Priority</Label>
+                <Input type="number" bind:value={newModel.priority} />
+              </div>
+              <div class="flex items-center gap-2">
+                <Toggle bind:checked={newModel.enabled} />
+                <Label>Enabled</Label>
+              </div>
+              <div class="md:col-span-3">
+                <Label>Description</Label>
+                <Textarea bind:value={newModel.description} rows="2" />
               </div>
             </div>
-
-            <div class="flex gap-2">
-              <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, -10)}>↑</Button>
-              <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, 10)}>↓</Button>
+            <div class="mt-3 flex gap-2">
+              <Button size="sm" on:click={handleCreateModel} disabled={!newModel.id || !newModel.provider}>Save model</Button>
+              <Button size="sm" color="light" on:click={() => showCreateModel = false}>Cancel</Button>
             </div>
-          </div>
-        </Card>
-      {/each}
-    </div>
+          </Card>
+        {/if}
 
-  {:else if selectedTab === 'providers'}
-    <!-- Providers List -->
-    <div class="grid md:grid-cols-2 gap-4">
-      {#each providers as provider}
-        <Card class="p-4">
-          <div class="flex items-start justify-between mb-3">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{provider.name}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{provider.id}</p>
-            </div>
-            <Badge color={provider.status === 'active' ? 'green' : provider.status === 'maintenance' ? 'yellow' : 'gray'}>
-              {provider.status}
-            </Badge>
-          </div>
+        <div class="flex flex-wrap gap-3 items-center mb-3">
+          <Input class="w-56" placeholder="Search model or provider" bind:value={modelSearch} />
+          <Select class="w-40" bind:value={modelStatusFilter}>
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="deprecated">Deprecated</option>
+          </Select>
+          <Select class="w-48" bind:value={modelProviderFilter}>
+            <option value="all">All providers</option>
+            {#each providers as provider}
+              <option value={provider.id}>{provider.name || provider.id}</option>
+            {/each}
+          </Select>
+          <Select class="w-40" bind:value={modelGroupBy}>
+            <option value="none">No grouping</option>
+            <option value="provider">Group by provider</option>
+            <option value="status">Group by status</option>
+          </Select>
+        </div>
 
-          {#if provider.description}
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{provider.description}</p>
-          {/if}
-
-          <div class="text-sm space-y-2">
-            {#if provider.apiEndpoint}
-              <div>
-                <span class="text-gray-500">Endpoint:</span>
-                <span class="ml-2 font-mono text-xs">{provider.apiEndpoint}</span>
-              </div>
-            {/if}
-            {#if provider.authType}
-              <div>
-                <span class="text-gray-500">Auth:</span>
-                <span class="ml-2">{provider.authType}</span>
-              </div>
-            {/if}
-            {#if provider.rateLimitPerMinute}
-              <div>
-                <span class="text-gray-500">Rate Limit:</span>
-                <span class="ml-2">{provider.rateLimitPerMinute}/min</span>
-              </div>
-            {/if}
-          </div>
-
-          <div class="flex gap-2 mt-3">
-            {#if provider.capabilities.streaming}
-              <Badge color="blue">Streaming</Badge>
-            {/if}
-            {#if provider.capabilities.functions}
-              <Badge color="purple">Functions</Badge>
-            {/if}
-            {#if provider.capabilities.vision}
-              <Badge color="pink">Vision</Badge>
-            {/if}
-          </div>
-        </Card>
-      {/each}
-    </div>
-
-  {:else if selectedTab === 'orchestration'}
-    <!-- Orchestration Rules -->
-    <div class="mb-4 flex justify-between items-center">
-      <div>
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Orchestration Rules</h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400">Define model selection and fallback strategies</p>
-      </div>
-      <div class="flex gap-2">
-        <Button onclick={showDiagram} color="light">
-          <Eye class="w-4 h-4 mr-2" />
-          View Diagram
-        </Button>
-        <Button onclick={() => openOrchestrationModal()}>
-          <Plus class="w-4 h-4 mr-2" />
-          New Rule
-        </Button>
-      </div>
-    </div>
-
-    <div class="grid gap-4">
-      {#each orchestrationRules.sort((a, b) => a.priority - b.priority) as rule}
-        <Card class="p-4">
-          <div class="flex justify-between items-start">
-            <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{rule.name}</h3>
-                <Badge color={rule.enabled ? 'green' : 'gray'}>{rule.enabled ? 'Enabled' : 'Disabled'}</Badge>
-                <Badge color="blue">{rule.strategy}</Badge>
-                <Badge color="purple">Priority {rule.priority}</Badge>
-              </div>
-
-              {#if rule.description}
-                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">{rule.description}</p>
-              {/if}
-
-              <div class="mb-3">
-                <span class="text-sm text-gray-500 font-medium">Model Sequence:</span>
-                <div class="flex gap-2 mt-2 flex-wrap">
-                  {#each rule.modelSequence as model, idx}
-                    <div class="flex items-center">
-                      <Badge color="indigo">{model}</Badge>
-                      {#if idx < rule.modelSequence.length - 1 && rule.strategy === 'fallback'}
-                        <span class="mx-2 text-gray-400">→</span>
+        {#if modelGroupBy === 'provider' || modelGroupBy === 'status'}
+          {#if Object.keys(groupedModels).length === 0}
+            <div class="text-sm text-slate-500">No models found for selected filters.</div>
+          {:else}
+            {#each Object.entries(groupedModels) as [group, items]}
+              <div class="mt-4">
+                <div class="flex items-center gap-2 mb-2">
+                  <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{group}</h4>
+                  <Badge color="light" class="text-xs">{items.length}</Badge>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
+                  <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
+                    <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+                      <tr>
+                        <th class="px-4 py-3">Model</th>
+                        <th class="px-4 py-3">Provider</th>
+                        <th class="px-4 py-3">Tier</th>
+                        <th class="px-4 py-3">Priority</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3">Context</th>
+                        <th class="px-4 py-3">Cost $/1K</th>
+                        <th class="px-4 py-3">Capabilities</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {#each items as model}
+                        <tr class="border-b border-slate-200 dark:border-slate-800">
+                        <td class="px-4 py-3">
+                          <div class="font-semibold text-gray-900 dark:text-white break-words">{model.id}</div>
+                          {#if model.displayName && model.displayName !== model.id}
+                            <div class="text-xs text-gray-500">{model.displayName}</div>
+                          {/if}
+                          {#if model.description}
+                            <div class="text-xs text-gray-500 line-clamp-2">{model.description}</div>
+                          {/if}
+                        </td>
+                        <td class="px-4 py-3"><span class="font-mono text-xs break-all">{model.provider}</span></td>
+                        <td class="px-4 py-3">Tier {model.tier}</td>
+                        <td class="px-4 py-3">
+                          <Badge color="purple">{model.priority}</Badge>
+                        </td>
+                        <td class="px-4 py-3">
+                          <Badge color={model.enabled ? 'green' : 'gray'}>{model.status}</Badge>
+                        </td>
+                        <td class="px-4 py-3">{model.contextWindow?.toLocaleString() || 'N/A'}</td>
+                        <td class="px-4 py-3">
+                          <div class="text-xs text-gray-700 dark:text-gray-200">In: {model.costPer1kInput ?? 'N/A'}</div>
+                          <div class="text-xs text-gray-700 dark:text-gray-200">Out: {model.costPer1kOutput ?? 'N/A'}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="flex flex-wrap gap-2">
+                            {#if model.supportsStreaming}<Badge color="indigo">Streaming</Badge>{/if}
+                            {#if model.supportsFunctions}<Badge color="purple">Functions</Badge>{/if}
+                            {#if model.supportsVision}<Badge color="pink">Vision</Badge>{/if}
+                          </div>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="flex flex-wrap items-center justify-end gap-2">
+                            <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
+                            <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
+                            <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>Edit</Button>
+                            <Button size="xs" color="light" onclick={() => loadModelHistoryEntries(model.id)}>
+                              <TrendingUp class="w-4 h-4" />
+                            </Button>
+                            <Button size="xs" color="red" onclick={() => handleDeleteModel(model.id)}>
+                              <Trash2 class="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {#if editingModelId === model.id}
+                        <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+                          <td colspan="9" class="px-4 py-4">
+                            <div class="grid gap-3 md:grid-cols-2">
+                              <div>
+                                <Label>Display name</Label>
+                                <Input bind:value={modelEdit.displayName} placeholder="Friendly name" />
+                              </div>
+                              <div>
+                                <Label>Tier</Label>
+                                <Input type="number" bind:value={modelEdit.tier} />
+                              </div>
+                              <div>
+                                <Label>Context window</Label>
+                                <Input type="number" bind:value={modelEdit.contextWindow} />
+                              </div>
+                              <div>
+                                <Label>Max tokens</Label>
+                                <Input type="number" bind:value={modelEdit.maxTokens} />
+                              </div>
+                              <div>
+                                <Label>Cost /1k input</Label>
+                                <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kInput} />
+                              </div>
+                              <div>
+                                <Label>Cost /1k output</Label>
+                                <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kOutput} />
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <Toggle bind:checked={modelEdit.enabled} />
+                                <Label>Enabled</Label>
+                              </div>
+                              <div>
+                                <Label>Status</Label>
+                                <Select bind:value={modelEdit.status}>
+                                  <option value="active">Active</option>
+                                  <option value="inactive">Inactive</option>
+                                  <option value="deprecated">Deprecated</option>
+                                </Select>
+                              </div>
+                            </div>
+                            <div class="flex gap-2 mt-3 justify-end">
+                              <Button size="sm" on:click={saveModelEdit}>Save</Button>
+                              <Button size="sm" color="light" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                            </div>
+                          </td>
+                        </tr>
                       {/if}
-                    </div>
-                  {/each}
-                </div>
+                      {#if modelHistory[model.id]}
+                        <tr class="bg-slate-50/40 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
+                          <td colspan="9" class="px-4 py-3">
+                            <div class="flex items-center justify-between mb-2">
+                              <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
+                              <Badge color="light" class="text-xs">{modelHistory[model.id].length}</Badge>
+                            </div>
+                            <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
+                              {#each modelHistory[model.id] as h}
+                                <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-white dark:bg-slate-900">
+                                  <div class="font-semibold text-slate-800 dark:text-white">{new Date(h.date).toLocaleDateString()}</div>
+                                  <div>Tokens: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
+                                  <div>Cost: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
+                                  <div>Messages: {h.messageCount ?? '-'}</div>
+                                </div>
+                              {/each}
+                            </div>
+                          </td>
+                        </tr>
+                      {:else if loadingModelHistory === model.id}
+                        <tr class="border-b border-slate-200 dark:border-slate-800">
+                          <td colspan="9" class="px-4 py-3 text-sm text-slate-500 flex items-center gap-2">
+                            <Spinner size="4" /> Loading history...
+                          </td>
+                        </tr>
+                      {/if}
+                    {/each}
+                  </tbody>
+                </table>
+          </div>
+        </div>
+      {/each}
+      {/if}
+    {:else}
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
+            <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
+              <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+                <tr>
+                  <th class="px-4 py-3">Model</th>
+                  <th class="px-4 py-3">Provider</th>
+                  <th class="px-4 py-3">Tier</th>
+                  <th class="px-4 py-3">Priority</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Context</th>
+                  <th class="px-4 py-3">Cost $/1K</th>
+                  <th class="px-4 py-3">Capabilities</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each filteredModels as model}
+                  <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="px-4 py-3">
+                      <div class="font-semibold text-gray-900 dark:text-white break-words">{model.id}</div>
+                      {#if model.displayName && model.displayName !== model.id}
+                        <div class="text-xs text-gray-500">{model.displayName}</div>
+                      {/if}
+                      {#if model.description}
+                        <div class="text-xs text-gray-500 line-clamp-2">{model.description}</div>
+                      {/if}
+                    </td>
+                    <td class="px-4 py-3"><span class="font-mono text-xs break-all">{model.provider}</span></td>
+                    <td class="px-4 py-3">Tier {model.tier}</td>
+                    <td class="px-4 py-3">
+                      <Badge color="purple">{model.priority}</Badge>
+                    </td>
+                    <td class="px-4 py-3">
+                      <Badge color={model.enabled ? 'green' : 'gray'}>{model.status}</Badge>
+                    </td>
+                    <td class="px-4 py-3">{model.contextWindow?.toLocaleString() || 'N/A'}</td>
+                    <td class="px-4 py-3">
+                      <div class="text-xs text-gray-700 dark:text-gray-200">In: {model.costPer1kInput ?? 'N/A'}</div>
+                      <div class="text-xs text-gray-700 dark:text-gray-200">Out: {model.costPer1kOutput ?? 'N/A'}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap gap-2">
+                        {#if model.supportsStreaming}<Badge color="indigo">Streaming</Badge>{/if}
+                        {#if model.supportsFunctions}<Badge color="purple">Functions</Badge>{/if}
+                        {#if model.supportsVision}<Badge color="pink">Vision</Badge>{/if}
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex flex-wrap items-center justify-end gap-2">
+                        <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
+                        <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
+                        <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>Edit</Button>
+                        <Button size="xs" color="light" onclick={() => loadModelHistoryEntries(model.id)}>
+                          <TrendingUp class="w-4 h-4" />
+                        </Button>
+                        <Button size="xs" color="red" onclick={() => handleDeleteModel(model.id)}>
+                          <Trash2 class="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                  {#if editingModelId === model.id}
+                    <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+                      <td colspan="9" class="px-4 py-4">
+                        <div class="grid gap-3 md:grid-cols-2">
+                          <div>
+                            <Label>Display name</Label>
+                            <Input bind:value={modelEdit.displayName} placeholder="Friendly name" />
+                          </div>
+                          <div>
+                            <Label>Tier</Label>
+                            <Input type="number" bind:value={modelEdit.tier} />
+                          </div>
+                          <div>
+                            <Label>Context window</Label>
+                            <Input type="number" bind:value={modelEdit.contextWindow} />
+                          </div>
+                          <div>
+                            <Label>Max tokens</Label>
+                            <Input type="number" bind:value={modelEdit.maxTokens} />
+                          </div>
+                          <div>
+                            <Label>Cost /1k input</Label>
+                            <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kInput} />
+                          </div>
+                          <div>
+                            <Label>Cost /1k output</Label>
+                            <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kOutput} />
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <Toggle bind:checked={modelEdit.enabled} />
+                            <Label>Enabled</Label>
+                          </div>
+                          <div>
+                            <Label>Status</Label>
+                            <Select bind:value={modelEdit.status}>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="deprecated">Deprecated</option>
+                            </Select>
+                          </div>
+                        </div>
+                        <div class="flex gap-2 mt-3 justify-end">
+                          <Button size="sm" on:click={saveModelEdit}>Save</Button>
+                          <Button size="sm" color="light" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                        </div>
+                      </td>
+                    </tr>
+                  {/if}
+                  {#if modelHistory[model.id]}
+                    <tr class="bg-slate-50/40 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
+                      <td colspan="9" class="px-4 py-3">
+                        <div class="flex items-center justify-between mb-2">
+                          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
+                          <Badge color="light" class="text-xs">{modelHistory[model.id].length}</Badge>
+                        </div>
+                        <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
+                          {#each modelHistory[model.id] as h}
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-white dark:bg-slate-900">
+                              <div class="font-semibold text-slate-800 dark:text-white">{new Date(h.date).toLocaleDateString()}</div>
+                              <div>Tokens: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
+                              <div>Cost: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
+                              <div>Messages: {h.messageCount ?? '-'}</div>
+                            </div>
+                          {/each}
+                        </div>
+                      </td>
+                    </tr>
+                  {:else if loadingModelHistory === model.id}
+                    <tr class="border-b border-slate-200 dark:border-slate-800">
+                      <td colspan="9" class="px-4 py-3 text-sm text-slate-500 flex items-center gap-2">
+                        <Spinner size="4" /> Loading history...
+                      </td>
+                    </tr>
+                  {/if}
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      {:else if selectedTab === 'providers'}
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div class="text-sm text-slate-500">Providers: {providers.length}</div>
+          <Button size="sm" color="light" onclick={() => showCreateProvider = !showCreateProvider}>
+            <Plus class="w-4 h-4 mr-1" /> {showCreateProvider ? 'Close' : 'New provider'}
+          </Button>
+        </div>
+
+        {#if showCreateProvider}
+          <Card class="p-4 border border-slate-200 dark:border-slate-800 mb-4">
+            <div class="grid md:grid-cols-3 gap-3">
+              <div>
+                <Label>ID</Label>
+                <Input bind:value={newProvider.id} placeholder="openai" />
+              </div>
+              <div>
+                <Label>Name</Label>
+                <Input bind:value={newProvider.name} placeholder="OpenAI" />
+              </div>
+              <div>
+                <Label>API Endpoint</Label>
+                <Input bind:value={newProvider.apiEndpoint} placeholder="https://..." />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select bind:value={newProvider.status}>
+                  <option value="active">Active</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="inactive">Inactive</option>
+                </Select>
               </div>
             </div>
+            <div class="mt-3 flex gap-2">
+              <Button size="sm" on:click={handleCreateProvider} disabled={!newProvider.id || !newProvider.name}>Create provider</Button>
+              <Button size="sm" color="light" on:click={() => showCreateProvider = false}>Cancel</Button>
+            </div>
+          </Card>
+        {/if}
 
-            <div class="flex gap-2">
-              <Button size="xs" color="light" onclick={() => openOrchestrationModal(rule)}>
-                <Edit class="w-4 h-4" />
-              </Button>
-              <Button size="xs" color="red" onclick={() => handleDeleteRule(rule.id)}>
-                <Trash2 class="w-4 h-4" />
+        <div class="flex flex-wrap gap-3 items-center mb-3">
+          <Input class="w-56" placeholder="Search provider" bind:value={providerSearch} />
+          <Select class="w-40" bind:value={providerStatusFilter}>
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="inactive">Inactive</option>
+          </Select>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
+          <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
+            <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+              <tr>
+                <th class="px-4 py-3">Provider</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Endpoint</th>
+                <th class="px-4 py-3">Auth</th>
+                <th class="px-4 py-3">Rate limit</th>
+                <th class="px-4 py-3">Capabilities</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each filteredProviders as provider}
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                  <td class="px-4 py-3">
+                    <div class="font-semibold text-gray-900 dark:text-white break-words">{provider.name}</div>
+                    <div class="text-xs text-gray-500 break-all">{provider.id}</div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <Badge color={provider.status === 'active' ? 'green' : provider.status === 'maintenance' ? 'yellow' : 'gray'}>
+                      {provider.status}
+                    </Badge>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="font-mono text-xs break-all">{provider.apiEndpoint}</div>
+                  </td>
+                  <td class="px-4 py-3">{provider.authType}</td>
+                  <td class="px-4 py-3">{provider.rateLimitPerMinute ? `${provider.rateLimitPerMinute}/min` : '-'}</td>
+                  <td class="px-4 py-3">
+                    <div class="flex flex-wrap gap-2">
+                      {#if provider.capabilities.streaming}<Badge color="blue">Streaming</Badge>{/if}
+                      {#if provider.capabilities.functions}<Badge color="purple">Functions</Badge>{/if}
+                      {#if provider.capabilities.vision}<Badge color="pink">Vision</Badge>{/if}
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex flex-wrap items-center gap-2 justify-end">
+                      <Button size="xs" color="light" onclick={() => handleHealthCheck(provider.id)}>
+                        {loadingHealth === provider.id ? 'Checking...' : 'Health'}
+                      </Button>
+                      {#if providerHealth[provider.id]}
+                        <Badge color={providerHealth[provider.id]?.status === 'healthy' ? 'green' : providerHealth[provider.id]?.status === 'degraded' ? 'yellow' : 'red'}>
+                          {providerHealth[provider.id]?.status}
+                        </Badge>
+                      {/if}
+                      <Button size="xs" color="alternative" onclick={() => openProviderEdit(provider)}>Edit</Button>
+                      <Button size="xs" color="light" onclick={() => loadProviderHistoryEntries(provider.id)}>
+                        <TrendingUp class="w-4 h-4" />
+                      </Button>
+                      <Button size="xs" color="red" onclick={() => handleDeleteProvider(provider.id)}>
+                        <Trash2 class="w-4 h-4" />
+                      </Button>
+                    </div>
+
+                    {#if editingProviderId === provider.id}
+                      <div class="mt-3 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <Label>Name</Label>
+                          <Input bind:value={providerEdit.name} />
+                        </div>
+                        <div>
+                          <Label>Status</Label>
+                          <Select bind:value={providerEdit.status}>
+                            <option value="active">Active</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="inactive">Inactive</option>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label>API Endpoint</Label>
+                          <Input bind:value={providerEdit.apiEndpoint} />
+                        </div>
+                        <div>
+                          <Label>API Key</Label>
+                          <Input type="password" bind:value={providerEdit.apiKey} placeholder="******" />
+                        </div>
+                        <div>
+                          <Label>Credits remaining</Label>
+                          <Input type="number" step="0.0001" bind:value={providerEdit.creditsRemaining} />
+                        </div>
+                        <div>
+                          <Label>Tokens used</Label>
+                          <Input type="number" bind:value={providerEdit.tokensUsed} />
+                        </div>
+                      </div>
+                      <div class="flex gap-2 mt-3 justify-end">
+                        <Button size="sm" on:click={saveProviderEdit}>Save</Button>
+                        <Button size="sm" color="light" on:click={() => { editingProviderId = null; providerEdit = {}; }}>Cancel</Button>
+                      </div>
+                    {/if}
+
+                    {#if providerHistory[provider.id]}
+                      <div class="mt-3 text-xs text-slate-500 space-y-1">
+                        <div class="font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</div>
+                        <div class="grid md:grid-cols-2 gap-2">
+                          {#each providerHistory[provider.id] as h}
+                            <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-slate-50 dark:bg-slate-800/50">
+                              <div class="font-semibold text-slate-800 dark:text-white">{new Date(h.date).toLocaleDateString()}</div>
+                              <div>Tokens: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
+                              <div>Cost: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
+                              <div>Credits used: ${h.creditsUsed?.toFixed?.(4) ?? h.creditsUsed ?? 0}</div>
+                            </div>
+                          {/each}
+                        </div>
+                      </div>
+                    {:else if loadingProviderHistory === provider.id}
+                      <div class="mt-2 text-xs text-slate-500 flex items-center gap-2">
+                        <Spinner size="4" /> Loading history...
+                      </div>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {:else if selectedTab === 'openrouter'}
+        <div class="space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">OpenRouter Available Models</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Browse remote models and import into your catalog.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+              <Input class="w-48" placeholder="Search models" bind:value={openRouterSearch} />
+              <Input class="w-24" type="number" bind:value={remoteLimit} placeholder="Limit" />
+              <Button size="sm" on:click={() => { remotePage = 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>
+                {loadingOpenRouterModels ? 'Loading...' : 'Refresh'}
               </Button>
             </div>
           </div>
-        </Card>
-      {/each}
+
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-300">
+              <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+                <tr>
+                  <th class="px-4 py-3">Model</th>
+                  <th class="px-4 py-3">Prompt $/1k</th>
+                  <th class="px-4 py-3">Completion $/1k</th>
+                  <th class="px-4 py-3">Context</th>
+                  <th class="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#if loadingOpenRouterModels}
+                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">Loading...</td></tr>
+                {:else if openRouterModels.length === 0}
+                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">No models</td></tr>
+                {:else}
+                  {#each openRouterModels as remote}
+                    <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
+                      <td class="px-4 py-3">
+                        <div class="font-semibold text-slate-900 dark:text-white">{remote.name}</div>
+                        <div class="text-xs text-slate-500">{remote.id}</div>
+                        {#if remote.description}
+                          <div class="text-xs text-slate-500 line-clamp-2">{remote.description}</div>
+                        {/if}
+                      </td>
+                      <td class="px-4 py-3">{remote.pricing?.prompt ?? '—'}</td>
+                      <td class="px-4 py-3">{remote.pricing?.completion ?? '—'}</td>
+                      <td class="px-4 py-3">{remote.contextLength ?? '—'}</td>
+                      <td class="px-4 py-3 text-right">
+                        <Button size="xs" on:click={() => openImportModal(remote)} disabled={importingModel}>
+                          Add
+                        </Button>
+                      </td>
+                    </tr>
+                  {/each}
+                {/if}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <Button size="sm" color="light" onclick={() => { if (remotePage > 1) { remotePage -= 1; loadOpenRouterExtras(); } }} disabled={remotePage === 1 || loadingOpenRouterModels}>Prev</Button>
+            <span class="text-sm text-slate-600 dark:text-slate-300">Page {remotePage}</span>
+            <Button size="sm" color="light" onclick={() => { remotePage += 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>Next</Button>
+          </div>
+        </div>
+      {:else if selectedTab === 'orchestration'}
+        <div class="mb-4 flex justify-between items-center flex-wrap gap-3">
+          <div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Orchestration Rules</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Define model selection and fallback strategies</p>
+          </div>
+          <div class="flex gap-2">
+            <Button onclick={showDiagram} color="light">
+              <Eye class="w-4 h-4 mr-2" />
+              View Diagram
+            </Button>
+            <Button onclick={() => openOrchestrationModal()}>
+              <Plus class="w-4 h-4 mr-2" />
+              New Rule
+            </Button>
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          {#each sortedRules as rule}
+            <Card class="p-4 border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 rounded-xl shadow-sm">
+              <div class="flex justify-between items-start gap-4">
+                <div class="flex-1 space-y-2">
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{rule.name}</h3>
+                    <Badge color={rule.enabled ? 'green' : 'gray'}>{rule.enabled ? 'Enabled' : 'Disabled'}</Badge>
+                    <Badge color="blue">{rule.strategy}</Badge>
+                    <Badge color="purple">Priority {rule.priority}</Badge>
+                  </div>
+
+                  {#if rule.description}
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{rule.description}</p>
+                  {/if}
+
+                  <div class="mb-2">
+                    <span class="text-sm text-gray-500 font-medium">Model Sequence:</span>
+                    <div class="flex gap-2 mt-2 flex-wrap">
+                      {#each rule.modelSequence as model, idx}
+                        <div class="flex items-center">
+                          <Badge color="indigo">{model}</Badge>
+                          {#if idx < rule.modelSequence.length - 1 && rule.strategy === 'fallback'}
+                            <span class="mx-2 text-gray-400">-></span>
+                          {/if}
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <Button size="xs" color="light" onclick={() => openOrchestrationModal(rule)}>
+                    <Edit class="w-4 h-4" />
+                  </Button>
+                  <Button size="xs" color="red" onclick={() => handleDeleteRule(rule.id)}>
+                    <Trash2 class="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          {/each}
+        </div>
+
+
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent usage logs</h3>
+            <Badge color="light" class="text-xs">{usageLogs.length} entries</Badge>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+              <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
+                <tr>
+                  <th class="px-6 py-3">When</th>
+                  <th class="px-6 py-3">Model</th>
+                  <th class="px-6 py-3">Provider</th>
+                  <th class="px-6 py-3">Tokens</th>
+                  <th class="px-6 py-3">Cost</th>
+                  <th class="px-6 py-3">Messages</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#if usageLogs.length === 0}
+                  <tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">No usage records</td></tr>
+                {:else}
+                  {#each usageLogs as log}
+                    <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
+                      <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">{new Date(log.date).toLocaleString()}</td>
+                      <td class="px-6 py-4">{log.model}</td>
+                      <td class="px-6 py-4">{log.provider}</td>
+                      <td class="px-6 py-4">{log.totalTokens}</td>
+                      <td class="px-6 py-4">${log.cost.toFixed(4)}</td>
+                      <td class="px-6 py-4">{log.messageCount}</td>
+                    </tr>
+                  {/each}
+                {/if}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {/if}
     </div>
-  {/if}
+  </div>
 </div>
 
 <!-- Orchestration Rule Modal -->
@@ -448,7 +1258,11 @@
       <div class="space-y-2">
         {#each ruleForm.modelSequence as model, idx}
           <div class="flex gap-2">
-            <Input bind:value={ruleForm.modelSequence[idx]} placeholder="e.g., openai/gpt-4o-mini" class="flex-1" />
+            <select bind:value={ruleForm.modelSequence[idx]} class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm">
+              {#each modelSelectOptions as opt}
+                <option value={opt.id}>{opt.label}</option>
+              {/each}
+            </select>
             <Button size="sm" color="red" onclick={() => {
               ruleForm.modelSequence = ruleForm.modelSequence.filter((_, i) => i !== idx);
             }}>
@@ -457,7 +1271,8 @@
           </div>
         {/each}
         <Button size="sm" color="light" onclick={() => {
-          ruleForm.modelSequence = [...ruleForm.modelSequence, ''];
+          const next = modelSelectOptions[0]?.id || '';
+          ruleForm.modelSequence = [...ruleForm.modelSequence, next];
         }}>
           <Plus class="w-4 h-4 mr-2" />
           Add Model
@@ -492,6 +1307,29 @@
   <div class="mt-4">
     <Button color="light" onclick={() => showDiagramModal = false}>Close</Button>
   </div>
+</Modal>
+
+<!-- Import remote model modal -->
+<Modal bind:open={showImportModal} size="md">
+  {#if selectedRemote}
+    <h3 class="text-lg font-semibold mb-2">Import {selectedRemote.name}</h3>
+    <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">{selectedRemote.id}</p>
+    <div class="space-y-3">
+      <div>
+        <Label>Priority</Label>
+        <Input type="number" bind:value={importPriority} />
+      </div>
+      <div class="text-sm text-slate-500">
+        Prompt $/1k: {selectedRemote.pricing?.prompt ?? '—'} | Completion $/1k: {selectedRemote.pricing?.completion ?? '—'}
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <Button on:click={() => { handleImportRemote(selectedRemote!.id); showImportModal = false; }}>
+        {importingModel ? 'Importing...' : 'Import'}
+      </Button>
+      <Button color="light" on:click={() => showImportModal = false}>Cancel</Button>
+    </div>
+  {/if}
 </Modal>
 
 <style>

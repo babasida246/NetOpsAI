@@ -86,6 +86,9 @@ services:
       ZABBIX_API_TOKEN: ${ZABBIX_API_TOKEN:-}
       FORTIGATE_API_URL: ${FORTIGATE_API_URL:-}
       FORTIGATE_API_TOKEN: ${FORTIGATE_API_TOKEN:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_NAME: ${ADMIN_NAME:-Default Admin}
     ports:
       - "${API_PORT:-3000}:3000"
     volumes:
@@ -179,11 +182,12 @@ services:
     restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    ports:
-      - "${REDISINSIGHT_PORT:-8001}:5540"
     volumes:
       - redisinsight_data:/data
       - ./docker/redisinsight/init-redis.sh:/docker-entrypoint.d/init-redis.sh:ro
+    # RedisInsight v2 serves UI on 5540 (avoids the common 8001 conflict on Windows)
+    ports:
+      - "${REDISINSIGHT_PORT:-5540}:5540"
     networks:
       - netopsai-gateway-network
     depends_on:
@@ -202,6 +206,7 @@ services:
       dockerfile: apps/web-ui/Dockerfile
       args:
         VITE_API_BASE: ${VITE_API_BASE:-http://localhost:3000}
+        BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://gateway-api:3000}
     container_name: netopsai-gateway-web-ui
     restart: unless-stopped
     depends_on:
@@ -211,6 +216,7 @@ services:
       PORT: 3003
       # API_URL kept for runtime server processes if needed; client uses VITE_API_BASE embedded at build
       API_URL: http://gateway-api:3000
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://gateway-api:3000}
     ports:
       - "${WEB_UI_PORT:-3003}:3003"
     networks:

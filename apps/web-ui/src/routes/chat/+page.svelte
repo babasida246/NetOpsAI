@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import { Button, Spinner, Badge } from 'flowbite-svelte';
   import { Send, MessageSquarePlus, Trash2, TrendingUp, DollarSign } from 'lucide-svelte';
   import ChatMessage from '$lib/components/ChatMessage.svelte';
@@ -10,7 +11,20 @@
     deleteConversation,
     listMessages
   } from '$lib/api/conversations';
-  import { sendChatMessage, getDailySummary, type DailySummary } from '$lib/api/chat';
+  import {
+    sendChatMessage,
+    getDailySummary,
+    listModels,
+    type DailySummary,
+    type ModelConfig
+  } from '$lib/api/chat';
+  import { getStoredTokens } from '$lib/api/httpClient';
+
+  type ModelOption = {
+    id: string;
+    label: string;
+    provider: string;
+  };
 
   let conversations = $state<Conversation[]>([]);
   let selectedConversationId = $state<string | null>(null);
@@ -21,11 +35,43 @@
   let messagesContainer: HTMLDivElement | null = $state(null);
   let dailyStats = $state<DailySummary | null>(null);
   let selectedModel = $state('openai/gpt-4o-mini');
+  let models = $state<ModelConfig[]>([]);
+
+  const fallbackModels: ModelOption[] = [
+    { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cheap)', provider: 'openai' },
+    { id: 'openai/gpt-4o', label: 'GPT-4o (Balanced)', provider: 'openai' },
+    { id: 'anthropic/claude-3-haiku', label: 'Claude 3 Haiku', provider: 'anthropic' },
+    { id: 'anthropic/claude-3-sonnet', label: 'Claude 3 Sonnet', provider: 'anthropic' },
+    { id: 'google/gemini-pro', label: 'Gemini Pro', provider: 'google' }
+  ];
+
+  const modelOptions = $derived<ModelOption[]>(
+    models.length > 0
+      ? models
+        .slice()
+        .sort((a, b) => a.priority - b.priority)
+        .map<ModelOption>((model) => ({
+          id: model.id,
+          label: model.description || model.id,
+          provider: model.provider
+        }))
+      : fallbackModels
+  );
+
+  const selectedModelInfo = $derived(modelOptions.find(model => model.id === selectedModel));
 
   // Load conversations on mount
   onMount(async () => {
-    await loadConversations();
-    await loadDailyStats();
+    const { accessToken } = getStoredTokens();
+    if (!accessToken) {
+      goto(`/login?redirect=${encodeURIComponent('/chat')}`);
+      return;
+    }
+    await Promise.all([
+      loadConversations(),
+      loadDailyStats(),
+      loadModels()
+    ]);
   });
 
   async function loadConversations() {
@@ -50,6 +96,20 @@
       dailyStats = await getDailySummary();
     } catch (error) {
       console.error('Failed to load stats:', error);
+    }
+  }
+
+  async function loadModels() {
+    try {
+      const response = await listModels();
+      const sorted = response.data.sort((a, b) => a.priority - b.priority);
+      models = sorted;
+
+      if (sorted.length > 0 && !sorted.some(model => model.id === selectedModel)) {
+        selectedModel = sorted[0].id;
+      }
+    } catch (error) {
+      console.error('Failed to load models:', error);
     }
   }
 
@@ -165,169 +225,193 @@
   });
 </script>
 
-<div class="flex h-screen bg-gray-50 dark:bg-gray-900">
-  <!-- Sidebar - Conversations List -->
-  <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-    <!-- Daily Stats Header -->
-    {#if dailyStats}
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
-        <div class="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Today's Usage</div>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="bg-white dark:bg-gray-700 rounded-lg p-2">
-            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <TrendingUp class="w-3 h-3" />
-              <span>Tokens</span>
-            </div>
-            <div class="font-bold text-sm text-gray-900 dark:text-white">
-              {dailyStats.totalTokens.toLocaleString()}
-            </div>
-          </div>
-          <div class="bg-white dark:bg-gray-700 rounded-lg p-2">
-            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <DollarSign class="w-3 h-3" />
-              <span>Cost</span>
-            </div>
-            <div class="font-bold text-sm text-gray-900 dark:text-white">
-              ${dailyStats.totalCost.toFixed(4)}
-            </div>
-          </div>
-        </div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          {dailyStats.totalMessages} messages · {dailyStats.modelsUsed} models
-        </div>
+<div class="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div>
+        <p class="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">Chat workspace</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">NetOpsAI Conversations</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Fast chat workspace with cost and model controls.</p>
       </div>
-    {/if}
-
-    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-      <Button onclick={createNewConversation} class="w-full" color="blue">
-        <MessageSquarePlus class="w-4 h-4 mr-2" />
-        New Chat
-      </Button>
-    </div>
-
-    <div class="flex-1 overflow-y-auto">
-      {#if loading && conversations.length === 0}
-        <div class="flex items-center justify-center p-8">
-          <Spinner size="8" />
-        </div>
-      {:else if conversations.length === 0}
-        <div class="p-4 text-center text-gray-500">
-          No conversations yet
-        </div>
-      {:else}
-        {#each conversations as conversation}
-          <button
-            onclick={() => selectConversation(conversation.id)}
-            class="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 transition-colors {selectedConversationId === conversation.id ? 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-600' : ''}"
-          >
-            <div class="font-medium text-gray-900 dark:text-gray-100 truncate">
-              {conversation.title || 'Untitled Chat'}
-            </div>
-            <div class="text-xs text-gray-500 mt-1">
-              {new Date(conversation.updatedAt).toLocaleDateString()}
-            </div>
-          </button>
-        {/each}
-      {/if}
-    </div>
-  </div>
-
-  <!-- Main Chat Area -->
-  <div class="flex-1 flex flex-col">
-    {#if selectedConversationId}
-      <!-- Chat Header -->
-      <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          {conversations.find(c => c.id === selectedConversationId)?.title || 'Chat'}
-        </h2>
-        <Button onclick={deleteCurrentConversation} color="red" size="sm">
+      <div class="flex gap-2">
+        <Button onclick={createNewConversation} color="blue" size="sm">
+          <MessageSquarePlus class="w-4 h-4 mr-2" />
+          New chat
+        </Button>
+        <Button onclick={deleteCurrentConversation} color="red" size="sm" disabled={!selectedConversationId}>
           <Trash2 class="w-4 h-4 mr-2" />
           Delete
         </Button>
       </div>
+    </div>
 
-      <!-- Messages -->
-      <div
-        bind:this={messagesContainer}
-        class="flex-1 overflow-y-auto px-6 py-4"
-      >
-        {#if loading && messages.length === 0}
-          <div class="flex items-center justify-center h-full">
-            <Spinner size="12" />
+    {#if dailyStats}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Tokens</span>
+            <TrendingUp class="w-4 h-4 text-blue-600" />
           </div>
-        {:else if messages.length === 0}
-          <div class="flex items-center justify-center h-full text-gray-500">
-            Start a conversation by sending a message
+          <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
+            {dailyStats.totalTokens.toLocaleString()}
           </div>
-        {:else}
-          {#each messages as message (message.id)}
-            <ChatMessage {message} />
-          {/each}
-          
-          {#if sendingMessage}
-            <div class="flex gap-4 mb-6">
-              <div class="flex-shrink-0">
-                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-gray-700">
-                  <Spinner size="4" color="white" />
-                </div>
-              </div>
-              <div class="flex-1">
-                <div class="text-gray-500 dark:text-gray-400">Thinking...</div>
-              </div>
-            </div>
-          {/if}
-        {/if}
-      </div>
-
-      <!-- Input Area -->
-      <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-        <!-- Model Selector -->
-        <div class="flex gap-2 mb-3">
-          <select
-            bind:value={selectedModel}
-            class="text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-gray-900 dark:text-gray-100"
-          >
-            <option value="openai/gpt-4o-mini">GPT-4o Mini (Fast & Cheap)</option>
-            <option value="openai/gpt-4o">GPT-4o (Balanced)</option>
-            <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
-            <option value="anthropic/claude-3-sonnet">Claude 3 Sonnet</option>
-            <option value="google/gemini-pro">Gemini Pro</option>
-          </select>
-          <Badge color="blue" class="text-xs">
-            {selectedModel.split('/')[0]}
-          </Badge>
         </div>
-
-        <div class="flex gap-4 items-end">
-          <textarea
-            bind:value={inputMessage}
-            onkeydown={handleKeyPress}
-            disabled={sendingMessage}
-            placeholder="Type your message..."
-            class="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-3 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
-            rows="3"
-          ></textarea>
-          <Button
-            onclick={handleSendMessage}
-            disabled={!inputMessage.trim() || sendingMessage}
-            color="blue"
-            class="h-12"
-          >
-            <Send class="w-5 h-5" />
-          </Button>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
+          <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+            <span>Cost</span>
+            <DollarSign class="w-4 h-4 text-emerald-600" />
+          </div>
+          <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
+            ${dailyStats.totalCost.toFixed(4)}
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Across {dailyStats.modelsUsed} models</p>
         </div>
-        <div class="text-xs text-gray-500 mt-2">
-          Press Enter to send, Shift+Enter for new line
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
+          <div class="text-xs text-slate-500 dark:text-slate-400">Messages</div>
+          <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
+            {dailyStats.totalMessages}
+          </div>
         </div>
-      </div>
-    {:else}
-      <!-- No conversation selected -->
-      <div class="flex-1 flex items-center justify-center text-gray-500">
-        <div class="text-center">
-          <MessageSquarePlus class="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <p class="text-lg">Select a conversation or create a new one</p>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
+          <div class="text-xs text-slate-500 dark:text-slate-400">Active model</div>
+          <div class="flex items-center gap-2 mt-2">
+            <Badge color="blue">{selectedModelInfo?.provider || 'model'}</Badge>
+            <span class="text-sm text-slate-900 dark:text-white truncate">{selectedModelInfo?.label || selectedModel}</span>
+          </div>
         </div>
       </div>
     {/if}
+
+    <div class="grid lg:grid-cols-[320px,1fr] gap-4 lg:gap-6">
+      <!-- Conversations -->
+      <div class="bg-white/90 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-slate-500">Conversations</p>
+            <p class="text-sm font-semibold text-slate-900 dark:text-white">{conversations.length} threads</p>
+          </div>
+          {#if loading && conversations.length === 0}
+            <Spinner size="5" />
+          {/if}
+        </div>
+        <div class="max-h-[70vh] overflow-y-auto">
+          {#if loading && conversations.length === 0}
+            <div class="p-6 flex justify-center">
+              <Spinner size="8" />
+            </div>
+          {:else if conversations.length === 0}
+            <div class="p-6 text-center text-slate-500">
+              No conversations yet
+            </div>
+          {:else}
+            {#each conversations as conversation}
+              <button
+                onclick={() => selectConversation(conversation.id)}
+                class="w-full text-left px-4 py-3 flex flex-col gap-1 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800 {selectedConversationId === conversation.id ? 'bg-blue-50/70 dark:bg-blue-900/20 ring-1 ring-blue-200 dark:ring-blue-700' : ''}"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="font-medium text-slate-900 dark:text-white truncate">
+                    {conversation.title || 'Untitled Chat'}
+                  </span>
+                  <span class="text-[11px] text-slate-500">{new Date(conversation.updatedAt).toLocaleDateString()}</span>
+                </div>
+                <p class="text-xs text-slate-500 line-clamp-2">{conversation.id}</p>
+              </button>
+            {/each}
+          {/if}
+        </div>
+      </div>
+
+      <!-- Chat panel -->
+      <div class="bg-white/95 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 lg:p-6 flex flex-col gap-4">
+        {#if selectedConversationId}
+          <div class="flex flex-wrap items-center gap-3 justify-between">
+            <div>
+              <p class="text-xs text-slate-500">Conversation</p>
+              <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                {conversations.find(c => c.id === selectedConversationId)?.title || 'Chat'}
+              </h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <select
+                bind:value={selectedModel}
+                class="text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-slate-900 dark:text-slate-100 shadow-inner"
+              >
+                {#each modelOptions as model}
+                  <option value={model.id}>{model.label}</option>
+                {/each}
+              </select>
+              <Badge color="blue" class="text-xs self-center">
+                {selectedModelInfo?.provider || selectedModel.split('/')[0]}
+              </Badge>
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 p-3 lg:p-4 shadow-inner min-h-[55vh] flex flex-col">
+            <div
+              bind:this={messagesContainer}
+              class="flex-1 overflow-y-auto pr-1 space-y-4"
+            >
+              {#if loading && messages.length === 0}
+                <div class="flex items-center justify-center h-full py-10">
+                  <Spinner size="12" />
+                </div>
+              {:else if messages.length === 0}
+                <div class="flex items-center justify-center h-full text-slate-500">
+                  Start the conversation with a message.
+                </div>
+              {:else}
+                {#each messages as message (message.id)}
+                  <ChatMessage {message} />
+                {/each}
+                
+                {#if sendingMessage}
+                  <div class="flex gap-4 mb-4">
+                    <div class="flex-shrink-0">
+                      <div class="w-8 h-8 rounded-full flex items-center justify-center bg-slate-700">
+                        <Spinner size="4" color="white" />
+                      </div>
+                    </div>
+                    <div class="flex-1">
+                      <div class="text-slate-500 dark:text-slate-400">Thinking...</div>
+                    </div>
+                  </div>
+                {/if}
+              {/if}
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex gap-3 items-start">
+              <textarea
+                bind:value={inputMessage}
+                onkeydown={handleKeyPress}
+                disabled={sendingMessage}
+                placeholder="Type your message..."
+                class="flex-1 resize-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 shadow-inner"
+                rows="3"
+              ></textarea>
+              <Button
+                onclick={handleSendMessage}
+                disabled={!inputMessage.trim() || sendingMessage}
+                color="blue"
+                class="h-12 self-stretch"
+              >
+                <Send class="w-5 h-5" />
+              </Button>
+            </div>
+            <div class="text-xs text-slate-500">
+              Press Enter to send, Shift+Enter for new line
+            </div>
+          </div>
+        {:else}
+          <div class="flex flex-1 flex-col items-center justify-center py-10 text-slate-500">
+            <MessageSquarePlus class="w-12 h-12 mb-3 text-slate-400" />
+            <p class="text-base font-semibold">No conversations yet</p>
+            <p class="text-sm text-slate-500">Create a new chat to begin.</p>
+          </div>
+        {/if}
+      </div>
+    </div>
   </div>
 </div>

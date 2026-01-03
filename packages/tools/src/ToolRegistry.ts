@@ -1,13 +1,22 @@
 import AjvModule from 'ajv'
 import addFormatsModule from 'ajv-formats'
-import { AppError } from '@domain/core'
-import type { JSONSchema, ToolDefinition as ContractToolDef } from '@contracts/shared'
+type JSONSchema = Record<string, any>
 
 // Handle both ESM and CJS imports
 const Ajv = (AjvModule as any).default || AjvModule
 const addFormats = (addFormatsModule as any).default || addFormatsModule
 
-export interface ToolDefinition extends ContractToolDef {
+const AppError = {
+    notFound: (msg: string) => Object.assign(new Error(msg), { statusCode: 404, code: 'NOT_FOUND' }),
+    badRequest: (msg: string, details?: any) => Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST', details }),
+    unauthorized: (msg: string) => Object.assign(new Error(msg), { statusCode: 401, code: 'UNAUTHORIZED' })
+}
+
+export interface ToolDefinition {
+    name: string
+    description?: string
+    inputSchema?: JSONSchema
+    outputSchema?: JSONSchema
     execute: (args: any, context: ToolContext) => Promise<any>
     strategy?: 'retry' | 'fail-fast' | 'best-effort'
     timeout?: number
@@ -58,11 +67,16 @@ export class ToolRegistry {
         return this.tools.get(name)
     }
 
-    list(): ContractToolDef[] {
+    list(): Array<Omit<ToolDefinition, 'execute'>> {
         return Array.from(this.tools.values()).map(t => ({
             name: t.name,
             description: t.description,
-            inputSchema: t.inputSchema
+            inputSchema: t.inputSchema,
+            outputSchema: t.outputSchema,
+            strategy: t.strategy,
+            timeout: t.timeout,
+            requiresAuth: t.requiresAuth,
+            requiredRole: t.requiredRole
         }))
     }
 

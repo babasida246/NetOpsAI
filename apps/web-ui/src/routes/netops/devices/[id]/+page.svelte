@@ -150,14 +150,14 @@
             </span>
             {#if device.site}
               <span class="text-sm text-gray-600 dark:text-gray-400">
-                • {device.site}
+                - {device.site}
               </span>
             {/if}
           </div>
           {#if device.model || device.os_version}
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
               {#if device.model}{device.model}{/if}
-              {#if device.model && device.os_version} • {/if}
+              {#if device.model && device.os_version} - {/if}
               {#if device.os_version}{device.os_version}{/if}
             </p>
           {/if}

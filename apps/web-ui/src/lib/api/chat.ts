@@ -1,9 +1,17 @@
-/**
- * Integrated Chat API Client
- * Provides methods for chat, stats, models, and orchestration management
- */
+import { API_BASE, apiJson, requireAccessToken } from './httpClient'
 
-const API_BASE = '/api'
+const ensureAuth = (): void => {
+    requireAccessToken()
+}
+
+const authJson = <T>(input: string, init: RequestInit = {}) => {
+    ensureAuth()
+    const headers = new Headers(init.headers || {})
+    if (init.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+    return apiJson<T>(input, { ...init, headers })
+}
 
 // ============================================================================
 // TYPES
@@ -69,6 +77,7 @@ export interface DailySummary {
 
 export interface ModelConfig {
     id: string
+    displayName?: string
     provider: string
     tier: number
     contextWindow?: number
@@ -91,10 +100,14 @@ export interface AIProvider {
     name: string
     description?: string
     apiEndpoint?: string
+    apiKey?: string
     authType?: string
     capabilities: Record<string, any>
     status: 'active' | 'inactive' | 'maintenance'
     rateLimitPerMinute?: number
+    creditsRemaining?: number
+    tokensUsed?: number
+    lastUsageAt?: string
     metadata?: Record<string, any>
     createdAt: string
     updatedAt: string
@@ -127,50 +140,51 @@ export interface ModelPerformance {
     qualityScore?: number
 }
 
-// ============================================================================
-// UTILITY
-// ============================================================================
-
-function getAuthToken(): string {
-    if (typeof window === 'undefined') return ''
-    return localStorage.getItem('authToken') || 'test-token'
+export interface UsageHistoryEntry {
+    date: string
+    totalTokens: number
+    totalCost: number
+    creditsUsed?: number
+    messageCount?: number
 }
 
-async function apiCall<T>(url: string, options?: RequestInit): Promise<T> {
-    const response = await fetch(`${API_BASE}${url}`, {
-        ...options,
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    })
+export interface UsageLogEntry {
+    conversationId: string
+    model: string
+    provider: string
+    totalTokens: number
+    cost: number
+    messageCount: number
+    date: string
+}
 
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Request failed' }))
-        throw new Error(error.message || `HTTP ${response.status}`)
-    }
+export interface ProviderHealth {
+    status: 'healthy' | 'degraded' | 'unreachable'
+    statusCode: number
+    latencyMs: number | null
+    message?: string
+}
 
-    return response.json()
+export interface RemoteOpenRouterModel {
+    id: string
+    name: string
+    description?: string
+    pricing?: Record<string, any>
+    contextLength?: number
+    provider: string
 }
 
 // ============================================================================
 // CHAT API
 // ============================================================================
 
-/**
- * Send a chat message
- */
 export async function sendChatMessage(data: ChatSendRequest): Promise<ChatSendResponse> {
-    return apiCall('/chat/send', {
+    return authJson(`${API_BASE}/chat/messages`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
 }
 
-/**
- * Advanced chat completion
- */
 export async function chatCompletion(
     messages: ChatMessage[],
     options?: {
@@ -180,7 +194,7 @@ export async function chatCompletion(
         conversationId?: string
     }
 ): Promise<any> {
-    return apiCall('/chat/completions', {
+    return authJson(`${API_BASE}/completions`, {
         method: 'POST',
         body: JSON.stringify({
             messages,
@@ -196,16 +210,10 @@ export async function chatCompletion(
 // STATS API
 // ============================================================================
 
-/**
- * Get conversation token usage statistics
- */
 export async function getConversationStats(conversationId: string): Promise<{ data: TokenUsageStats[] }> {
-    return apiCall(`/chat/stats/conversation/${conversationId}`)
+    return authJson(`${API_BASE}/stats/chat/conversations/${conversationId}`)
 }
 
-/**
- * Get user token usage statistics
- */
 export async function getUserStats(filters?: {
     startDate?: string
     endDate?: string
@@ -215,23 +223,17 @@ export async function getUserStats(filters?: {
     if (filters?.endDate) params.append('endDate', filters.endDate)
 
     const query = params.toString()
-    return apiCall(`/chat/stats/user${query ? '?' + query : ''}`)
+    return authJson(`${API_BASE}/stats/chat/user${query ? '?' + query : ''}`)
 }
 
-/**
- * Get daily usage summary
- */
 export async function getDailySummary(): Promise<DailySummary> {
-    return apiCall('/chat/stats/daily')
+    return authJson(`${API_BASE}/stats/chat/daily`)
 }
 
 // ============================================================================
 // MODELS API
 // ============================================================================
 
-/**
- * List available models
- */
 export async function listModels(filters?: {
     provider?: string
     tier?: number
@@ -243,58 +245,132 @@ export async function listModels(filters?: {
     if (filters?.enabled !== undefined) params.append('enabled', filters.enabled.toString())
 
     const query = params.toString()
-    return apiCall(`/chat/models${query ? '?' + query : ''}`)
+    return authJson(`${API_BASE}/models${query ? '?' + query : ''}`)
 }
 
-/**
- * Get model details
- */
 export async function getModel(modelId: string): Promise<ModelConfig> {
-    return apiCall(`/chat/models/${modelId}`)
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}`)
 }
 
-/**
- * Update model priority
- */
+export async function createModel(
+    data: Omit<ModelConfig, 'createdAt'> & { provider: string }
+): Promise<ModelConfig> {
+    return authJson(`${API_BASE}/models`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+}
+
+export async function deleteModel(modelId: string): Promise<{ message: string }> {
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}`, { method: 'DELETE' })
+}
+
 export async function updateModelPriority(modelId: string, priority: number): Promise<{ message: string }> {
-    return apiCall(`/chat/models/${modelId}/priority`, {
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}/priority`, {
         method: 'PATCH',
         body: JSON.stringify({ priority })
     })
 }
 
-/**
- * Get model performance metrics
- */
+export async function updateModelConfig(
+    modelId: string,
+    data: Partial<Omit<ModelConfig, 'id' | 'createdAt' | 'provider'>>
+): Promise<{ message: string }> {
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    })
+}
+
 export async function getModelPerformance(modelId: string, days = 7): Promise<{ data: ModelPerformance[] }> {
-    return apiCall(`/chat/models/${modelId}/performance?days=${days}`)
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}/performance?days=${days}`)
+}
+
+export async function getModelHistory(modelId: string, days = 30): Promise<{ data: UsageHistoryEntry[] }> {
+    const id = encodeURIComponent(modelId)
+    return authJson(`${API_BASE}/models/${id}/history?days=${days}`)
 }
 
 // ============================================================================
 // PROVIDERS API
 // ============================================================================
 
-/**
- * List AI providers
- */
 export async function listProviders(): Promise<{ data: AIProvider[] }> {
-    return apiCall('/chat/providers')
+    return authJson(`${API_BASE}/providers`)
+}
+
+export async function createProvider(
+    data: Pick<AIProvider, 'id' | 'name'> & Partial<Omit<AIProvider, 'id' | 'name' | 'createdAt' | 'updatedAt'>>
+): Promise<AIProvider> {
+    return authJson(`${API_BASE}/providers`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+}
+
+export async function deleteProvider(providerId: string): Promise<{ message: string }> {
+    return authJson(`${API_BASE}/providers/${providerId}`, { method: 'DELETE' })
+}
+
+export async function updateProvider(
+    providerId: string,
+    data: Partial<Omit<AIProvider, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>> & { metadata?: Record<string, any> }
+): Promise<{ message: string }> {
+    return authJson(`${API_BASE}/providers/${providerId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    })
+}
+
+export async function getProviderHistory(providerId: string, days = 30): Promise<{ data: UsageHistoryEntry[] }> {
+    return authJson(`${API_BASE}/providers/${providerId}/history?days=${days}`)
+}
+
+export async function listUsageLogs(limit = 100): Promise<{ data: UsageLogEntry[] }> {
+    return authJson(`${API_BASE}/usage/logs?limit=${limit}`)
+}
+
+export async function checkProviderHealth(providerId: string): Promise<ProviderHealth> {
+    return authJson(`${API_BASE}/providers/${providerId}/health`)
+}
+
+export async function listOpenRouterRemoteModels(search?: string, page?: number, limit?: number): Promise<{ data: RemoteOpenRouterModel[]; meta?: any }> {
+    const params = new URLSearchParams()
+    if (search) params.set('search', search)
+    if (page) params.set('page', page.toString())
+    if (limit) params.set('limit', limit.toString())
+    const query = params.toString()
+    return authJson(`${API_BASE}/providers/openrouter/remote-models${query ? `?${query}` : ''}`)
+}
+
+export async function importOpenRouterModel(modelId: string, priority?: number): Promise<ModelConfig> {
+    return authJson(`${API_BASE}/providers/openrouter/models/import`, {
+        method: 'POST',
+        body: JSON.stringify({ modelId, priority })
+    })
+}
+
+export async function getOpenRouterAccountActivity(): Promise<any> {
+    return authJson(`${API_BASE}/providers/openrouter/account`)
+}
+
+export async function getOpenRouterCredits(): Promise<any> {
+    return authJson(`${API_BASE}/providers/openrouter/credits`)
 }
 
 // ============================================================================
 // ORCHESTRATION API
 // ============================================================================
 
-/**
- * List orchestration rules
- */
 export async function listOrchestrationRules(enabledOnly = false): Promise<{ data: OrchestrationRule[] }> {
-    return apiCall(`/chat/orchestration?enabledOnly=${enabledOnly}`)
+    return authJson(`${API_BASE}/orchestration/rules?enabledOnly=${enabledOnly}`)
 }
 
-/**
- * Create orchestration rule
- */
 export async function createOrchestrationRule(data: {
     name: string
     description?: string
@@ -304,30 +380,24 @@ export async function createOrchestrationRule(data: {
     enabled?: boolean
     priority?: number
 }): Promise<OrchestrationRule> {
-    return apiCall('/chat/orchestration', {
+    return authJson(`${API_BASE}/orchestration/rules`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
 }
 
-/**
- * Update orchestration rule
- */
 export async function updateOrchestrationRule(
     ruleId: string,
     data: Partial<Omit<OrchestrationRule, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<{ message: string }> {
-    return apiCall(`/chat/orchestration/${ruleId}`, {
+    return authJson(`${API_BASE}/orchestration/rules/${ruleId}`, {
         method: 'PATCH',
         body: JSON.stringify(data)
     })
 }
 
-/**
- * Delete orchestration rule
- */
 export async function deleteOrchestrationRule(ruleId: string): Promise<{ message: string }> {
-    return apiCall(`/chat/orchestration/${ruleId}`, {
+    return authJson(`${API_BASE}/orchestration/rules/${ruleId}`, {
         method: 'DELETE'
     })
 }

@@ -90,6 +90,12 @@ export class MikroTikParser extends BaseParser {
                             } else {
                                 config.interfaces.push(iface)
                             }
+                            if ((iface as any).vlanId) {
+                                const vlanId = (iface as any).vlanId as number
+                                if (!config.vlans.find(v => v.id === vlanId)) {
+                                    config.vlans.push({ id: vlanId, name: iface.name, l3GatewayIps: [] })
+                                }
+                            }
                         }
                     }
                     continue
@@ -206,6 +212,13 @@ export class MikroTikParser extends BaseParser {
                             config.mgmt.ntp.servers.push({ address: server })
                         }
                     }
+                    const primary = this.extractKeyValue(line, 'primary-ntp')
+                    const secondary = this.extractKeyValue(line, 'secondary-ntp')
+                    for (const addr of [primary, secondary]) {
+                        if (addr) {
+                            config.mgmt.ntp.servers.push({ address: addr })
+                        }
+                    }
                     continue
                 }
 
@@ -215,6 +228,17 @@ export class MikroTikParser extends BaseParser {
                     if (remoteMatch) {
                         config.mgmt.syslog.enabled = true
                         config.mgmt.syslog.servers.push({ address: remoteMatch[1] })
+                    }
+                    continue
+                }
+
+                // Users
+                if (currentSection === '/user' && line.startsWith('add')) {
+                    const name = this.extractKeyValue(line, 'name')
+                    if (name) {
+                        const role = this.extractKeyValue(line, 'group')
+                        config.security.users = config.security.users || []
+                        config.security.users.push({ name, role } as any)
                     }
                     continue
                 }
@@ -230,6 +254,32 @@ export class MikroTikParser extends BaseParser {
         // Update metadata
         config.metadata.rawLineCount = lines.length
         config.metadata.warnings = warnings
+        if (!config.security.acls) config.security.acls = []
+        if (config.security.firewallPolicies.length) {
+            config.security.acls.push({
+                name: 'filter-input',
+                type: 'extended',
+                rules: config.security.firewallPolicies.map(policy => ({
+                    action: policy.action === 'accept' ? 'permit' : 'deny',
+                    source: Array.isArray(policy.srcAddr) ? policy.srcAddr.join(',') : policy.srcAddr,
+                    destination: Array.isArray(policy.dstAddr) ? policy.dstAddr.join(',') : policy.dstAddr,
+                    protocol: typeof policy.service === 'string' ? policy.service : 'any'
+                }))
+            } as any)
+        }
+        if (config.security.natRules.length) {
+            config.security.acls.push({
+                name: 'nat-srcnat',
+                type: 'extended',
+                rules: config.security.natRules.map(rule => ({
+                    action: 'permit',
+                    source: rule.srcAddr || 'any',
+                    destination: rule.dstAddr || 'any',
+                    protocol: 'any'
+                }))
+            } as any)
+        }
+        this.finalizeForTests(config)
 
         return {
             normalized: config,
@@ -250,14 +300,16 @@ export class MikroTikParser extends BaseParser {
 
         const disabled = line.includes('disabled=yes')
         const comment = this.extractKeyValue(line, 'comment')
+        const vlanIdStr = this.extractKeyValue(line, 'vlan-id')
 
         return {
             name,
             type,
             adminUp: !disabled,
             ips: [],
-            description: comment || undefined
-        }
+            description: comment || undefined,
+            vlanId: vlanIdStr ? parseInt(vlanIdStr, 10) : undefined
+        } as any
     }
 
     private parseIpAddressLine(line: string): { address: string; prefix: number; interface: string } | null {

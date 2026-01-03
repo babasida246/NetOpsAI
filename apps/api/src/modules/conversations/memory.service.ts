@@ -119,16 +119,8 @@ export class ConversationMemoryService {
                 tokenCount,
                 message.toolCallId || null,
                 message.toolCalls ? JSON.stringify(message.toolCalls) : null,
-                message.metadata ? JSON.stringify(message.metadata) : null
+                message.metadata ? JSON.stringify(message.metadata) : '{}'
             ]
-        )
-
-        // Update conversation stats
-        await this.db.query(
-            `UPDATE conversations 
-             SET message_count = message_count + 1, updated_at = NOW()
-             WHERE id = $1`,
-            [conversationId]
         )
 
         const newMessage: ConversationMessage = {

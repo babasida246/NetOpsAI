@@ -1,6 +1,13 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Build arguments for environment variables
+ARG VITE_API_BASE
+ARG BACKEND_BASE_URL
+# Expose to build environment so Vite's import.meta.env picks them up
+ENV VITE_API_BASE=${VITE_API_BASE}
+ENV BACKEND_BASE_URL=${BACKEND_BASE_URL}
+
 # Install pnpm (match workspace lockfile version)
 RUN npm install -g pnpm@10
 
@@ -42,6 +49,7 @@ EXPOSE 3000
 # Set environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV BACKEND_BASE_URL=${BACKEND_BASE_URL:-http://gateway-api:3000}
 
 # Start the app
 CMD ["node", "build"]

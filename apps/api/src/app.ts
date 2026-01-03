@@ -22,6 +22,7 @@ import { integratedChatRoutes } from './modules/chat/integrated-chat.routes.js'
 import { ConversationRepository, conversationRoutes } from './modules/conversations/index.js'
 import { AdminRepository, adminRoutes } from './modules/admin/index.js'
 import { netopsRoutes } from './modules/netops/index.js'
+import { toolsRoutes } from './modules/tools/tools.routes.js'
 
 export interface AppDependencies {
     db: Pool
@@ -62,9 +63,13 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
     })
 
     // Swagger/OpenAPI
-    // TEMPORARY: Disabled to fix schema validation errors
-    /*
     await fastify.register(swagger, {
+        refResolver: {
+            buildLocalReference(json, _baseUri, _fragment, i) {
+                // Avoid duplicate $id collisions when using zod/json-schema converters
+                return `def-${i}`
+            }
+        },
         openapi: {
             info: {
                 title: 'Gateway API',
@@ -72,8 +77,7 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
                 version: '2.0.0'
             },
             servers: [
-                { url: `http://localhost:${env.PORT}`, description: 'Development' },
-                { url: 'https://api.example.com', description: 'Production' }
+                { url: `http://localhost:${env.PORT}`, description: 'Development' }
             ],
             components: {
                 securitySchemes: {
@@ -89,26 +93,29 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
                 { name: 'Authentication', description: 'User authentication' },
                 { name: 'Chat', description: 'Chat completion endpoints' },
                 { name: 'Conversations', description: 'Conversation management' },
+                { name: 'Models', description: 'Model registry and capabilities' },
+                { name: 'Providers', description: 'AI providers and credentials' },
+                { name: 'Orchestration', description: 'Routing and orchestration rules' },
+                { name: 'Chat Stats', description: 'Usage and performance statistics' },
                 { name: 'Admin - Users', description: 'User management (admin only)' },
                 { name: 'Admin - System', description: 'System administration' },
                 { name: 'Admin - Audit', description: 'Audit logs' },
                 { name: 'NetOps', description: 'Network operations and device management' }
             ]
-        }
+        },
+        exposeRoute: true
     })
-    */
 
     // Swagger UI
-    // TEMPORARY: Disabled to fix schema validation errors
-    // await fastify.register(swaggerUi, {
-    //     routePrefix: '/docs',
-    //     uiConfig: {
-    //         docExpansion: 'list',
-    //         deepLinking: true,
-    //         persistAuthorization: true
-    //     },
-    //     staticCSP: true
-    // })
+    await fastify.register(swaggerUi, {
+        routePrefix: '/docs',
+        uiConfig: {
+            docExpansion: 'list',
+            deepLinking: true,
+            persistAuthorization: true
+        },
+        staticCSP: true
+    })
 
     // ==================== Shared Schemas ====================
 
@@ -180,6 +187,17 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
     await fastify.register(async (netopsApp) => {
         await netopsRoutes(netopsApp, deps.db, authService)
     }, { prefix: '/netops' })
+
+    // Tools
+    await fastify.register(async (toolsApp) => {
+        await toolsRoutes(toolsApp, authService)
+    })
+
+    // ==================== Docs Routes ====================
+
+    fastify.get('/openapi.json', {
+        schema: { hide: true }
+    }, async () => fastify.swagger())
 
     // ==================== Root Route ====================
 

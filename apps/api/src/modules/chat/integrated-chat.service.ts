@@ -8,6 +8,8 @@ import { ChatStatsRepository } from './chat-stats.repository.js'
 import { ConversationRepository } from '../conversations/conversations.repository.js'
 import type { ChatCompletionRequest, ChatCompletionResponse } from './chat.schema.js'
 import type { Redis } from 'ioredis'
+import { env } from '../../config/env.js'
+import { BadRequestError } from '../../shared/errors/http-errors.js'
 
 export interface ChatOptions {
     userId: string
@@ -152,6 +154,14 @@ export class IntegratedChatService {
         return await this.statsRepo.listModels(filters)
     }
 
+    async createModel(data: any) {
+        return await this.statsRepo.createModel(data)
+    }
+
+    async deleteModel(id: string) {
+        return await this.statsRepo.deleteModel(id)
+    }
+
     /**
      * Get model details
      */
@@ -164,6 +174,14 @@ export class IntegratedChatService {
      */
     async listProviders() {
         return await this.statsRepo.listProviders()
+    }
+
+    async createProvider(data: any) {
+        return await this.statsRepo.createProvider(data)
+    }
+
+    async deleteProvider(id: string) {
+        return await this.statsRepo.deleteProvider(id)
     }
 
     /**
@@ -220,6 +238,139 @@ export class IntegratedChatService {
      */
     async updateModelPriority(modelId: string, priority: number) {
         return await this.statsRepo.updateModelPriority(modelId, priority)
+    }
+
+    async updateModel(modelId: string, updates: any) {
+        return await this.statsRepo.updateModel(modelId, updates)
+    }
+
+    async updateProvider(providerId: string, updates: any) {
+        return await this.statsRepo.updateProvider(providerId, updates)
+    }
+
+    async getModelHistory(modelId: string, days?: number) {
+        return await this.statsRepo.getModelHistory(modelId, days)
+    }
+
+    async getProviderHistory(providerId: string, days?: number) {
+        return await this.statsRepo.getProviderHistory(providerId, days)
+    }
+
+    async listUsageLogs(limit?: number) {
+        return await this.statsRepo.listUsageLogs(limit)
+    }
+
+    async checkProviderHealth(providerId: string) {
+        const provider = await this.statsRepo.getProvider(providerId)
+        if (!provider) {
+            throw new Error('Provider not found')
+        }
+
+        const headers: Record<string, string> = {}
+        const apiKey = this.resolveApiKey(provider)
+        if (apiKey && provider.authType === 'bearer') {
+            headers.Authorization = `Bearer ${apiKey}`
+        }
+
+        const url = provider.apiEndpoint || `https://${provider.id}.com`
+        const start = Date.now()
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 10000)
+
+        try {
+            const resp = await fetch(url, { method: 'GET', headers, signal: controller.signal })
+            const latencyMs = Date.now() - start
+            return {
+                status: resp.ok ? 'healthy' : 'degraded',
+                statusCode: resp.status,
+                latencyMs,
+                message: resp.statusText
+            }
+        } catch (err: any) {
+            return {
+                status: 'unreachable',
+                statusCode: 0,
+                latencyMs: null,
+                message: err?.message || 'unreachable'
+            }
+        } finally {
+            clearTimeout(timeout)
+        }
+    }
+
+    private resolveOpenRouterKey() {
+        return env.OPENROUTER_API_KEY
+    }
+
+    async fetchOpenRouterModels(search?: string, page = 1, limit = 50) {
+        const provider = await this.statsRepo.getProvider('openrouter')
+        const key = provider?.apiKey || this.resolveOpenRouterKey()
+        if (!key) {
+            return []
+        }
+        const resp = await this.openRouterFetch('/models', key)
+        const models = (resp?.data || []) as Array<any>
+        const filtered = search
+            ? models.filter(m =>
+                (m.id && m.id.toLowerCase().includes(search.toLowerCase())) ||
+                (m.name && m.name.toLowerCase().includes(search.toLowerCase()))
+            )
+            : models
+
+        const start = (page - 1) * limit
+        const slice = filtered.slice(start, start + limit)
+
+        return slice.map(m => ({
+            id: m.id,
+            name: m.name || m.id,
+            description: m.description || '',
+            pricing: m.pricing || {},
+            contextLength: m.context_length,
+            provider: 'openrouter'
+        }))
+    }
+
+    async importOpenRouterModel(modelId: string, priority = 100) {
+        const models = await this.fetchOpenRouterModels()
+        const match = models.find(m => m.id === modelId)
+        if (!match) {
+            throw new Error('Model not found on OpenRouter')
+        }
+
+        const costIn = match.pricing?.prompt ?? undefined
+        const costOut = match.pricing?.completion ?? undefined
+
+        return await this.statsRepo.createModel({
+            id: `openrouter/${match.id}`,
+            provider: 'openrouter',
+            displayName: match.name,
+            description: match.description,
+            tier: 0,
+            priority,
+            contextWindow: match.contextLength,
+            costPer1kInput: costIn,
+            costPer1kOutput: costOut,
+            supportsStreaming: true,
+            supportsFunctions: true,
+            supportsVision: true,
+            enabled: true,
+            status: 'active',
+            capabilities: {}
+        } as any)
+    }
+
+    async getOpenRouterAccountActivity() {
+        const provider = await this.statsRepo.getProvider('openrouter')
+        const key = provider?.apiKey || this.resolveOpenRouterKey()
+        if (!key) return { message: 'OpenRouter API key not configured; skipping account fetch' }
+        return await this.openRouterFetch('/analytics/user-activity', key)
+    }
+
+    async getOpenRouterCredits() {
+        const provider = await this.statsRepo.getProvider('openrouter')
+        const key = provider?.apiKey || this.resolveOpenRouterKey()
+        if (!key) return { message: 'OpenRouter API key not configured; skipping credits fetch' }
+        return await this.openRouterFetch('/credits', key)
     }
 
     // ========================================================================
@@ -316,5 +467,35 @@ export class IntegratedChatService {
             return content.length < userMessage.content.length ? `${content}...` : content
         }
         return 'New Chat'
+    }
+
+    private resolveApiKey(provider?: any): string | undefined {
+        if (provider?.apiKey) return provider.apiKey
+        if (provider?.id === 'openrouter') return env.OPENROUTER_API_KEY
+        if (provider?.id === 'openai') return env.OPENAI_API_KEY
+        if (provider?.id === 'anthropic') return env.ANTHROPIC_API_KEY
+        if (provider?.id === 'google') return env.GOOGLE_API_KEY
+        return undefined
+    }
+
+    private async openRouterFetch(path: string, apiKey?: string): Promise<any> {
+        const key = apiKey || env.OPENROUTER_API_KEY
+        if (!key) {
+            throw new BadRequestError('OpenRouter API key not configured')
+        }
+
+        const resp = await fetch(`https://openrouter.ai/api/v1${path}`, {
+            headers: {
+                Authorization: `Bearer ${key}`,
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => resp.statusText)
+            throw new BadRequestError(text || `OpenRouter error: ${resp.statusText}`, { status: resp.status })
+        }
+
+        return resp.json()
     }
 }

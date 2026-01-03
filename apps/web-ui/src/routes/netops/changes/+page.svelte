@@ -71,7 +71,7 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
           {changes.length} {changes.length === 1 ? 'change' : 'changes'}
           {#if Object.keys(statusCounts()).length > 0}
-            • {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${s}`).join(' • ')}
+            - {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${s}`).join(' - ')}
           {/if}
         </p>
       </div>
@@ -208,3 +208,4 @@
     </div>
   {/if}
 </div>
+

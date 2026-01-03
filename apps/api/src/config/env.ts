@@ -38,12 +38,25 @@ const envSchema = z.object({
     ANTHROPIC_API_KEY: z.string().optional(),
     GOOGLE_API_KEY: z.string().optional(),
 
+    // Default admin bootstrap (optional)
+    ADMIN_EMAIL: z.string().email().optional(),
+    ADMIN_PASSWORD: z.string().min(6).optional(),
+    ADMIN_NAME: z.string().optional(),
+
+    // Bootstrap chat config (JSON strings)
+    CHAT_DEFAULT_PROVIDERS: z.string().optional(),
+    CHAT_DEFAULT_MODELS: z.string().optional(),
+    CHAT_DEFAULT_RULES: z.string().optional(),
+
     // Logging
     LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 
     // Rate Limiting
     RATE_LIMIT_MAX: z.coerce.number().default(100),
-    RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000)
+    RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+
+    // Local development helpers
+    MOCK_CHAT_RESPONSES: z.string().optional()
 })
 
 export type Env = z.infer<typeof envSchema>
@@ -65,3 +78,6 @@ export const env = validateEnv()
 export const isDev = env.NODE_ENV === 'development'
 export const isTest = env.NODE_ENV === 'test'
 export const isProd = env.NODE_ENV === 'production'
+export const mockChat =
+    env.MOCK_CHAT_RESPONSES === 'true' ||
+    (!env.OPENAI_API_KEY && !env.ANTHROPIC_API_KEY && !env.GOOGLE_API_KEY && !env.OPENROUTER_API_KEY && isDev)

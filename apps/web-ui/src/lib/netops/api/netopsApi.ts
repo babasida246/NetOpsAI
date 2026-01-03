@@ -10,8 +10,7 @@ import type {
     DeviceFilter,
     ChangeFilter
 } from '../types';
-
-const API_BASE = '/api';
+import { API_BASE } from '$lib/api/httpClient';
 
 class NetOpsApiError extends Error {
     constructor(
@@ -77,7 +76,8 @@ export const devicesApi = {
         if (filter?.search) params.set('search', filter.search);
 
         const query = params.toString();
-        return fetchApi<Device[]>(`/netops/devices${query ? `?${query}` : ''}`);
+        const response = await fetchApi<{ data: Device[], total: number, limit: number }>(`/netops/devices${query ? `?${query}` : ''}`);
+        return response.data; // Extract data array from response wrapper
     },
 
     async get(id: string): Promise<Device> {
@@ -217,7 +217,8 @@ export const changesApi = {
         if (filter?.search) params.set('search', filter.search);
 
         const query = params.toString();
-        return fetchApi<ChangeRequest[]>(`/netops/changes${query ? `?${query}` : ''}`);
+        const response = await fetchApi<{ data: ChangeRequest[], total: number }>(`/netops/changes${query ? `?${query}` : ''}`);
+        return response.data; // Extract data array from response wrapper
     },
 
     async get(id: string): Promise<ChangeRequest & { changeSets?: ChangeSet[] }> {

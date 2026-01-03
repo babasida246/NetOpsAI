@@ -44,15 +44,27 @@ export interface ModelPerformance {
     qualityScore?: number
 }
 
+export interface UsageHistoryEntry {
+    date: string
+    totalTokens: number
+    totalCost: number
+    messageCount?: number
+    creditsUsed?: number
+}
+
 export interface AIProvider {
     id: string
     name: string
     description?: string
     apiEndpoint?: string
+    apiKey?: string
     authType?: string
     capabilities: Record<string, any>
     status: 'active' | 'inactive' | 'maintenance'
     rateLimitPerMinute?: number
+    creditsRemaining?: number
+    tokensUsed?: number
+    lastUsageAt?: Date
     metadata?: Record<string, any>
     createdAt: Date
     updatedAt: Date
@@ -60,6 +72,7 @@ export interface AIProvider {
 
 export interface ModelConfig {
     id: string
+    displayName?: string
     provider: string
     tier: number
     contextWindow?: number
@@ -267,6 +280,74 @@ export class ChatStatsRepository {
         return result.rows[0] ? this.mapModelConfig(result.rows[0]) : null
     }
 
+    async createModel(data: {
+        id: string
+        provider: string
+        displayName?: string
+        tier?: number
+        contextWindow?: number
+        maxTokens?: number
+        costPer1kInput?: number
+        costPer1kOutput?: number
+        capabilities?: Record<string, any>
+        enabled?: boolean
+        supportsStreaming?: boolean
+        supportsFunctions?: boolean
+        supportsVision?: boolean
+        description?: string
+        priority?: number
+        status?: ModelConfig['status']
+    }): Promise<ModelConfig> {
+        const result = await this.db.query<any>(
+            `INSERT INTO model_configs (
+                id, provider, display_name, tier, context_window, max_tokens,
+                cost_per_1k_input, cost_per_1k_output, capabilities, enabled,
+                supports_streaming, supports_functions, supports_vision, description,
+                priority, status
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9, $10,
+                $11, $12, $13, $14,
+                $15, $16
+            )
+            RETURNING *`,
+            [
+                data.id,
+                data.provider,
+                data.displayName || null,
+                data.tier ?? 0,
+                data.contextWindow || null,
+                data.maxTokens || null,
+                data.costPer1kInput || null,
+                data.costPer1kOutput || null,
+                data.capabilities || {},
+                data.enabled ?? true,
+                data.supportsStreaming ?? false,
+                data.supportsFunctions ?? false,
+                data.supportsVision ?? false,
+                data.description || null,
+                data.priority ?? 100,
+                data.status || 'active'
+            ]
+        )
+
+        return this.mapModelConfig(result.rows[0])
+    }
+
+    async deleteModel(modelId: string): Promise<boolean> {
+        // Remove the model from any orchestration rule sequences first to avoid downstream errors
+        await this.db.query(
+            `UPDATE orchestration_rules 
+             SET model_sequence = array_remove(model_sequence, $1),
+                 updated_at = NOW()
+             WHERE $1 = ANY(model_sequence)`,
+            [modelId]
+        )
+
+        const result = await this.db.query(`DELETE FROM model_configs WHERE id = $1`, [modelId])
+        return (result.rowCount || 0) > 0
+    }
+
     async updateModelPriority(modelId: string, priority: number): Promise<void> {
         await this.db.query(
             `UPDATE model_configs SET priority = $1 WHERE id = $2`,
@@ -279,6 +360,60 @@ export class ChatStatsRepository {
             `UPDATE model_configs SET status = $1 WHERE id = $2`,
             [status, modelId]
         )
+    }
+
+    async updateModel(modelId: string, updates: Partial<ModelConfig>): Promise<void> {
+        const fields: string[] = []
+        const values: any[] = []
+        let idx = 1
+
+        const add = (col: string, value: any) => {
+            fields.push(`${col} = $${idx}`)
+            values.push(value)
+            idx++
+        }
+
+        if (updates.description !== undefined) add('description', updates.description)
+        if (updates.tier !== undefined) add('tier', updates.tier)
+        if (updates.contextWindow !== undefined) add('context_window', updates.contextWindow)
+        if (updates.maxTokens !== undefined) add('max_tokens', updates.maxTokens)
+        if (updates.costPer1kInput !== undefined) add('cost_per_1k_input', updates.costPer1kInput)
+        if (updates.costPer1kOutput !== undefined) add('cost_per_1k_output', updates.costPer1kOutput)
+        if (updates.enabled !== undefined) add('enabled', updates.enabled)
+        if (updates.supportsStreaming !== undefined) add('supports_streaming', updates.supportsStreaming)
+        if (updates.supportsFunctions !== undefined) add('supports_functions', updates.supportsFunctions)
+        if (updates.supportsVision !== undefined) add('supports_vision', updates.supportsVision)
+        if (updates.priority !== undefined) add('priority', updates.priority)
+        if (updates.status !== undefined) add('status', updates.status)
+        if (updates.displayName !== undefined) add('display_name', updates.displayName)
+        if (updates.capabilities !== undefined) add('capabilities', updates.capabilities)
+
+        if (fields.length === 0) return
+
+        add('updated_at', new Date())
+        values.push(modelId)
+
+        await this.db.query(
+            `UPDATE model_configs SET ${fields.join(', ')} WHERE id = $${idx}`,
+            values
+        )
+    }
+
+    async getModelHistory(modelId: string, days = 30): Promise<UsageHistoryEntry[]> {
+        const result = await this.db.query<any>(
+            `SELECT usage_date, total_tokens, total_cost, message_count
+             FROM model_usage_history
+             WHERE model = $1 AND usage_date >= CURRENT_DATE - $2
+             ORDER BY usage_date DESC`,
+            [modelId, days]
+        )
+
+        return result.rows.map(row => ({
+            date: row.usage_date,
+            totalTokens: parseInt(row.total_tokens || 0, 10),
+            totalCost: parseFloat(row.total_cost || 0),
+            messageCount: parseInt(row.message_count || 0, 10)
+        }))
     }
 
     // ========================================================================
@@ -300,11 +435,129 @@ export class ChatStatsRepository {
         return result.rows[0] ? this.mapProvider(result.rows[0]) : null
     }
 
+    async createProvider(data: {
+        id: string
+        name: string
+        description?: string
+        apiEndpoint?: string
+        apiKey?: string
+        authType?: string
+        capabilities?: Record<string, any>
+        status?: AIProvider['status']
+        rateLimitPerMinute?: number
+    }): Promise<AIProvider> {
+        const result = await this.db.query<any>(
+            `INSERT INTO ai_providers (
+                id, name, description, api_endpoint, api_key, auth_type, capabilities,
+                status, rate_limit_per_minute
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING *`,
+            [
+                data.id,
+                data.name,
+                data.description || null,
+                data.apiEndpoint || null,
+                data.apiKey || null,
+                data.authType || null,
+                data.capabilities || {},
+                data.status || 'active',
+                data.rateLimitPerMinute || null
+            ]
+        )
+
+        return this.mapProvider(result.rows[0])
+    }
+
+    async deleteProvider(providerId: string): Promise<boolean> {
+        const result = await this.db.query(`DELETE FROM ai_providers WHERE id = $1`, [providerId])
+        return (result.rowCount || 0) > 0
+    }
+
     async updateProviderStatus(providerId: string, status: AIProvider['status']): Promise<void> {
         await this.db.query(
             `UPDATE ai_providers SET status = $1, updated_at = NOW() WHERE id = $2`,
             [status, providerId]
         )
+    }
+
+    async updateProvider(providerId: string, updates: Partial<AIProvider> & { apiKey?: string }): Promise<void> {
+        const fields: string[] = []
+        const values: any[] = []
+        let idx = 1
+
+        const add = (col: string, value: any) => {
+            fields.push(`${col} = $${idx}`)
+            values.push(value)
+            idx++
+        }
+
+        if (updates.name !== undefined) add('name', updates.name)
+        if (updates.description !== undefined) add('description', updates.description)
+        if (updates.apiEndpoint !== undefined) add('api_endpoint', updates.apiEndpoint)
+        if (updates.apiKey !== undefined) add('api_key', updates.apiKey)
+        if (updates.authType !== undefined) add('auth_type', updates.authType)
+        if (updates.capabilities !== undefined) add('capabilities', updates.capabilities)
+        if (updates.status !== undefined) add('status', updates.status)
+        if (updates.rateLimitPerMinute !== undefined) add('rate_limit_per_minute', updates.rateLimitPerMinute)
+        if (updates.creditsRemaining !== undefined) add('credits_remaining', updates.creditsRemaining)
+        if (updates.tokensUsed !== undefined) add('tokens_used', updates.tokensUsed)
+        if (updates.lastUsageAt !== undefined) add('last_usage_at', updates.lastUsageAt)
+        if (updates.metadata !== undefined) add('metadata', updates.metadata)
+
+        if (fields.length === 0) return
+
+        add('updated_at', new Date())
+        values.push(providerId)
+
+        await this.db.query(
+            `UPDATE ai_providers SET ${fields.join(', ')} WHERE id = $${idx}`,
+            values
+        )
+    }
+
+    async getProviderHistory(providerId: string, days = 30): Promise<UsageHistoryEntry[]> {
+        const result = await this.db.query<any>(
+            `SELECT usage_date, total_tokens, total_cost, credits_used
+             FROM provider_usage_history
+             WHERE provider = $1 AND usage_date >= CURRENT_DATE - $2
+             ORDER BY usage_date DESC`,
+            [providerId, days]
+        )
+
+        return result.rows.map(row => ({
+            date: row.usage_date,
+            totalTokens: parseInt(row.total_tokens || 0, 10),
+            totalCost: parseFloat(row.total_cost || 0),
+            creditsUsed: parseFloat(row.credits_used || 0)
+        }))
+    }
+
+    async listUsageLogs(limit = 100): Promise<Array<{
+        conversationId: string
+        model: string
+        provider: string
+        totalTokens: number
+        cost: number
+        messageCount: number
+        date: string
+    }>> {
+        const result = await this.db.query<any>(
+            `SELECT conversation_id, model, provider, total_tokens, cost, message_count, created_at
+             FROM conversation_token_usage
+             ORDER BY created_at DESC
+             LIMIT $1`,
+            [limit]
+        )
+
+        return result.rows.map(row => ({
+            conversationId: row.conversation_id,
+            model: row.model,
+            provider: row.provider,
+            totalTokens: row.total_tokens,
+            cost: parseFloat(row.cost),
+            messageCount: row.message_count,
+            date: row.created_at
+        }))
     }
 
     // ========================================================================
@@ -496,6 +749,7 @@ export class ChatStatsRepository {
     private mapModelConfig(row: any): ModelConfig {
         return {
             id: row.id,
+            displayName: row.display_name,
             provider: row.provider,
             tier: row.tier,
             contextWindow: row.context_window,
@@ -520,10 +774,14 @@ export class ChatStatsRepository {
             name: row.name,
             description: row.description,
             apiEndpoint: row.api_endpoint,
+            apiKey: row.api_key,
             authType: row.auth_type,
             capabilities: row.capabilities || {},
             status: row.status,
             rateLimitPerMinute: row.rate_limit_per_minute,
+            creditsRemaining: row.credits_remaining ? parseFloat(row.credits_remaining) : undefined,
+            tokensUsed: row.tokens_used ? parseInt(row.tokens_used, 10) : undefined,
+            lastUsageAt: row.last_usage_at,
             metadata: row.metadata || {},
             createdAt: row.created_at,
             updatedAt: row.updated_at

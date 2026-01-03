@@ -59,7 +59,7 @@
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
           {rulepacks.length} {rulepacks.length === 1 ? 'rulepack' : 'rulepacks'}
           {#if rulepacks.some(r => r.active)}
-            • {rulepacks.find(r => r.active)?.name} is active
+            - {rulepacks.find(r => r.active)?.name} is active
           {/if}
         </p>
       </div>
@@ -185,3 +185,4 @@
     </div>
   </svelte:fragment>
 </Modal>
+

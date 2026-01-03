@@ -49,6 +49,7 @@ export class EnhancedChatService {
     private configs: ProviderConfigs
     private memoryService?: ConversationMemoryService
     private contextOptimizer?: ContextOptimizationService
+    private mockMode: boolean
 
     constructor(deps?: { db?: Pool; redis?: Redis }) {
         this.configs = {
@@ -57,6 +58,8 @@ export class EnhancedChatService {
             google: env.GOOGLE_API_KEY ? { apiKey: env.GOOGLE_API_KEY } : undefined,
             openrouter: env.OPENROUTER_API_KEY ? { apiKey: env.OPENROUTER_API_KEY } : undefined
         }
+        this.mockMode = env.MOCK_CHAT_RESPONSES === 'true' ||
+            (!env.OPENAI_API_KEY && !env.ANTHROPIC_API_KEY && !env.GOOGLE_API_KEY && !env.OPENROUTER_API_KEY && env.NODE_ENV !== 'production')
 
         // Initialize memory services if dependencies provided
         if (deps?.db && deps?.redis) {
@@ -96,24 +99,36 @@ export class EnhancedChatService {
 
         const config = this.getProviderConfig(provider)
         if (!config) {
+            if (this.mockMode) {
+                return this.mockCompletionResponse({ ...request, messages })
+            }
             throw new ServiceUnavailableError(`Provider ${provider} not configured`)
         }
 
         let response: ChatCompletionResponse
 
-        switch (provider) {
-            case 'openai':
-                response = await this.callOpenAI({ ...request, messages }, config)
-                break
-            case 'anthropic':
-                response = await this.callAnthropic({ ...request, messages }, config)
-                break
-            case 'google':
-                response = await this.callGoogle({ ...request, messages }, config)
-                break
-            case 'openrouter':
-            default:
-                response = await this.callOpenRouter({ ...request, messages }, config)
+        try {
+            switch (provider) {
+                case 'openai':
+                    response = await this.callOpenAI({ ...request, messages }, config)
+                    break
+                case 'anthropic':
+                    response = await this.callAnthropic({ ...request, messages }, config)
+                    break
+                case 'google':
+                    response = await this.callGoogle({ ...request, messages }, config)
+                    break
+                case 'openrouter':
+                default:
+                    response = await this.callOpenRouter({ ...request, messages }, config)
+            }
+        } catch (err) {
+            if (this.mockMode) {
+                console.warn('Mocking chat response because provider call failed:', err)
+                response = this.mockCompletionResponse({ ...request, messages })
+            } else {
+                throw err
+            }
         }
 
         // Save to memory if enabled
@@ -148,6 +163,33 @@ export class EnhancedChatService {
         }
 
         return response
+    }
+
+    private mockCompletionResponse(request: ChatCompletionRequest): ChatCompletionResponse {
+        const lastMessage = request.messages[request.messages.length - 1]
+        const echo = lastMessage?.content || 'Mock response'
+        const promptTokens = Math.max(1, Math.floor(echo.length / 4))
+        const completionTokens = 20
+        return {
+            id: randomUUID(),
+            object: 'chat.completion',
+            created: Math.floor(Date.now() / 1000),
+            model: request.model,
+            choices: [{
+                index: 0,
+                message: {
+                    role: 'assistant',
+                    content: `[mock] ${echo}`,
+                    toolCalls: []
+                },
+                finishReason: 'stop'
+            }],
+            usage: {
+                promptTokens,
+                completionTokens,
+                totalTokens: promptTokens + completionTokens
+            }
+        }
     }
 
     /**

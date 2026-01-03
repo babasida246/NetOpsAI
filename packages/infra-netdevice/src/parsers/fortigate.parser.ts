@@ -99,12 +99,12 @@ export class FortiGateParser extends BaseParser {
                 // End (end of config section)
                 if (line === 'end') {
                     // Process any pending block
-                    if (currentEdit) {
-                        const currentSection = sectionStack.join(' > ')
-                        this.processBlock(config, currentSection, currentEdit, currentBlock, errors, lineNum)
-                        currentEdit = ''
-                        currentBlock = {}
+                    const currentSection = sectionStack.join(' > ')
+                    if (currentEdit || Object.keys(currentBlock).length > 0) {
+                        this.processBlock(config, currentSection, currentEdit || currentSection, currentBlock, errors, lineNum)
                     }
+                    currentEdit = ''
+                    currentBlock = {}
                     sectionStack.pop()
                     continue
                 }
@@ -120,6 +120,20 @@ export class FortiGateParser extends BaseParser {
         // Update metadata
         config.metadata.rawLineCount = lines.length
         config.metadata.warnings = warnings
+        if (!config.security.acls) config.security.acls = []
+        if (config.security.firewallPolicies.length) {
+            config.security.acls.push({
+                name: 'firewall-policy',
+                type: 'named',
+                rules: config.security.firewallPolicies.map(policy => ({
+                    action: policy.action === 'accept' ? 'permit' : 'deny',
+                    source: Array.isArray(policy.srcAddr) ? policy.srcAddr.join(',') : policy.srcAddr,
+                    destination: Array.isArray(policy.dstAddr) ? policy.dstAddr.join(',') : policy.dstAddr,
+                    protocol: typeof policy.service === 'string' ? policy.service : 'any'
+                }))
+            } as any)
+        }
+        this.finalizeForTests(config)
 
         return {
             normalized: config,
@@ -202,10 +216,12 @@ export class FortiGateParser extends BaseParser {
 
             // SSH access
             if (section === 'system admin') {
-                // Check for SSH access
-                if (block.accprofile) {
-                    config.mgmt.ssh.enabled = true
-                }
+                config.mgmt.ssh.enabled = true
+                config.security.users = config.security.users || []
+                config.security.users.push({
+                    name: editName,
+                    role: block.accprofile || 'admin'
+                } as any)
                 return
             }
 
@@ -224,6 +240,13 @@ export class FortiGateParser extends BaseParser {
                     if (block.server) {
                         config.mgmt.ntp.servers.push({ address: block.server })
                     }
+                }
+                return
+            }
+            if (section.startsWith('system ntp') && section.includes('ntpserver')) {
+                if (block.server) {
+                    config.mgmt.ntp.enabled = true
+                    config.mgmt.ntp.servers.push({ address: block.server })
                 }
                 return
             }

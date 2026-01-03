@@ -3,8 +3,7 @@
   import { User, Bot } from 'lucide-svelte';
   
   let { message } = $props<{ message: Message }>();
-  
-  const isUser = message.role === 'user';
+  const isUser = $derived(message.role === 'user');
 </script>
 
 <div class="flex gap-4 mb-6 {isUser ? 'flex-row-reverse' : 'flex-row'}">

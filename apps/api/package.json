@@ -17,6 +17,7 @@
     "dependencies": {
         "@contracts/shared": "workspace:*",
         "@infra/netdevice": "workspace:*",
+        "@tools/registry": "workspace:*",
         "@security/core": "workspace:*",
         "@fastify/cors": "^10.1.0",
         "@fastify/helmet": "^13.0.1",

@@ -97,7 +97,7 @@ export class ConversationRepository {
             `INSERT INTO conversations (user_id, title, model, metadata)
        VALUES ($1, $2, $3, $4)
        RETURNING id, user_id, title, model, status, message_count, metadata, created_at, updated_at`,
-            [userId, data.title, data.model, data.metadata || null]
+            [userId, data.title, data.model, data.metadata ?? {}]
         )
         return this.mapConversation(result.rows[0])
     }
@@ -121,7 +121,7 @@ export class ConversationRepository {
 
         if (data.metadata !== undefined) {
             updates.push(`metadata = $${paramIndex}`)
-            params.push(data.metadata)
+            params.push(data.metadata ?? {})
             paramIndex++
         }
 
@@ -194,15 +194,7 @@ export class ConversationRepository {
             `INSERT INTO messages (conversation_id, role, content, model, metadata)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, conversation_id, role, content, model, token_count, metadata, created_at`,
-            [conversationId, data.role, data.content, data.model || null, data.metadata || null]
-        )
-
-        // Update conversation message count and updated_at
-        await this.db.query(
-            `UPDATE conversations 
-       SET message_count = message_count + 1, updated_at = NOW()
-       WHERE id = $1`,
-            [conversationId]
+            [conversationId, data.role, data.content, data.model || null, data.metadata ?? {}]
         )
 
         return this.mapMessage(result.rows[0])

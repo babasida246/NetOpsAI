@@ -182,6 +182,40 @@ export abstract class BaseParser implements IVendorParser {
     protected createError(message: string, line?: number, severity: 'error' | 'warning' = 'warning'): ParseError {
         return { message, line, severity }
     }
+
+    /**
+     * Add compatibility fields expected by tests/consumers
+     */
+    protected finalizeForTests(config: any): void {
+        config.routing = config.routing || {}
+        const staticRoutes = config.routing.staticRoutes || []
+        config.routing.static = staticRoutes.map((r: any) => ({
+            network: r.prefix ? `${r.destination}/${r.prefix}` : r.destination,
+            nextHop: r.nextHop,
+            interface: r.interface
+        }))
+
+        config.security = config.security || {}
+        config.security.acls = (config.security.acls || []).map((acl: any) => ({
+            ...acl,
+            entries: acl.entries || acl.rules || []
+        }))
+        if (!config.security.users) {
+            config.security.users = []
+        }
+
+        config.interfaces = (config.interfaces || []).map((iface: any) => ({
+            ...iface,
+            mode: iface.vlanMode || iface.mode,
+            ipv4: iface.ips?.find((ip: any) => ip.type === 'ipv4')?.address || iface.ipv4
+        }))
+
+        if (config.mgmt?.ntp?.servers) {
+            config.mgmt.ntp.servers = config.mgmt.ntp.servers.map((s: any) =>
+                typeof s === 'string' ? s : s?.address
+            ).filter(Boolean)
+        }
+    }
 }
 
 /**
