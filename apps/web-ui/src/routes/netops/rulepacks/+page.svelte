@@ -50,7 +50,7 @@
   });
 </script>
 
-<div class="p-6 max-w-7xl mx-auto">
+<div class="page-shell page-content py-6 lg:py-8">
   <!-- Header -->
   <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">

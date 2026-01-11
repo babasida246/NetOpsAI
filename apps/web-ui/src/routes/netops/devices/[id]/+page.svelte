@@ -119,7 +119,7 @@
   });
 </script>
 
-<div class="p-6 max-w-7xl mx-auto">
+<div class="page-shell page-content py-6 lg:py-8">
   <!-- Back button -->
   <div class="mb-4">
     <Button href="/netops/devices" color="alternative" size="sm">

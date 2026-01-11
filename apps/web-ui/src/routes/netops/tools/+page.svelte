@@ -46,7 +46,7 @@
   };
 
   let vendor = $state<'cisco' | 'fortigate' | 'mikrotik'>('cisco');
-  let action = $state(vendorActions[vendor][0].value);
+  let action = $state<string>('');
   let paramsJson = $state(vendorActions['cisco'][0].sample);
   let command = $state('');
   let errorMsg = $state('');
@@ -55,6 +55,9 @@
   $effect(() => {
     const first = vendorActions[vendor][0];
     if (first && !vendorActions[vendor].some(a => a.value === action)) {
+      action = first.value;
+      paramsJson = first.sample;
+    } else if (first && action === '') {
       action = first.value;
       paramsJson = first.sample;
     }
@@ -76,7 +79,7 @@
   }
 </script>
 
-<div class="max-w-5xl mx-auto p-6 space-y-4">
+<div class="page-shell page-content py-6 lg:py-8">
   <div>
     <h1 class="text-2xl font-bold text-slate-900 dark:text-white">NetOps Config Generator</h1>
     <p class="text-sm text-slate-500">Generate vendor-specific CLI snippets for network devices.</p>
@@ -112,7 +115,7 @@
 
     <div>
       <Label>Params (JSON)</Label>
-      <Textarea rows="8" bind:value={paramsJson} class="font-mono text-xs" />
+      <Textarea rows={8} bind:value={paramsJson} class="font-mono text-xs" />
     </div>
 
     <Button on:click={handleGenerate} disabled={loading}>

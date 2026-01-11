@@ -76,7 +76,7 @@
   }
 </script>
 
-<div class="max-w-6xl mx-auto p-6 space-y-6">
+<div class="page-shell page-content py-6 lg:py-8">
   <div class="flex items-center justify-between">
     <div>
       <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Admin Users</h1>
@@ -128,7 +128,7 @@
             <div class="flex items-center gap-2">
               <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{user.name}</h3>
               <Badge color="blue">{user.role}</Badge>
-              <Badge color={user.isActive ? 'green' : 'gray'}>{user.isActive ? 'Active' : 'Disabled'}</Badge>
+              <Badge color={user.isActive ? 'green' : 'red'}>{user.isActive ? 'Active' : 'Disabled'}</Badge>
             </div>
             <p class="text-sm text-slate-500">{user.email}</p>
             {#if user.lastLogin}

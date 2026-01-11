@@ -226,7 +226,7 @@
 </script>
 
 <div class="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+  <div class="page-shell py-6 lg:py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div>
         <p class="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">Chat workspace</p>

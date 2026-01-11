@@ -12,7 +12,6 @@ describe('auth token guard', () => {
 
     afterEach(() => {
         clearStoredSession()
-        // @ts-expect-error - restore fetch for other tests
         global.fetch = originalFetch
     })
 
@@ -27,7 +26,6 @@ describe('auth token guard', () => {
         const mockFetch = vi.fn(async (_input: any, init?: RequestInit) => {
             return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })
         })
-        // @ts-expect-error - allow overriding in test
         global.fetch = mockFetch
 
         await authorizedFetch('/api/chat/send', { method: 'POST' })

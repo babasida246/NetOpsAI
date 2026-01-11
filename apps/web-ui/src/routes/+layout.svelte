@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { MessageSquare, Network, Settings, TrendingUp, Shield, LogOut, LogIn } from 'lucide-svelte';
+  import { MessageSquare, Network, Settings, TrendingUp, Shield, LogOut, LogIn, Wrench } from 'lucide-svelte';
   
   let { children } = $props();
   
@@ -11,6 +11,7 @@
     { href: '/chat', label: 'Chat', icon: MessageSquare },
     { href: '/stats', label: 'Stats', icon: TrendingUp },
     { href: '/models', label: 'Models', icon: Settings },
+    { href: '/tools', label: 'Tools', icon: Wrench },
     { href: '/netops/devices', label: 'NetOps', icon: Network }
   ];
 
@@ -39,7 +40,7 @@
 
 <div class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50">
   <header class="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+    <div class="page-shell h-14 flex items-center justify-between gap-4">
       <a href="/chat" class="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
         <div class="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm">AI</div>
         <span>NetOpsAI</span>
@@ -85,7 +86,7 @@
     </div>
   </header>
 
-  <main class={isNetOpsRoute ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6'}>
+  <main class="py-4 lg:py-6">
     {@render children()}
   </main>
 </div>

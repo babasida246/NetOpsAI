@@ -96,7 +96,7 @@
   }
 </script>
 
-<div class="max-w-7xl mx-auto p-6 lg:p-8 space-y-6">
+<div class="page-shell page-content py-6 lg:py-8">
   <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white rounded-3xl p-6 lg:p-8 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
@@ -106,7 +106,7 @@
       </div>
       <div class="flex gap-2">
         <Badge color="blue" class="bg-white/10 text-white border-white/20">{periodLabel}</Badge>
-        <Badge color="light" class="bg-white/10 text-white border-white/20">
+        <Badge color="primary" class="bg-white/10 text-white border-white/20">
           {stats.length} records
         </Badge>
       </div>
@@ -279,7 +279,7 @@
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Daily Breakdown</h2>
-              <Badge color="light" class="text-xs">{stats.length} entries</Badge>
+              <Badge color="primary" class="text-xs">{stats.length} entries</Badge>
             </div>
             
             <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -318,3 +318,4 @@
     </div>
   </div>
 </div>
+

@@ -1,11 +1,79 @@
-# Development overrides
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# NetOpsAI - Dev-only Compose (standalone)
+# Usage: docker-compose -f docker-compose.dev.yml up
+# Runs everything in dev mode with hot reload (Vite for web-ui, pnpm dev for APIs).
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: netopsai-gateway-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-netopsai_gateway}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_dev}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./packages/infra-postgres/src/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./packages/infra-postgres/src/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - netopsai-gateway-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: netopsai-gateway-redis-dev
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_dev} --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - netopsai-gateway-network
+
   gateway-api:
     build:
+      context: .
+      dockerfile: apps/api/Dockerfile
       target: builder
-    command: sh -c "pnpm install && pnpm --filter gateway-api dev"
+    container_name: netopsai-gateway-api-dev
+    command: sh -c "pnpm install && pnpm --filter @apps/api dev"
+    working_dir: /app
+    user: "root"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_dev}@postgres:5432/${POSTGRES_DB:-netopsai_gateway}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_dev}@redis:6379
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      JWT_SECRET: dev-jwt-secret-0123456789abcdef0123456
+      JWT_ACCESS_SECRET: dev-access-secret-0123456789abcdef0123456789
+      JWT_REFRESH_SECRET: dev-refresh-secret-0123456789abcdef0123456789
+      ENCRYPTION_KEY: dev-encryption-key-32chars!!devkey
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      ADMIN_NAME: ${ADMIN_NAME:-Dev Admin}
+      CI: "true"
     volumes:
       - .:/app
       - /app/node_modules
@@ -20,17 +88,35 @@ services:
       - /app/packages/security/node_modules
       - /app/packages/tools/node_modules
       - /app/apps/gateway-api/node_modules
-    environment:
-      NODE_ENV: development
-      LOG_LEVEL: debug
     ports:
-      - "3000:3000"
-      - "9229:9229"  # Node.js debugger
+      - "${API_PORT:-3000}:3000"
+      - "9229:9229"
+    networks:
+      - netopsai-gateway-network
 
   gateway-mcp:
     build:
-      target: builder
-    command: sh -c "pnpm install && pnpm --filter gateway-mcp dev"
+      context: .
+      dockerfile: apps/gateway-mcp/Dockerfile.simple
+    container_name: netopsai-gateway-mcp-dev
+    command: sh -c "pnpm install && pnpm --filter @apps/gateway-mcp dev"
+    working_dir: /app
+    user: "root"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      LOG_LEVEL: debug
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_dev}@postgres:5432/${POSTGRES_DB:-netopsai_gateway}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_dev}@redis:6379
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-32chars!!}
+      CI: "true"
     volumes:
       - .:/app
       - /app/node_modules
@@ -42,26 +128,11 @@ services:
       - /app/packages/providers/node_modules
       - /app/packages/tools/node_modules
       - /app/apps/gateway-mcp/node_modules
-    environment:
-      NODE_ENV: development
-      LOG_LEVEL: debug
     ports:
-      - "3001:3001"
-      - "9230:9229"  # Node.js debugger
-
-  postgres:
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: postgres_dev
-    volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
-
-  redis:
-    ports:
-      - "6379:6379"
-    environment:
-      REDIS_PASSWORD: redis_dev
+      - "${MCP_PORT:-3001}:3001"
+      - "9230:9229"
+    networks:
+      - netopsai-gateway-network
 
   web-ui:
     build:
@@ -70,20 +141,96 @@ services:
     container_name: netopsai-gateway-web-ui-dev
     depends_on:
       - gateway-api
+    working_dir: /app/apps/web-ui
+    entrypoint: []
+    command: ["sh","-c","npm install -g pnpm@10 && pnpm install && pnpm dev --host --port 5173"]
+    user: "root"
     environment:
       NODE_ENV: development
       PORT: 5173
-      VITE_API_BASE: http://localhost:3000
+      VITE_API_BASE: http://gateway-api:3000
+      BACKEND_BASE_URL: http://gateway-api:3000
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      CI: "true"
     ports:
       - "5173:5173"
     volumes:
-      - ./apps/web-ui:/app/apps/web-ui
+      - .:/app
       - /app/node_modules
       - /app/apps/web-ui/node_modules
+    networks:
+      - netopsai-gateway-network
+
+  pgadmin:
+    image: dpage/pgadmin4:7
+    container_name: netopsai-pgadmin-dev
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+      - ./docker/pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./docker/pgadmin/init-servers.sh:/docker-entrypoint.d/init-servers.sh:ro
+    networks:
+      - netopsai-gateway-network
+
+  redisinsight:
+    build:
+      context: ./docker/redisinsight
+    image: netopsai-redisinsight:local
+    container_name: netopsai-redisinsight-dev
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_dev}
+    volumes:
+      - redisinsight_dev_data:/data
+      - ./docker/redisinsight/init-redis.sh:/docker-entrypoint.d/init-redis.sh:ro
+    ports:
+      - "${REDISINSIGHT_PORT:-5540}:5540"
+    networks:
+      - netopsai-gateway-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: netopsai-gateway-nginx-dev
+    restart: unless-stopped
+    profiles:
+      - proxy
+    depends_on:
+      - gateway-api
+      - gateway-mcp
+      - web-ui
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
     networks:
       - netopsai-gateway-network
 
 volumes:
   postgres_dev_data:
     driver: local
+  redis_dev_data:
+    driver: local
+  pgadmin_dev_data:
+    driver: local
+  redisinsight_dev_data:
+    driver: local
 
+networks:
+  netopsai-gateway-network:
+    driver: bridge

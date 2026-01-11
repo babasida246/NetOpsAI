@@ -231,6 +231,22 @@ async function ensureDefaultChatConfig(db: pg.Pool) {
             status: 'active'
         },
         {
+            id: 'openrouter/gpt-4o-mini',
+            provider: 'openrouter',
+            displayName: 'OpenRouter GPT-4o mini',
+            description: 'GPT-4o mini via OpenRouter router',
+            tier: 0,
+            priority: 25,
+            contextWindow: 128000,
+            costPer1kInput: 0.150,
+            costPer1kOutput: 0.600,
+            supportsStreaming: true,
+            supportsFunctions: true,
+            supportsVision: true,
+            enabled: true,
+            status: 'active'
+        },
+        {
             id: 'anthropic/claude-3-haiku',
             provider: 'anthropic',
             displayName: 'Claude 3 Haiku',
@@ -271,7 +287,7 @@ async function ensureDefaultChatConfig(db: pg.Pool) {
             strategy: 'fallback',
             priority: 100,
             enabled: true,
-            modelSequence: ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3-haiku']
+            modelSequence: ['openai/gpt-4o-mini', 'openai/gpt-4o', 'openrouter/gpt-4o-mini', 'anthropic/claude-3-haiku']
         }
     ])
 

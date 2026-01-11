@@ -14,9 +14,10 @@ RUN if command -v apk > /dev/null 2>&1; then \
     echo "No supported package manager found; libsecret/gnome-keyring may be missing"; \
     fi
 
-# Copy wrapper entrypoint and make it executable
+# Copy wrapper entrypoint, normalize line endings, and make it executable
 COPY entrypoint.sh /usr/local/bin/redisinsight-entrypoint.sh
-RUN chmod +x /usr/local/bin/redisinsight-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/redisinsight-entrypoint.sh && \
+    chmod +x /usr/local/bin/redisinsight-entrypoint.sh
 
 # Restore default user if image defines one (most official images expect non-root runtime)
 USER 1000

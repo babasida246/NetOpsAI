@@ -134,6 +134,7 @@
   });
 
   let mermaidDiagram = $state('');
+  let mermaidLib: any;
   let diagramContainer: HTMLElement;
   let editingModelId = $state<string | null>(null);
   let modelEdit = $state<Partial<ModelConfig>>({});
@@ -159,6 +160,7 @@
         theme: 'default',
         securityLevel: 'loose'
       });
+      mermaidLib = (window as any).mermaid;
     }
   });
 
@@ -438,10 +440,10 @@
   }
 
   async function renderDiagram() {
-    if (!diagramContainer || !mermaidDiagram) return;
+    if (!diagramContainer || !mermaidDiagram || !mermaidLib) return;
     
     try {
-      const { svg } = await mermaid.render('mermaid-diagram', mermaidDiagram);
+      const { svg } = await mermaidLib.render('mermaid-diagram', mermaidDiagram);
       diagramContainer.innerHTML = svg;
     } catch (error) {
       console.error('Failed to render diagram:', error);
@@ -461,7 +463,7 @@
   });
 </script>
 
-<div class="w-full mx-auto p-4 sm:p-6 lg:p-8 xl:p-10 space-y-6">
+<div class="page-shell page-content py-6 lg:py-8">
   <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 text-white rounded-3xl p-6 lg:p-8 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
@@ -527,7 +529,7 @@
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div class="text-sm text-slate-500">Active models: {summary.activeModels}</div>
           <div class="flex gap-2">
-            <Button size="sm" color="light" onclick={() => showCreateModel = !showCreateModel}>
+            <Button size="sm" color="primary" onclick={() => showCreateModel = !showCreateModel}>
               <Plus class="w-4 h-4 mr-1" /> {showCreateModel ? 'Close' : 'New model'}
             </Button>
           </div>
@@ -562,12 +564,12 @@
               </div>
               <div class="md:col-span-3">
                 <Label>Description</Label>
-                <Textarea bind:value={newModel.description} rows="2" />
+                <Textarea bind:value={newModel.description} rows={2} />
               </div>
             </div>
             <div class="mt-3 flex gap-2">
               <Button size="sm" on:click={handleCreateModel} disabled={!newModel.id || !newModel.provider}>Save model</Button>
-              <Button size="sm" color="light" on:click={() => showCreateModel = false}>Cancel</Button>
+              <Button size="sm" color="primary" on:click={() => showCreateModel = false}>Cancel</Button>
             </div>
           </Card>
         {/if}
@@ -601,7 +603,7 @@
               <div class="mt-4">
                 <div class="flex items-center gap-2 mb-2">
                   <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{group}</h4>
-                  <Badge color="light" class="text-xs">{items.length}</Badge>
+                  <Badge color="primary" class="text-xs">{items.length}</Badge>
                 </div>
                 <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80">
                   <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
@@ -636,7 +638,7 @@
                           <Badge color="purple">{model.priority}</Badge>
                         </td>
                         <td class="px-4 py-3">
-                          <Badge color={model.enabled ? 'green' : 'gray'}>{model.status}</Badge>
+                          <Badge color={model.enabled ? 'green' : 'red'}>{model.status}</Badge>
                         </td>
                         <td class="px-4 py-3">{model.contextWindow?.toLocaleString() || 'N/A'}</td>
                         <td class="px-4 py-3">
@@ -652,10 +654,10 @@
                         </td>
                         <td class="px-4 py-3">
                           <div class="flex flex-wrap items-center justify-end gap-2">
-                            <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
-                            <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
+                            <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
+                            <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
                             <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>Edit</Button>
-                            <Button size="xs" color="light" onclick={() => loadModelHistoryEntries(model.id)}>
+                            <Button size="xs" color="primary" onclick={() => loadModelHistoryEntries(model.id)}>
                               <TrendingUp class="w-4 h-4" />
                             </Button>
                             <Button size="xs" color="red" onclick={() => handleDeleteModel(model.id)}>
@@ -707,7 +709,7 @@
                             </div>
                             <div class="flex gap-2 mt-3 justify-end">
                               <Button size="sm" on:click={saveModelEdit}>Save</Button>
-                              <Button size="sm" color="light" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                              <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
                             </div>
                           </td>
                         </tr>
@@ -717,7 +719,7 @@
                           <td colspan="9" class="px-4 py-3">
                             <div class="flex items-center justify-between mb-2">
                               <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
-                              <Badge color="light" class="text-xs">{modelHistory[model.id].length}</Badge>
+                              <Badge color="primary" class="text-xs">{modelHistory[model.id].length}</Badge>
                             </div>
                             <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
                               {#each modelHistory[model.id] as h}
@@ -779,7 +781,7 @@
                       <Badge color="purple">{model.priority}</Badge>
                     </td>
                     <td class="px-4 py-3">
-                      <Badge color={model.enabled ? 'green' : 'gray'}>{model.status}</Badge>
+                      <Badge color={model.enabled ? 'green' : 'red'}>{model.status}</Badge>
                     </td>
                     <td class="px-4 py-3">{model.contextWindow?.toLocaleString() || 'N/A'}</td>
                     <td class="px-4 py-3">
@@ -795,10 +797,10 @@
                     </td>
                     <td class="px-4 py-3">
                       <div class="flex flex-wrap items-center justify-end gap-2">
-                        <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
-                        <Button size="xs" color="light" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
+                        <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
+                        <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
                         <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>Edit</Button>
-                        <Button size="xs" color="light" onclick={() => loadModelHistoryEntries(model.id)}>
+                        <Button size="xs" color="primary" onclick={() => loadModelHistoryEntries(model.id)}>
                           <TrendingUp class="w-4 h-4" />
                         </Button>
                         <Button size="xs" color="red" onclick={() => handleDeleteModel(model.id)}>
@@ -850,7 +852,7 @@
                         </div>
                         <div class="flex gap-2 mt-3 justify-end">
                           <Button size="sm" on:click={saveModelEdit}>Save</Button>
-                          <Button size="sm" color="light" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                          <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
                         </div>
                       </td>
                     </tr>
@@ -860,7 +862,7 @@
                       <td colspan="9" class="px-4 py-3">
                         <div class="flex items-center justify-between mb-2">
                           <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
-                          <Badge color="light" class="text-xs">{modelHistory[model.id].length}</Badge>
+                          <Badge color="primary" class="text-xs">{modelHistory[model.id].length}</Badge>
                         </div>
                         <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
                           {#each modelHistory[model.id] as h}
@@ -889,7 +891,7 @@
       {:else if selectedTab === 'providers'}
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div class="text-sm text-slate-500">Providers: {providers.length}</div>
-          <Button size="sm" color="light" onclick={() => showCreateProvider = !showCreateProvider}>
+          <Button size="sm" color="primary" onclick={() => showCreateProvider = !showCreateProvider}>
             <Plus class="w-4 h-4 mr-1" /> {showCreateProvider ? 'Close' : 'New provider'}
           </Button>
         </div>
@@ -920,7 +922,7 @@
             </div>
             <div class="mt-3 flex gap-2">
               <Button size="sm" on:click={handleCreateProvider} disabled={!newProvider.id || !newProvider.name}>Create provider</Button>
-              <Button size="sm" color="light" on:click={() => showCreateProvider = false}>Cancel</Button>
+              <Button size="sm" color="primary" on:click={() => showCreateProvider = false}>Cancel</Button>
             </div>
           </Card>
         {/if}
@@ -956,7 +958,7 @@
                     <div class="text-xs text-gray-500 break-all">{provider.id}</div>
                   </td>
                   <td class="px-4 py-3">
-                    <Badge color={provider.status === 'active' ? 'green' : provider.status === 'maintenance' ? 'yellow' : 'gray'}>
+                    <Badge color={provider.status === 'active' ? 'green' : provider.status === 'maintenance' ? 'yellow' : 'red'}>
                       {provider.status}
                     </Badge>
                   </td>
@@ -974,7 +976,7 @@
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap items-center gap-2 justify-end">
-                      <Button size="xs" color="light" onclick={() => handleHealthCheck(provider.id)}>
+                      <Button size="xs" color="primary" onclick={() => handleHealthCheck(provider.id)}>
                         {loadingHealth === provider.id ? 'Checking...' : 'Health'}
                       </Button>
                       {#if providerHealth[provider.id]}
@@ -983,7 +985,7 @@
                         </Badge>
                       {/if}
                       <Button size="xs" color="alternative" onclick={() => openProviderEdit(provider)}>Edit</Button>
-                      <Button size="xs" color="light" onclick={() => loadProviderHistoryEntries(provider.id)}>
+                      <Button size="xs" color="primary" onclick={() => loadProviderHistoryEntries(provider.id)}>
                         <TrendingUp class="w-4 h-4" />
                       </Button>
                       <Button size="xs" color="red" onclick={() => handleDeleteProvider(provider.id)}>
@@ -1024,7 +1026,7 @@
                       </div>
                       <div class="flex gap-2 mt-3 justify-end">
                         <Button size="sm" on:click={saveProviderEdit}>Save</Button>
-                        <Button size="sm" color="light" on:click={() => { editingProviderId = null; providerEdit = {}; }}>Cancel</Button>
+                        <Button size="sm" color="primary" on:click={() => { editingProviderId = null; providerEdit = {}; }}>Cancel</Button>
                       </div>
                     {/if}
 
@@ -1111,9 +1113,9 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <Button size="sm" color="light" onclick={() => { if (remotePage > 1) { remotePage -= 1; loadOpenRouterExtras(); } }} disabled={remotePage === 1 || loadingOpenRouterModels}>Prev</Button>
+            <Button size="sm" color="primary" onclick={() => { if (remotePage > 1) { remotePage -= 1; loadOpenRouterExtras(); } }} disabled={remotePage === 1 || loadingOpenRouterModels}>Prev</Button>
             <span class="text-sm text-slate-600 dark:text-slate-300">Page {remotePage}</span>
-            <Button size="sm" color="light" onclick={() => { remotePage += 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>Next</Button>
+            <Button size="sm" color="primary" onclick={() => { remotePage += 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>Next</Button>
           </div>
         </div>
       {:else if selectedTab === 'orchestration'}
@@ -1123,7 +1125,7 @@
             <p class="text-sm text-gray-600 dark:text-gray-400">Define model selection and fallback strategies</p>
           </div>
           <div class="flex gap-2">
-            <Button onclick={showDiagram} color="light">
+            <Button onclick={showDiagram} color="primary">
               <Eye class="w-4 h-4 mr-2" />
               View Diagram
             </Button>
@@ -1141,7 +1143,7 @@
                 <div class="flex-1 space-y-2">
                   <div class="flex items-center gap-3 flex-wrap">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{rule.name}</h3>
-                    <Badge color={rule.enabled ? 'green' : 'gray'}>{rule.enabled ? 'Enabled' : 'Disabled'}</Badge>
+                    <Badge color={rule.enabled ? 'green' : 'red'}>{rule.enabled ? 'Enabled' : 'Disabled'}</Badge>
                     <Badge color="blue">{rule.strategy}</Badge>
                     <Badge color="purple">Priority {rule.priority}</Badge>
                   </div>
@@ -1166,7 +1168,7 @@
                 </div>
 
                 <div class="flex gap-2">
-                  <Button size="xs" color="light" onclick={() => openOrchestrationModal(rule)}>
+                  <Button size="xs" color="primary" onclick={() => openOrchestrationModal(rule)}>
                     <Edit class="w-4 h-4" />
                   </Button>
                   <Button size="xs" color="red" onclick={() => handleDeleteRule(rule.id)}>
@@ -1182,7 +1184,7 @@
         <div class="mt-6">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent usage logs</h3>
-            <Badge color="light" class="text-xs">{usageLogs.length} entries</Badge>
+            <Badge color="primary" class="text-xs">{usageLogs.length} entries</Badge>
           </div>
           <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
@@ -1234,7 +1236,7 @@
 
     <div>
       <Label for="rule-description">Description</Label>
-      <Textarea id="rule-description" bind:value={ruleForm.description} rows="2" placeholder="Optional description" />
+      <Textarea id="rule-description" bind:value={ruleForm.description} rows={2} placeholder="Optional description" />
     </div>
 
     <div>
@@ -1270,7 +1272,7 @@
             </Button>
           </div>
         {/each}
-        <Button size="sm" color="light" onclick={() => {
+        <Button size="sm" color="primary" onclick={() => {
           const next = modelSelectOptions[0]?.id || '';
           ruleForm.modelSequence = [...ruleForm.modelSequence, next];
         }}>
@@ -1290,7 +1292,7 @@
     <Button onclick={handleSaveRule} disabled={!ruleForm.name || ruleForm.modelSequence.length === 0}>
       Save Rule
     </Button>
-    <Button color="light" onclick={() => showOrchestrationModal = false}>
+    <Button color="primary" onclick={() => showOrchestrationModal = false}>
       Cancel
     </Button>
   </div>
@@ -1305,7 +1307,7 @@
   </div>
 
   <div class="mt-4">
-    <Button color="light" onclick={() => showDiagramModal = false}>Close</Button>
+    <Button color="primary" onclick={() => showDiagramModal = false}>Close</Button>
   </div>
 </Modal>
 
@@ -1327,7 +1329,7 @@
       <Button on:click={() => { handleImportRemote(selectedRemote!.id); showImportModal = false; }}>
         {importingModel ? 'Importing...' : 'Import'}
       </Button>
-      <Button color="light" on:click={() => showImportModal = false}>Cancel</Button>
+      <Button color="primary" on:click={() => showImportModal = false}>Cancel</Button>
     </div>
   {/if}
 </Modal>
@@ -1338,3 +1340,4 @@
     justify-content: center;
   }
 </style>
+
