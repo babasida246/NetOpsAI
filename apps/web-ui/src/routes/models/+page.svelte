@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Button, Badge, Card, Spinner, Toggle, Modal, Label, Input, Select, Textarea } from 'flowbite-svelte';
   import { Settings, TrendingUp, Zap, DollarSign, Plus, Edit, Trash2, Eye } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import {
     listModels,
     listProviders,
@@ -141,7 +141,7 @@
   let editingProviderId = $state<string | null>(null);
   let providerEdit = $state<Partial<AIProvider>>({});
 
-  onMount(async () => {
+  async function init() {
     await loadData();
 
     if (typeof window !== 'undefined') {
@@ -162,6 +162,10 @@
       });
       mermaidLib = (window as any).mermaid;
     }
+  }
+
+  $effect(() => {
+    void init();
   });
 
   async function loadData() {
@@ -467,21 +471,21 @@
   <div class="bg-gradient-to-r from-slate-900 via-blue-900 to-slate-800 text-white rounded-3xl p-6 lg:p-8 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <p class="text-xs uppercase tracking-wide text-blue-200 font-semibold">Model control</p>
-        <h1 class="text-3xl font-bold">AI Model Management</h1>
-        <p class="text-sm text-blue-100/80 mt-2">Configure models, providers, and orchestration in one place.</p>
+        <p class="text-xs uppercase tracking-wide text-blue-200 font-semibold">{$isLoading ? 'Model control' : $_('models.title')}</p>
+        <h1 class="text-3xl font-bold">{$isLoading ? 'AI Model Management' : $_('models.title')}</h1>
+        <p class="text-sm text-blue-100/80 mt-2">{$isLoading ? 'Configure models, providers, and orchestration in one place' : $_('models.subtitle')}</p>
       </div>
       <div class="grid grid-cols-3 gap-3 w-full sm:w-auto text-left sm:text-right">
         <div class="bg-white/10 rounded-xl p-3">
-          <p class="text-xs text-blue-100/80">Active models</p>
+          <p class="text-xs text-blue-100/80">{$isLoading ? 'Active models' : $_('models.activeModels', { values: { count: summary.activeModels } })}</p>
           <p class="text-xl font-semibold">{summary.activeModels}</p>
         </div>
         <div class="bg-white/10 rounded-xl p-3">
-          <p class="text-xs text-blue-100/80">Providers</p>
+          <p class="text-xs text-blue-100/80">{$isLoading ? 'Providers' : $_('models.providers', { values: { count: summary.providers } })}</p>
           <p class="text-xl font-semibold">{summary.providers}</p>
         </div>
         <div class="bg-white/10 rounded-xl p-3">
-          <p class="text-xs text-blue-100/80">Rules</p>
+          <p class="text-xs text-blue-100/80">{$isLoading ? 'Rules' : $_('models.rules', { values: { count: summary.rules } })}</p>
           <p class="text-xl font-semibold">{summary.rules}</p>
         </div>
       </div>

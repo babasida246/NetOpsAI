@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Card, Badge, Spinner, Button } from 'flowbite-svelte';
   import { TrendingUp, DollarSign, Zap, MessageSquare, Calendar } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { getUserStats, getDailySummary, type UserTokenStats, type DailySummary } from '$lib/api/chat';
 
   let stats = $state<UserTokenStats[]>([]);
@@ -10,13 +10,13 @@
   let selectedPeriod = $state<'today' | 'week' | 'month'>('week');
 
   const periodLabel = $derived(() => {
-    if (selectedPeriod === 'today') return 'Today';
-    if (selectedPeriod === 'week') return 'Last 7 days';
-    return 'Last 30 days';
+    if (selectedPeriod === 'today') return $_('stats.today');
+    if (selectedPeriod === 'week') return $_('stats.last7Days');
+    return $_('stats.last30Days');
   });
 
-  onMount(async () => {
-    await loadData();
+  $effect(() => {
+    void loadData();
   });
 
   async function loadData() {
@@ -100,14 +100,14 @@
   <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white rounded-3xl p-6 lg:p-8 shadow-xl">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <p class="text-xs uppercase tracking-wide text-blue-200 font-semibold">Usage insights</p>
-        <h1 class="text-3xl font-bold">AI Statistics & Cost</h1>
-        <p class="text-sm text-blue-100/80 mt-2">Usage, cost, and volume by model.</p>
+        <p class="text-xs uppercase tracking-wide text-blue-200 font-semibold">{$isLoading ? 'Usage insights' : $_('stats.usageInsights')}</p>
+        <h1 class="text-3xl font-bold">{$isLoading ? 'AI Statistics & Cost' : $_('stats.aiStatsCost')}</h1>
+        <p class="text-sm text-blue-100/80 mt-2">{$isLoading ? 'Usage, cost, and volume by model' : $_('stats.usageCostVolume')}</p>
       </div>
       <div class="flex gap-2">
         <Badge color="blue" class="bg-white/10 text-white border-white/20">{periodLabel}</Badge>
         <Badge color="primary" class="bg-white/10 text-white border-white/20">
-          {stats.length} records
+          {$isLoading ? `${stats.length} records` : $_('stats.records', { values: { count: stats.length } })}
         </Badge>
       </div>
     </div>
@@ -120,21 +120,21 @@
         size="sm"
         onclick={() => { selectedPeriod = 'today'; loadData(); }}
       >
-        Today
+        {$isLoading ? 'Today' : $_('stats.today')}
       </Button>
       <Button 
         color={selectedPeriod === 'week' ? 'blue' : 'light'}
         size="sm"
         onclick={() => { selectedPeriod = 'week'; loadData(); }}
       >
-        Last 7 Days
+        {$isLoading ? 'Last 7 Days' : $_('stats.last7Days')}
       </Button>
       <Button 
         color={selectedPeriod === 'month' ? 'blue' : 'light'}
         size="sm"
         onclick={() => { selectedPeriod = 'month'; loadData(); }}
       >
-        Last 30 Days
+        {$isLoading ? 'Last 30 Days' : $_('stats.last30Days')}
       </Button>
     </div>
 
@@ -149,53 +149,53 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <Card class="p-6 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Today's Tokens</h3>
+                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? "Today's Tokens" : $_('stats.todaysTokens')}</h3>
                 <TrendingUp class="w-5 h-5 text-blue-600" />
               </div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatNumber(dailySummary.totalTokens)}
               </p>
               <p class="text-xs text-gray-500 mt-1">
-                {dailySummary.modelsUsed} models used
+                {$isLoading ? `${dailySummary.modelsUsed} models used` : $_('stats.modelsUsed', { values: { count: dailySummary.modelsUsed } })}
               </p>
             </Card>
 
             <Card class="p-6 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Today's Cost</h3>
+                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? "Today's Cost" : $_('stats.todaysCost')}</h3>
                 <DollarSign class="w-5 h-5 text-green-600" />
               </div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(dailySummary.totalCost)}
               </p>
               <p class="text-xs text-gray-500 mt-1">
-                ${(dailySummary.totalMessages ? (dailySummary.totalCost / dailySummary.totalMessages) : 0).toFixed(6)}/msg
+                {$isLoading ? `${(dailySummary.totalMessages ? (dailySummary.totalCost / dailySummary.totalMessages) : 0).toFixed(6)}/msg` : $_('stats.perMsg', { values: { amount: (dailySummary.totalMessages ? (dailySummary.totalCost / dailySummary.totalMessages) : 0).toFixed(6) } })}
               </p>
             </Card>
 
             <Card class="p-6 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Messages</h3>
+                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? 'Messages' : $_('stats.messages')}</h3>
                 <MessageSquare class="w-5 h-5 text-purple-600" />
               </div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatNumber(dailySummary.totalMessages)}
               </p>
               <p class="text-xs text-gray-500 mt-1">
-                {dailySummary.totalMessages ? Math.round(dailySummary.totalTokens / dailySummary.totalMessages) : 0} tokens/msg avg
+                {$isLoading ? `${dailySummary.totalMessages ? Math.round(dailySummary.totalTokens / dailySummary.totalMessages) : 0} tokens/msg avg` : $_('stats.tokensPerMsg', { values: { count: dailySummary.totalMessages ? Math.round(dailySummary.totalTokens / dailySummary.totalMessages) : 0 } })}
               </p>
             </Card>
 
             <Card class="p-6 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
               <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Period Total</h3>
+                <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? 'Period Total' : $_('stats.periodTotal')}</h3>
                 <Calendar class="w-5 h-5 text-orange-600" />
               </div>
               <p class="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatCurrency(totalStats.cost)}
               </p>
               <p class="text-xs text-gray-500 mt-1">
-                {formatNumber(totalStats.tokens)} tokens
+                {$isLoading ? `${formatNumber(totalStats.tokens)} tokens` : `${formatNumber(totalStats.tokens)} ${$_('stats.tokens')}`}
               </p>
             </Card>
           </div>
@@ -204,14 +204,14 @@
         <!-- Usage by Model -->
         <div class="mb-6">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Usage by Model</h2>
-            <Badge color="blue" class="text-xs">Top spend</Badge>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{$isLoading ? 'Usage by Model' : $_('stats.usageByModel')}</h2>
+            <Badge color="blue" class="text-xs">{$isLoading ? 'Top spend' : $_('stats.topSpend')}</Badge>
           </div>
           
           {#if modelStatsArray.length === 0}
             <Card class="p-8 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800">
               <div class="text-center text-gray-500">
-                No usage data for selected period
+                {$isLoading ? 'No usage data for selected period' : $_('stats.noUsageData')}
               </div>
             </Card>
           {:else}
@@ -229,25 +229,25 @@
 
                       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                          <span class="text-gray-500">Tokens:</span>
+                          <span class="text-gray-500">{$isLoading ? 'Tokens:' : `${$_('stats.tokens')}:`}</span>
                           <span class="ml-2 font-medium text-gray-900 dark:text-white">
                             {formatNumber(modelStat.totalTokens)}
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">Cost:</span>
+                          <span class="text-gray-500">{$isLoading ? 'Cost:' : `${$_('stats.cost')}:`}</span>
                           <span class="ml-2 font-medium text-gray-900 dark:text-white">
                             {formatCurrency(modelStat.totalCost)}
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">Messages:</span>
+                          <span class="text-gray-500">{$isLoading ? 'Messages:' : `${$_('stats.messages')}:`}</span>
                           <span class="ml-2 font-medium text-gray-900 dark:text-white">
                             {formatNumber(modelStat.messageCount)}
                           </span>
                         </div>
                         <div>
-                          <span class="text-gray-500">Avg Cost/Msg:</span>
+                          <span class="text-gray-500">{$isLoading ? 'Avg Cost/Msg:' : `${$_('stats.avgCostPerMsg')}:`}</span>
                           <span class="ml-2 font-medium text-gray-900 dark:text-white">
                             {formatCurrency(modelStat.totalCost / modelStat.messageCount)}
                           </span>
@@ -278,20 +278,22 @@
         {#if stats.length > 0}
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Daily Breakdown</h2>
-              <Badge color="primary" class="text-xs">{stats.length} entries</Badge>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{$isLoading ? 'Daily Breakdown' : $_('stats.dailyBreakdown')}</h2>
+              <Badge color="primary" class="text-xs">
+                {$isLoading ? `${stats.length} entries` : $_('stats.entries', { values: { count: stats.length } })}
+              </Badge>
             </div>
             
             <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
               <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                   <tr>
-                    <th class="px-6 py-3">Date</th>
-                    <th class="px-6 py-3">Model</th>
-                    <th class="px-6 py-3">Provider</th>
-                    <th class="px-6 py-3">Tokens</th>
-                    <th class="px-6 py-3">Messages</th>
-                    <th class="px-6 py-3">Cost</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Date' : $_('common.date')}</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Model' : $_('stats.model')}</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Provider' : $_('stats.provider')}</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Tokens' : $_('stats.tokens')}</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Messages' : $_('stats.messages')}</th>
+                    <th class="px-6 py-3">{$isLoading ? 'Cost' : $_('stats.cost')}</th>
                   </tr>
                 </thead>
                 <tbody>

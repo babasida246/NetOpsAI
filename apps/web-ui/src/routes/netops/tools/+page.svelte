@@ -1,7 +1,21 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Button, Card, Input, Label, Select, Textarea, Alert } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { generateConfig } from '$lib/netops/api/tools';
+
+  const actionLabels: Record<string, string> = {
+    secure_baseline: 'netops.toolsPage.actions.secureBaseline',
+    baseline: 'netops.toolsPage.actions.baseline',
+    wan_uplink: 'netops.toolsPage.actions.wanUplink',
+    lan_vlan: 'netops.toolsPage.actions.lanVlan',
+    dhcp_server: 'netops.toolsPage.actions.dhcpServer',
+    static_route: 'netops.toolsPage.actions.staticRoute',
+    ospf: 'netops.toolsPage.actions.ospf',
+    nat_overload: 'netops.toolsPage.actions.natOverload',
+    firewall_basic: 'netops.toolsPage.actions.firewallBasic',
+    load_balancing: 'netops.toolsPage.actions.loadBalancing',
+    bridge: 'netops.toolsPage.actions.bridge'
+  };
 
   const vendorActions: Record<string, Array<{ value: string; label: string; sample: string }>> = {
     cisco: [
@@ -72,17 +86,22 @@
       const res = await generateConfig({ vendor, action: action as any, params: parsed });
       command = res.command;
     } catch (error: any) {
-      errorMsg = error?.message || 'Failed to generate';
+      errorMsg = error?.message || $_('netops.toolsPage.errors.generateFailed');
     } finally {
       loading = false;
     }
+  }
+
+  function getActionLabel(value: string, fallback: string) {
+    const key = actionLabels[value];
+    return key ? $_(key) : fallback;
   }
 </script>
 
 <div class="page-shell page-content py-6 lg:py-8">
   <div>
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">NetOps Config Generator</h1>
-    <p class="text-sm text-slate-500">Generate vendor-specific CLI snippets for network devices.</p>
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{$isLoading ? 'NetOps Config Generator' : $_('netops.toolsPage.title')}</h1>
+    <p class="text-sm text-slate-500">{$isLoading ? 'Generate vendor-specific CLI snippets for network devices.' : $_('netops.toolsPage.subtitle')}</p>
   </div>
 
   {#if errorMsg}
@@ -92,7 +111,7 @@
   <Card class="space-y-3">
     <div class="grid md:grid-cols-2 gap-3">
       <div>
-        <Label>Vendor</Label>
+        <Label>{$isLoading ? 'Vendor' : $_('netops.toolsPage.vendor')}</Label>
         <Select bind:value={vendor}>
           <option value="cisco">Cisco</option>
           <option value="fortigate">Fortigate</option>
@@ -100,33 +119,33 @@
         </Select>
       </div>
       <div>
-        <Label>Action</Label>
+        <Label>{$isLoading ? 'Action' : $_('netops.toolsPage.action')}</Label>
         <Select bind:value={action} on:change={(e) => {
           const val = (e.target as HTMLSelectElement).value;
           const found = vendorActions[vendor].find(a => a.value === val);
           if (found) paramsJson = found.sample;
         }}>
           {#each vendorActions[vendor] as act}
-            <option value={act.value}>{act.label}</option>
+            <option value={act.value}>{$isLoading ? act.label : getActionLabel(act.value, act.label)}</option>
           {/each}
         </Select>
       </div>
     </div>
 
     <div>
-      <Label>Params (JSON)</Label>
+      <Label>{$isLoading ? 'Params (JSON)' : $_('netops.toolsPage.params')}</Label>
       <Textarea rows={8} bind:value={paramsJson} class="font-mono text-xs" />
     </div>
 
     <Button on:click={handleGenerate} disabled={loading}>
-      {loading ? 'Generating...' : 'Generate'}
+      {loading ? ($isLoading ? 'Generating...' : $_('netops.toolsPage.generating')) : ($isLoading ? 'Generate' : $_('netops.toolsPage.generate'))}
     </Button>
   </Card>
 
   {#if command}
     <Card>
       <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Command</h3>
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$isLoading ? 'Command' : $_('netops.toolsPage.command')}</h3>
       </div>
       <pre class="text-sm bg-slate-900 text-slate-100 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">{command}</pre>
     </Card>

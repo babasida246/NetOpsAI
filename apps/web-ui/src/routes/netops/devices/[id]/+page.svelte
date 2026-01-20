@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { Button, Tabs, TabItem, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Alert, Spinner, Modal, Label, Select } from 'flowbite-svelte';
   import { ArrowLeft, Download, Play, AlertCircle, FileText } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { devicesApi, configsApi, rulepacksApi, lintApi } from '$lib/netops/api/netopsApi';
   import type { Device, ConfigVersion, Rulepack } from '$lib/netops/types';
   import StatusBadge from '$lib/netops/components/StatusBadge.svelte';
@@ -111,11 +111,11 @@
     }
   }
   
-  onMount(() => {
-    loadDevice();
-    loadConfigs();
-    loadFacts();
-    loadRulepacks();
+  $effect(() => {
+    void loadDevice();
+    void loadConfigs();
+    void loadFacts();
+    void loadRulepacks();
   });
 </script>
 

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { Button, Alert, Spinner, Modal, Label, Select } from 'flowbite-svelte';
   import { ArrowLeft, FileCode, Play, GitCompare } from 'lucide-svelte';
   import { configsApi, rulepacksApi, lintApi, devicesApi } from '$lib/netops/api/netopsApi';
@@ -119,9 +118,9 @@
     }
   }
   
-  onMount(() => {
-    loadConfig();
-    loadRulepacks();
+  $effect(() => {
+    void loadConfig();
+    void loadRulepacks();
   });
 </script>
 

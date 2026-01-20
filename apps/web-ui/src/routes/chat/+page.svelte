@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { Button, Spinner, Badge } from 'flowbite-svelte';
   import { Send, MessageSquarePlus, Trash2, TrendingUp, DollarSign } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import ChatMessage from '$lib/components/ChatMessage.svelte';
   import type { Conversation, Message } from '$lib/api/conversations';
   import {
@@ -60,8 +60,7 @@
 
   const selectedModelInfo = $derived(modelOptions.find(model => model.id === selectedModel));
 
-  // Load conversations on mount
-  onMount(async () => {
+  async function init() {
     const { accessToken } = getStoredTokens();
     if (!accessToken) {
       goto(`/login?redirect=${encodeURIComponent('/chat')}`);
@@ -72,6 +71,10 @@
       loadDailyStats(),
       loadModels()
     ]);
+  }
+
+  $effect(() => {
+    void init();
   });
 
   async function loadConversations() {
@@ -129,7 +132,7 @@
 
   async function createNewConversation() {
     try {
-      const conversation = await createConversation({ title: 'New Chat' });
+      const conversation = await createConversation({ title: $_('chat.newChat') });
       conversations = [conversation, ...conversations];
       await selectConversation(conversation.id);
     } catch (error) {
@@ -229,18 +232,18 @@
   <div class="page-shell py-6 lg:py-8">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <div>
-        <p class="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">Chat workspace</p>
-        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">NetOpsAI Conversations</h1>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Fast chat workspace with cost and model controls.</p>
+        <p class="text-xs uppercase tracking-wide text-blue-600 dark:text-blue-300 font-semibold">{$isLoading ? 'Chat workspace' : $_('chat.workspace')}</p>
+        <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{$isLoading ? 'NetOpsAI Conversations' : $_('chat.netopsConversations')}</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{$isLoading ? 'Fast chat workspace with cost and model controls' : $_('chat.fastWorkspace')}</p>
       </div>
       <div class="flex gap-2">
         <Button onclick={createNewConversation} color="blue" size="sm">
           <MessageSquarePlus class="w-4 h-4 mr-2" />
-          New chat
+          {$isLoading ? 'New chat' : $_('chat.newChat')}
         </Button>
         <Button onclick={deleteCurrentConversation} color="red" size="sm" disabled={!selectedConversationId}>
           <Trash2 class="w-4 h-4 mr-2" />
-          Delete
+          {$isLoading ? 'Delete' : $_('chat.deleteChat')}
         </Button>
       </div>
     </div>
@@ -249,7 +252,7 @@
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
           <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Tokens</span>
+            <span>{$isLoading ? 'Tokens' : $_('chat.tokens')}</span>
             <TrendingUp class="w-4 h-4 text-blue-600" />
           </div>
           <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
@@ -258,24 +261,24 @@
         </div>
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
           <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span>Cost</span>
+            <span>{$isLoading ? 'Cost' : $_('chat.cost')}</span>
             <DollarSign class="w-4 h-4 text-emerald-600" />
           </div>
           <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
             ${dailyStats.totalCost.toFixed(4)}
           </div>
-          <p class="text-xs text-slate-500 mt-1">Across {dailyStats.modelsUsed} models</p>
+          <p class="text-xs text-slate-500 mt-1">{$isLoading ? `Across ${dailyStats.modelsUsed} models` : $_('chat.acrossModels', { values: { count: dailyStats.modelsUsed } })}</p>
         </div>
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
-          <div class="text-xs text-slate-500 dark:text-slate-400">Messages</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">{$isLoading ? 'Messages' : $_('chat.messages')}</div>
           <div class="text-xl font-semibold text-slate-900 dark:text-white mt-2">
             {dailyStats.totalMessages}
           </div>
         </div>
         <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 shadow-sm">
-          <div class="text-xs text-slate-500 dark:text-slate-400">Active model</div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">{$isLoading ? 'Active model' : $_('chat.activeModel')}</div>
           <div class="flex items-center gap-2 mt-2">
-            <Badge color="blue">{selectedModelInfo?.provider || 'model'}</Badge>
+            <Badge color="blue">{selectedModelInfo?.provider || ($isLoading ? 'model' : $_('common.model'))}</Badge>
             <span class="text-sm text-slate-900 dark:text-white truncate">{selectedModelInfo?.label || selectedModel}</span>
           </div>
         </div>
@@ -287,8 +290,8 @@
       <div class="bg-white/90 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <p class="text-xs text-slate-500">Conversations</p>
-            <p class="text-sm font-semibold text-slate-900 dark:text-white">{conversations.length} threads</p>
+            <p class="text-xs text-slate-500">{$isLoading ? 'Conversations' : $_('chat.conversations')}</p>
+            <p class="text-sm font-semibold text-slate-900 dark:text-white">{$isLoading ? `${conversations.length} threads` : $_('chat.threads', { values: { count: conversations.length } })}</p>
           </div>
           {#if loading && conversations.length === 0}
             <Spinner size="5" />
@@ -301,7 +304,7 @@
             </div>
           {:else if conversations.length === 0}
             <div class="p-6 text-center text-slate-500">
-              No conversations yet
+              {$isLoading ? 'No conversations yet' : $_('chat.noConversationsYet')}
             </div>
           {:else}
             {#each conversations as conversation}
@@ -311,7 +314,7 @@
               >
                 <div class="flex items-center justify-between gap-2">
                   <span class="font-medium text-slate-900 dark:text-white truncate">
-                    {conversation.title || 'Untitled Chat'}
+                    {conversation.title || ($isLoading ? 'Untitled Chat' : $_('chat.untitledChat'))}
                   </span>
                   <span class="text-[11px] text-slate-500">{new Date(conversation.updatedAt).toLocaleDateString()}</span>
                 </div>
@@ -327,9 +330,9 @@
         {#if selectedConversationId}
           <div class="flex flex-wrap items-center gap-3 justify-between">
             <div>
-              <p class="text-xs text-slate-500">Conversation</p>
+              <p class="text-xs text-slate-500">{$isLoading ? 'Conversation' : $_('chat.conversation')}</p>
               <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
-                {conversations.find(c => c.id === selectedConversationId)?.title || 'Chat'}
+                {conversations.find(c => c.id === selectedConversationId)?.title || ($isLoading ? 'Chat' : $_('chat.title'))}
               </h2>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -358,7 +361,7 @@
                 </div>
               {:else if messages.length === 0}
                 <div class="flex items-center justify-center h-full text-slate-500">
-                  Start the conversation with a message.
+                  {$isLoading ? 'Start the conversation with a message' : $_('chat.startConversation')}
                 </div>
               {:else}
                 {#each messages as message (message.id)}
@@ -373,7 +376,7 @@
                       </div>
                     </div>
                     <div class="flex-1">
-                      <div class="text-slate-500 dark:text-slate-400">Thinking...</div>
+                      <div class="text-slate-500 dark:text-slate-400">{$isLoading ? 'Thinking...' : $_('chat.thinking')}</div>
                     </div>
                   </div>
                 {/if}
@@ -387,7 +390,7 @@
                 bind:value={inputMessage}
                 onkeydown={handleKeyPress}
                 disabled={sendingMessage}
-                placeholder="Type your message..."
+                placeholder={$isLoading ? 'Type your message...' : $_('chat.typeMessage')}
                 class="flex-1 resize-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 shadow-inner"
                 rows="3"
               ></textarea>
@@ -401,14 +404,14 @@
               </Button>
             </div>
             <div class="text-xs text-slate-500">
-              Press Enter to send, Shift+Enter for new line
+              {$isLoading ? 'Press Enter to send, Shift+Enter for new line' : $_('chat.enterToSend')}
             </div>
           </div>
         {:else}
           <div class="flex flex-1 flex-col items-center justify-center py-10 text-slate-500">
             <MessageSquarePlus class="w-12 h-12 mb-3 text-slate-400" />
-            <p class="text-base font-semibold">No conversations yet</p>
-            <p class="text-sm text-slate-500">Create a new chat to begin.</p>
+            <p class="text-base font-semibold">{$isLoading ? 'No conversations yet' : $_('chat.noConversationsYet')}</p>
+            <p class="text-sm text-slate-500">{$isLoading ? 'Create a new chat to begin' : $_('chat.createToBegin')}</p>
           </div>
         {/if}
       </div>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { onMount } from 'svelte';
   import { Button, Alert, Spinner, Tabs, TabItem, Accordion, AccordionItem } from 'flowbite-svelte';
   import { ArrowLeft, Play, CheckCircle, AlertTriangle, Rocket, X } from 'lucide-svelte';
   import { changesApi, devicesApi } from '$lib/netops/api/netopsApi';
@@ -138,8 +137,8 @@
     return device ? device.name : deviceId.substring(0, 8);
   }
   
-  onMount(() => {
-    loadChange();
+  $effect(() => {
+    void loadChange();
   });
 </script>
 

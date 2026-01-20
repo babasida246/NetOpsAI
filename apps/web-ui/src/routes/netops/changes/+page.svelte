@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Button, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Select, Label, Alert, Spinner } from 'flowbite-svelte';
   import { Plus, RefreshCw, Search } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { changesApi } from '$lib/netops/api/netopsApi';
   import type { ChangeRequest, ChangeStatus, RiskTier } from '$lib/netops/types';
   import StatusBadge from '$lib/netops/components/StatusBadge.svelte';
@@ -57,8 +57,8 @@
     filterRisk = '';
   }
   
-  onMount(() => {
-    loadChanges();
+  $effect(() => {
+    void loadChanges();
   });
 </script>
 
@@ -67,9 +67,9 @@
   <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">Change Requests</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'Change Requests' : $_('netops.changes')}</h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {changes.length} {changes.length === 1 ? 'change' : 'changes'}
+          {changes.length} {changes.length === 1 ? ($isLoading ? 'change' : $_('netops.changes')) : ($isLoading ? 'changes' : $_('netops.changes'))}
           {#if Object.keys(statusCounts()).length > 0}
             - {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${s}`).join(' - ')}
           {/if}

@@ -36,3 +36,31 @@ backups/
 .vscode/
 *.swp
 *.swo
+
+# Asset uploads
+uploads/
+
+# Test artifacts
+playwright-report/
+test-results/
+test-results.json/
+.auth/
+*.timestamp-*.mjs
+
+# Temporary files
+*.http
+*.bak
+*-log.txt
+test-*.txt
+run-tests.ps1
+
+# Archive reports (keep in archive folder)
+*_REPORT.md
+*_SUMMARY.md
+*_PLAN.md
+*_COMPLETION.md
+*_INDEX.md
+*_IMPLEMENTATION.md
+*_REFERENCE.md
+*_GUIDE.md
+TEST_*.md

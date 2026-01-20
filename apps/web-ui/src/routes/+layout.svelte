@@ -1,41 +1,67 @@
 <script lang="ts">
   import '../app.css';
-  import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
-  import { MessageSquare, Network, Settings, TrendingUp, Shield, LogOut, LogIn, Wrench } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { locale, _, isLoading } from '$lib/i18n';
+  import LanguageSwitcher from '$lib/components/LanguageSwitcher.svelte';
+  import {
+    HardDrive,
+    LogIn,
+    LogOut,
+    MessageSquare,
+    Network,
+    Settings,
+    Shield,
+    TrendingUp,
+    Wrench
+  } from 'lucide-svelte';
   
   let { children } = $props();
+
+  // Load saved locale from localStorage on mount
+  onMount(() => {
+    if (typeof window !== 'undefined') {
+      const savedLocale = localStorage.getItem('locale');
+      if (savedLocale) {
+        locale.set(savedLocale);
+      }
+    }
+  });
   
   const navLinks = [
-    { href: '/chat', label: 'Chat', icon: MessageSquare },
-    { href: '/stats', label: 'Stats', icon: TrendingUp },
-    { href: '/models', label: 'Models', icon: Settings },
-    { href: '/tools', label: 'Tools', icon: Wrench },
-    { href: '/netops/devices', label: 'NetOps', icon: Network }
+    { href: '/chat', labelKey: 'nav.chat', icon: MessageSquare },
+    { href: '/stats', labelKey: 'nav.stats', icon: TrendingUp },
+    { href: '/models', labelKey: 'nav.models', icon: Settings },
+    { href: '/tools', labelKey: 'nav.tools', icon: Wrench },
+    { href: '/assets', labelKey: 'nav.assets', icon: HardDrive },
+    { href: '/netops/devices', labelKey: 'nav.netops', icon: Network }
   ];
 
   let userEmail = $state('');
   let userRole = $state('');
 
-  onMount(() => {
-    const token = localStorage.getItem('authToken');
-    userEmail = localStorage.getItem('userEmail') || '';
-    userRole = localStorage.getItem('userRole') || '';
-    if (!token && !$page.url.pathname.startsWith('/login')) {
-      goto(`/login?redirect=${encodeURIComponent($page.url.pathname + $page.url.search)}`);
-    }
-  });
-
   $effect(() => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('authToken');
       userEmail = localStorage.getItem('userEmail') || '';
       userRole = localStorage.getItem('userRole') || '';
+      if (!token && !$page.url.pathname.startsWith('/login')) {
+        goto(`/login?redirect=${encodeURIComponent($page.url.pathname + $page.url.search)}`);
+      }
     }
   });
 
-  const isNetOpsRoute = $derived($page.url.pathname.startsWith('/netops'));
-  const isActive = (href: string) => $page.url.pathname.startsWith(href);
+  const assetRoutes = ['/assets', '/inventory', '/warehouse', '/maintenance', '/requests', '/reports', '/cmdb'];
+  const isActive = (href: string) => {
+    if (href === '/assets') {
+      return assetRoutes.some((route) => $page.url.pathname.startsWith(route));
+    }
+    if (href === '/netops/devices') {
+      return $page.url.pathname.startsWith('/netops');
+    }
+    return $page.url.pathname.startsWith(href);
+  };
 </script>
 
 <div class="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50">
@@ -54,7 +80,7 @@
             class="px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors {isActive(link.href) ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <Icon class="w-4 h-4" />
-            {link.label}
+            <span>{$isLoading ? '' : $_(link.labelKey)}</span>
           </a>
         {/each}
         {#if userRole === 'admin' || userRole === 'super_admin'}
@@ -63,23 +89,24 @@
             class="px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors {isActive('/admin') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
           >
             <Shield class="w-4 h-4" />
-            Admin
+            <span>{$isLoading ? '' : $_('nav.admin')}</span>
           </a>
         {/if}
       </nav>
 
-      <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+      <div class="hidden sm:flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <LanguageSwitcher />
         <span class="px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800">v6.0.0</span>
         {#if userEmail}
           <span class="px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
             {userEmail} {userRole ? `(${userRole})` : ''}
           </span>
           <a href="/logout" class="px-2 py-1 rounded-full bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200 flex items-center gap-1">
-            <LogOut class="w-4 h-4" /> Logout
+            <LogOut class="w-4 h-4" /> <span>{$isLoading ? '' : $_('auth.logout')}</span>
           </a>
         {:else}
           <a href="/login" class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100 flex items-center gap-1">
-            <LogIn class="w-4 h-4" /> Login
+            <LogIn class="w-4 h-4" /> <span>{$isLoading ? '' : $_('auth.login')}</span>
           </a>
         {/if}
       </div>

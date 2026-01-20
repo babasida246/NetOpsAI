@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { Button, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Input, Select, Modal, Label, Alert, Spinner } from 'flowbite-svelte';
   import { Plus, Upload, RefreshCw, Search } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { devicesApi } from '$lib/netops/api/netopsApi';
   import type { Device, Vendor, DeviceRole } from '$lib/netops/types';
   import StatusBadge from '$lib/netops/components/StatusBadge.svelte';
@@ -139,8 +139,8 @@
     filterRole = '';
   }
   
-  onMount(() => {
-    loadDevices();
+  $effect(() => {
+    void loadDevices();
   });
 </script>
 

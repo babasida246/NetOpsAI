@@ -1,8 +1,8 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
   import { Button, Input, Label, Select, Textarea, Alert, Spinner, Badge } from 'flowbite-svelte';
   import { ArrowLeft, ArrowRight, Check } from 'lucide-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { changesApi, devicesApi } from '$lib/netops/api/netopsApi';
   import type { Device, RiskTier } from '$lib/netops/types';
   import StatusBadge from '$lib/netops/components/StatusBadge.svelte';
@@ -123,8 +123,8 @@
     }
   }
   
-  onMount(() => {
-    loadDevices();
+  $effect(() => {
+    void loadDevices();
   });
 </script>
 
