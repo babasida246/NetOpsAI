@@ -189,11 +189,14 @@ export abstract class BaseParser implements IVendorParser {
     protected finalizeForTests(config: any): void {
         config.routing = config.routing || {}
         const staticRoutes = config.routing.staticRoutes || []
-        config.routing.static = staticRoutes.map((r: any) => ({
-            network: r.prefix ? `${r.destination}/${r.prefix}` : r.destination,
-            nextHop: r.nextHop,
-            interface: r.interface
-        }))
+        config.routing.static = staticRoutes.map((r: any) => {
+            const hasPrefix = typeof r.prefix === 'number'
+            return {
+                network: hasPrefix ? `${r.destination}/${r.prefix}` : r.destination,
+                nextHop: r.nextHop,
+                interface: r.interface
+            }
+        })
 
         config.security = config.security || {}
         config.security.acls = (config.security.acls || []).map((acl: any) => ({

@@ -1,3 +1,0 @@
-SELECT id, host, port, name, encryption
-FROM database_instance
-WHERE id='hospital-gateway-redis';

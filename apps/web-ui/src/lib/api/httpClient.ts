@@ -31,6 +31,7 @@ export function clearStoredSession(): void {
     if (typeof window === 'undefined') return
     localStorage.removeItem('authToken')
     localStorage.removeItem('refreshToken')
+    localStorage.removeItem('userId')
     localStorage.removeItem('userEmail')
     localStorage.removeItem('userRole')
     localStorage.removeItem('userName')

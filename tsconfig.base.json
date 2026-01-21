@@ -13,10 +13,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
     "paths": {
+      "@domain/core": ["./packages/domain/src/index.ts"],
       "@domain/*": ["./packages/domain/src/*"],
+      "@application/core": ["./packages/application/src/index.ts"],
       "@application/*": ["./packages/application/src/*"],
+      "@contracts/shared": ["./packages/contracts/src/index.ts"],
       "@contracts/*": ["./packages/contracts/src/*"],
       "@config/*": ["./packages/config/src/*"],
       "@infra/postgres": ["./packages/infra-postgres/src"],

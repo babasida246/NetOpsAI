@@ -679,7 +679,7 @@ export class NetOpsOrchestrator {
             startedAt: new Date(),
             completedAt: null,
             durationMs: null,
-            inputSummary: { expertOutputCommands: (run.expertOutput as ExpertOutputResult)?.commandsSummary?.totalCommands },
+            inputSummary: { expertOutputCommands: run.expertOutput?.commandsSummary?.totalCommands },
             outputSummary: null,
             modelUsed: null,
             modelTier: null,

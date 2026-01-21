@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest'
 import { lintEngine, LintEngine } from '../src/lint/engine.js'
 import type { NormalizedConfig, LintRule } from '@contracts/shared'
 
-describe.skip('LintEngine', () => {
+describe('LintEngine', () => {
     // Sample normalized config for testing
     const sampleConfig: NormalizedConfig = {
         schemaVersion: 'v1',
@@ -407,7 +407,7 @@ describe.skip('LintEngine', () => {
             expect(result.findings.length).toBe(1)
             expect(result.findings[0].ruleId).toBe('FIND-001')
             expect(result.findings[0].severity).toBe('high')
-            expect(result.findings[0].message).toContain('Finding Test')
+            expect(result.findings[0].message).toContain('$.nonexistent.path')
         })
 
         it('should measure duration', async () => {

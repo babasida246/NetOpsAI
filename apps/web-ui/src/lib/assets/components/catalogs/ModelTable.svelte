@@ -1,0 +1,52 @@
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { Button, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Pencil, Trash2 } from 'lucide-svelte';
+  import type { AssetCategory, AssetModel, Vendor } from '$lib/api/assetCatalogs';
+
+  let {
+    models = [],
+    categories = [],
+    vendors = [],
+    disabled = false
+  } = $props<{
+    models?: AssetModel[];
+    categories?: AssetCategory[];
+    vendors?: Vendor[];
+    disabled?: boolean;
+  }>();
+
+  const dispatch = createEventDispatcher<{ edit: AssetModel; remove: string }>();
+</script>
+
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+  <Table>
+    <TableHead>
+      <TableHeadCell>Model</TableHeadCell>
+      <TableHeadCell>Brand</TableHeadCell>
+      <TableHeadCell>Category</TableHeadCell>
+      <TableHeadCell>Vendor</TableHeadCell>
+      <TableHeadCell class="w-32">Actions</TableHeadCell>
+    </TableHead>
+    <TableBody>
+      {#each models as model}
+        <TableBodyRow>
+          <TableBodyCell>{model.model}</TableBodyCell>
+          <TableBodyCell>{model.brand || '-'}</TableBodyCell>
+          <TableBodyCell>{categories.find(cat => cat.id === model.categoryId)?.name || '-'}</TableBodyCell>
+          <TableBodyCell>{vendors.find(vendor => vendor.id === model.vendorId)?.name || '-'}</TableBodyCell>
+          <TableBodyCell>
+            <div class="flex gap-2">
+              <Button size="xs" color="alternative" on:click={() => dispatch('edit', model)} disabled={disabled}>
+                <Pencil class="w-3 h-3" />
+              </Button>
+              <Button size="xs" color="alternative" on:click={() => dispatch('remove', model.id)} disabled={disabled}>
+                <Trash2 class="w-3 h-3" />
+              </Button>
+            </div>
+          </TableBodyCell>
+        </TableBodyRow>
+      {/each}
+    </TableBody>
+  </Table>
+</div>

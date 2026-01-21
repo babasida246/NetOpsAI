@@ -1,0 +1,244 @@
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { Button, Input, Label, Select, Spinner } from 'flowbite-svelte';
+  import {
+    createModel,
+    getCategorySpecDefs,
+    getSpecDefsByVersion,
+    updateModel,
+    type AssetCategory,
+    type AssetModel,
+    type CategorySpecDef,
+    type Vendor
+  } from '$lib/api/assetCatalogs';
+  import DynamicSpecForm from './DynamicSpecForm.svelte';
+
+  let {
+    categories = [],
+    vendors = [],
+    selectedModel = null
+  } = $props<{
+    categories?: AssetCategory[];
+    vendors?: Vendor[];
+    selectedModel?: AssetModel | null;
+  }>();
+
+  const dispatch = createEventDispatcher<{ updated: void; error: string; cleared: void }>();
+
+  let form = $state({
+    model: '',
+    brand: '',
+    categoryId: '',
+    vendorId: '',
+    spec: {} as Record<string, unknown>
+  });
+  let editingId = $state<string | null>(null);
+  let saving = $state(false);
+  let specDefs = $state<CategorySpecDef[]>([]);
+  let specLoading = $state(false);
+  let specError = $state('');
+  let specFieldErrors = $state<Record<string, string>>({});
+  let lastCategoryId = $state<string | null>(null);
+  let preserveSpec = $state(false);
+  let useVersionDefs = $state(false);
+
+  function resetForm(emit = true) {
+    form = { model: '', brand: '', categoryId: '', vendorId: '', spec: {} };
+    editingId = null;
+    specDefs = [];
+    specError = '';
+    specFieldErrors = {};
+    lastCategoryId = null;
+    useVersionDefs = false;
+    if (emit) dispatch('cleared');
+  }
+
+  function applySelected(model: AssetModel) {
+    preserveSpec = true;
+    useVersionDefs = Boolean(model.specVersionId);
+    form = {
+      model: model.model,
+      brand: model.brand ?? '',
+      categoryId: model.categoryId ?? '',
+      vendorId: model.vendorId ?? '',
+      spec: model.spec ?? {}
+    };
+    editingId = model.id;
+    if (model.specVersionId) {
+      loadSpecDefsByVersion(model.specVersionId);
+    }
+  }
+
+  async function loadSpecDefs(categoryId: string) {
+    try {
+      specLoading = true;
+      specError = '';
+      const response = await getCategorySpecDefs(categoryId);
+      specDefs = response.data;
+    } catch (err) {
+      specDefs = [];
+      specError = err instanceof Error ? err.message : 'Failed to load spec fields';
+    } finally {
+      specLoading = false;
+    }
+  }
+
+  async function loadSpecDefsByVersion(versionId: string) {
+    try {
+      specLoading = true;
+      specError = '';
+      const response = await getSpecDefsByVersion(versionId);
+      specDefs = response.data;
+    } catch (err) {
+      specDefs = [];
+      specError = err instanceof Error ? err.message : 'Failed to load spec fields';
+    } finally {
+      specLoading = false;
+    }
+  }
+
+  function extractSpecErrors(err: unknown): Record<string, string> | null {
+    if (!(err instanceof Error)) return null;
+    try {
+      const parsed = JSON.parse(err.message) as {
+        errors?: { errors?: Array<{ key: string; message: string }> };
+        error?: { details?: { errors?: Array<{ key: string; message: string }> } };
+      };
+      const items = parsed.errors?.errors ?? parsed.error?.details?.errors ?? [];
+      if (!Array.isArray(items)) return null;
+      const map: Record<string, string> = {};
+      for (const item of items) {
+        if (item?.key && item?.message) {
+          map[String(item.key)] = String(item.message);
+        }
+      }
+      return Object.keys(map).length ? map : null;
+    } catch {
+      return null;
+    }
+  }
+
+  $effect(() => {
+    if (!selectedModel) {
+      if (editingId) resetForm(false);
+      return;
+    }
+    applySelected(selectedModel);
+  });
+
+  $effect(() => {
+    const categoryId = form.categoryId;
+    if (!categoryId) {
+      specDefs = [];
+      specError = '';
+      specFieldErrors = {};
+      lastCategoryId = null;
+      preserveSpec = false;
+      useVersionDefs = false;
+      return;
+    }
+    if (useVersionDefs) return;
+    if (categoryId === lastCategoryId) return;
+    if (lastCategoryId && !preserveSpec) {
+      form.spec = {};
+    }
+    preserveSpec = false;
+    specFieldErrors = {};
+    lastCategoryId = categoryId;
+    loadSpecDefs(categoryId);
+  });
+
+  $effect(() => {
+    form.spec;
+    if (Object.keys(specFieldErrors).length > 0) {
+      specFieldErrors = {};
+    }
+  });
+
+  async function save() {
+    if (!form.model.trim()) return;
+    try {
+      saving = true;
+      specFieldErrors = {};
+      const payload = {
+        model: form.model.trim(),
+        brand: form.brand.trim() ? form.brand.trim() : null,
+        categoryId: form.categoryId || null,
+        vendorId: form.vendorId || null,
+        spec: form.spec
+      };
+      if (editingId) {
+        await updateModel(editingId, payload);
+      } else {
+        await createModel(payload);
+      }
+      resetForm();
+      dispatch('updated');
+    } catch (err) {
+      const fieldErrors = extractSpecErrors(err);
+      if (fieldErrors) {
+        specFieldErrors = fieldErrors;
+        return;
+      }
+      dispatch('error', err instanceof Error ? err.message : 'Failed to save model');
+    } finally {
+      saving = false;
+    }
+  }
+</script>
+
+<div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <Label class="mb-2">Model</Label>
+      <Input bind:value={form.model} placeholder="Latitude 7420" />
+    </div>
+    <div>
+      <Label class="mb-2">Brand</Label>
+      <Input bind:value={form.brand} placeholder="Dell" />
+    </div>
+    <div>
+      <Label class="mb-2">Category</Label>
+      <Select bind:value={form.categoryId} on:change={() => useVersionDefs = false}>
+        <option value="">No category</option>
+        {#each categories as category}
+          <option value={category.id}>{category.name}</option>
+        {/each}
+      </Select>
+    </div>
+    <div>
+      <Label class="mb-2">Vendor</Label>
+      <Select bind:value={form.vendorId}>
+        <option value="">No vendor</option>
+        {#each vendors as vendor}
+          <option value={vendor.id}>{vendor.name}</option>
+        {/each}
+      </Select>
+    </div>
+  </div>
+  {#if form.categoryId}
+    <div>
+      <Label class="mb-2">Specifications</Label>
+      {#if specLoading}
+        <div class="flex justify-center py-4">
+          <Spinner size="6" />
+        </div>
+      {:else if specDefs.length > 0}
+        <DynamicSpecForm specDefs={specDefs} bind:spec={form.spec} errors={specFieldErrors} />
+      {:else}
+        <p class="text-sm text-gray-500">No spec fields defined for this category.</p>
+      {/if}
+      {#if specError}
+        <p class="text-sm text-red-600 mt-2">{specError}</p>
+      {/if}
+    </div>
+  {/if}
+  <div class="flex gap-2">
+    <Button on:click={save} disabled={saving || !form.model.trim()}>
+      {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
+    </Button>
+    {#if editingId}
+      <Button color="alternative" on:click={() => resetForm()}>Cancel</Button>
+    {/if}
+  </div>
+</div>

@@ -20,7 +20,15 @@ export async function login(email: string, password: string): Promise<AuthRespon
     })
 
     setStoredTokens(result.accessToken, result.refreshToken)
-    setStoredUser({ email: result.user.email, role: result.user.role, name: result.user.name })
+    setStoredUser({
+        email: result.user.email,
+        role: result.user.role,
+        name: result.user.name
+    })
+    // Store userId separately (required for asset management API calls)
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('userId', result.user.id)
+    }
     return result
 }
 

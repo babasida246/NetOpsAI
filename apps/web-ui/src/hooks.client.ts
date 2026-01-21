@@ -1,5 +1,5 @@
 import { goto } from '$app/navigation'
-import type { HandleFetch } from '@sveltejs/kit'
+import type { ClientInit, HandleClientError, HandleFetch } from '@sveltejs/kit'
 import { clearStoredSession, getStoredTokens, refreshAccessToken } from '$lib/api/httpClient'
 
 export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
@@ -41,3 +41,9 @@ export const handleFetch: HandleFetch = async ({ event, request, fetch }) => {
 
     return response
 }
+
+export const handleError: HandleClientError = ({ error }) => {
+    console.error('Client error', error)
+}
+
+export const init: ClientInit = () => {}

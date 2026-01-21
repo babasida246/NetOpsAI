@@ -344,7 +344,7 @@ export interface VerificationStep {
 
 export interface ExpertOutput {
     version: 'v1'
-    generatedAt: Date
+    generatedAt: string
 
     // Per-device generated configs
     deviceConfigs: DeviceConfigOutput[]
@@ -390,7 +390,7 @@ export interface GeneratedCommand {
 
 export interface JudgeVerdict {
     version: 'v1'
-    evaluatedAt: Date
+    evaluatedAt: string
 
     // Overall verdict
     verdict: 'approve' | 'reject' | 'needs_review'

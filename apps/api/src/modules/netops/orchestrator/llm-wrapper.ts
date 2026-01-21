@@ -19,7 +19,7 @@ import {
     type ExpertOutputResult,
     type JudgeVerdictResult
 } from './llm-schemas.js'
-import type { ModelTier, NetOpsContextPack, OrchestrationNode } from './types.js'
+import type { ModelTier, NetOpsContextPack, NetworkSnapshot, OrchestrationNode } from './types.js'
 
 // ====================
 // CONFIGURATION
@@ -252,14 +252,14 @@ export class NetOpsLLMWrapper {
         intent: string
         scope: { deviceIds: string[]; sites: string[]; vendors: string[] }
         devicesContext: Array<{ id: string; name: string; hostname: string; vendor: string; role: string }>
-        networkSnapshot: Record<string, unknown>
+        networkSnapshot: NetworkSnapshot
     }): Promise<{
         output: TaskGraphOutput
         metrics: { promptTokens: number; completionTokens: number; latencyMs: number; retries: number }
     }> {
         const userPrompt = buildPlannerPrompt(context)
 
-        const { result, metrics } = await this.callWithRetry(
+        const { result, metrics } = await this.callWithRetry<TaskGraphOutput>(
             {
                 model: this.getModelForTier('cheap'),
                 systemPrompt: PLANNER_SYSTEM_PROMPT,
@@ -291,7 +291,7 @@ export class NetOpsLLMWrapper {
     }> {
         const userPrompt = buildExpertPrompt(context)
 
-        const { result, metrics } = await this.callWithRetry(
+        const { result, metrics } = await this.callWithRetry<ExpertOutputResult>(
             {
                 model: this.getModelForTier('strong'),
                 systemPrompt: EXPERT_SYSTEM_PROMPT,
@@ -320,7 +320,7 @@ export class NetOpsLLMWrapper {
     }> {
         const userPrompt = buildJudgePrompt(context)
 
-        const { result, metrics } = await this.callWithRetry(
+        const { result, metrics } = await this.callWithRetry<JudgeVerdictResult>(
             {
                 model: this.getModelForTier('strong'),
                 systemPrompt: JUDGE_SYSTEM_PROMPT,
@@ -339,7 +339,7 @@ export class NetOpsLLMWrapper {
      */
     private async callWithRetry<T>(
         request: LLMRequest,
-        schema: z.ZodSchema<T>
+        schema: z.ZodType<T, z.ZodTypeDef, unknown>
     ): Promise<{
         result: T
         metrics: { promptTokens: number; completionTokens: number; latencyMs: number; retries: number }

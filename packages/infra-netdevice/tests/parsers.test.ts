@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import { CiscoParser, MikroTikParser, FortiGateParser, parserRegistry } from '../src/parsers/index.js'
 
-describe.skip('CiscoParser', () => {
+describe('CiscoParser', () => {
     const parser = new CiscoParser()
 
     const sampleCiscoConfig = `
@@ -137,7 +137,7 @@ end
     })
 })
 
-describe.skip('MikroTikParser', () => {
+describe('MikroTikParser', () => {
     const parser = new MikroTikParser()
 
     const sampleMikroTikConfig = `
@@ -250,7 +250,7 @@ add action=remote topics=firewall
     })
 })
 
-describe.skip('FortiGateParser', () => {
+describe('FortiGateParser', () => {
     const parser = new FortiGateParser()
 
     const sampleFortiGateConfig = `
@@ -409,7 +409,7 @@ end
     })
 })
 
-describe.skip('ParserRegistry', () => {
+describe('ParserRegistry', () => {
     it('should have all parsers registered', () => {
         expect(parserRegistry.getParser('cisco')).toBeDefined()
         expect(parserRegistry.getParser('mikrotik')).toBeDefined()

@@ -28,7 +28,7 @@ COPY packages/testing/package.json packages/testing/ 2>/dev/null || true
 COPY packages/tools/package.json packages/tools/
 COPY packages/tools/tsconfig.json packages/tools/
 COPY packages/tools/vitest.config.ts packages/tools/
-COPY apps/gateway-api/package.json apps/gateway-api/
+COPY apps/api/package.json apps/api/
 COPY apps/gateway-mcp/package.json apps/gateway-mcp/
 COPY apps/gateway-cli/package.json apps/gateway-cli/
 

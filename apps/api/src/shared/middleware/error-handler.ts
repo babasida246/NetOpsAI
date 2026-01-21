@@ -5,6 +5,7 @@ import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify'
 import { HttpError } from '../errors/http-errors.js'
 import { ZodError } from 'zod'
 import { env } from '../../config/env.js'
+import { AppError } from '@domain/core'
 
 interface ProblemDetails {
     type: string
@@ -93,6 +94,21 @@ export function errorHandler(
                 request,
                 error.code,
                 error.details
+            )
+        )
+    }
+
+    // Domain/App errors
+    if (error instanceof AppError) {
+        const appError = error as AppError
+        return sendProblem(
+            toProblem(
+                appError.httpStatus || 500,
+                appError.code.replace(/_/g, ' ').toLowerCase(),
+                appError.message,
+                request,
+                appError.code,
+                appError.details
             )
         )
     }

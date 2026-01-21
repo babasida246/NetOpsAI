@@ -19,12 +19,8 @@ COPY packages ./packages
 # Install dependencies (after sources are in place to keep workspace links)
 RUN pnpm install --frozen-lockfile
 
-# Build workspace deps needed by API
-RUN pnpm --filter @tools/registry build
-
-# Build API
-WORKDIR /app/apps/api
-RUN pnpm build
+# Build API and its workspace dependencies
+RUN pnpm --filter @apps/api... build
 
 # Production stage
 FROM node:20-alpine AS production
@@ -39,8 +35,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/*/package.json ./packages/
 
-# Copy built artifacts and packages
+# Copy built artifacts, locales and packages
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/locales ./apps/api/locales
 COPY --from=builder /app/packages ./packages
 
 # Install production dependencies only (after packages copied)

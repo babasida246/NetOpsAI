@@ -22,6 +22,7 @@ const envSchema = z.object({
 
     // Database
     DATABASE_URL: z.string().url(),
+    DB_BOOTSTRAP: z.enum(['true', 'false']).default('true'),
 
     // Redis
     REDIS_URL: z.string().url(),
@@ -52,7 +53,8 @@ const envSchema = z.object({
     LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
 
     // Rate Limiting
-    RATE_LIMIT_MAX: z.coerce.number().default(100),
+    ENABLE_RATE_LIMIT: z.enum(['true', 'false']).default('false'),
+    RATE_LIMIT_MAX: z.coerce.number().default(10000),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
 
     // Local development helpers

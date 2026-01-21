@@ -13,6 +13,14 @@ test.describe('Smoke Test - Error Detection', () => {
     let errorReport: ErrorReport
 
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem('authToken', 'ui-test-token')
+            localStorage.setItem('refreshToken', 'ui-test-refresh')
+            localStorage.setItem('userId', 'ui-tester')
+            localStorage.setItem('userEmail', 'ui-tester@example.com')
+            localStorage.setItem('userRole', 'viewer')
+        })
+
         errorReport = {
             consoleErrors: [],
             pageErrors: [],

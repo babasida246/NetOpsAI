@@ -11,6 +11,7 @@ import { ChatStatsRepository } from './modules/chat/chat-stats.repository.js'
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { PgClient } from '@infra/postgres'
 
 const { Pool } = pg
 const __filename = fileURLToPath(import.meta.url)
@@ -21,6 +22,14 @@ async function main() {
     const db = new Pool({
         connectionString: env.DATABASE_URL,
         max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000
+    })
+
+    const pgClient = new PgClient({
+        connectionString: env.DATABASE_URL,
+        max: 20,
+        min: 2,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 5000
     })
@@ -36,8 +45,12 @@ async function main() {
         await db.query('SELECT 1')
         console.log('Go.. Database connected')
 
-        // Apply schema/migrations (idempotent)
-        await applyBootstrapSchema(db)
+        // Apply schema/migrations (idempotent, optional)
+        if (env.DB_BOOTSTRAP !== 'false') {
+            await applyBootstrapSchema(db)
+        } else {
+            console.log('ℹ️  DB_BOOTSTRAP=false; skipping schema bootstrap')
+        }
 
         // Test Redis connection
         await redis.connect()
@@ -50,7 +63,7 @@ async function main() {
         await ensureDefaultChatConfig(db)
 
         // Build and start app
-        const app = await buildApp({ db, redis })
+        const app = await buildApp({ db, redis, pgClient })
 
         await app.listen({
             host: env.HOST,
@@ -74,6 +87,7 @@ async function main() {
             await app.close()
             await redis.quit()
             await db.end()
+            await pgClient.close()
 
             console.log('👋 Goodbye!')
             process.exit(0)
@@ -86,6 +100,7 @@ async function main() {
         console.error('❌ Failed to start server:', error)
         await redis.quit().catch(() => { })
         await db.end().catch(() => { })
+        await pgClient.close().catch(() => { })
         process.exit(1)
     }
 }

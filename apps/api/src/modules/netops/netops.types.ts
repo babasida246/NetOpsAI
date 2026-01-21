@@ -49,6 +49,7 @@ export interface NetConfigVersion {
     normalizedConfig?: NormalizedConfig | null
     parserVersion?: string | null
     parseErrors?: ParseError[] | null
+    metadata?: Record<string, unknown> | null
     source: string
     collectedBy?: string | null
     collectedAt: Date
@@ -105,9 +106,19 @@ export interface NetChangeRequest {
     riskLevel: RiskLevel
     status: ChangeRequestStatus
     requiredApprovals?: number
+    lintBlocking?: boolean
+    rollbackPlan?: string | null
+    preCheckCommands?: string[] | null
+    postCheckCommands?: string[] | null
     createdBy: string
+    assignedTo?: string | null
     createdAt: Date
     updatedAt: Date
+    plannedAt?: Date | null
+    submittedAt?: Date | null
+    approvedAt?: Date | null
+    deployedAt?: Date | null
+    closedAt?: Date | null
 }
 
 export interface NetChangeSet {

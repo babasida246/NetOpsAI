@@ -342,6 +342,11 @@ export interface NormalizedSecurity {
     firewallPolicies: NormalizedFirewallPolicy[]
     natRules: NormalizedNatRule[]
     vpnTunnels: NormalizedVpnTunnel[]
+    users?: Array<{
+        name: string
+        role?: string
+        privilege?: number
+    }>
 }
 
 export interface NormalizedAcl {

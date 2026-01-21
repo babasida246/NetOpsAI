@@ -11,3 +11,27 @@ export type { ExecutionConfig } from './core/ExecutorEngine.js'
 
 // Main Orchestrator
 export { ChatOrchestrator } from './core/ChatOrchestrator.js'
+
+// Assets
+export { AssetService } from './assets/AssetService.js'
+export { MaintenanceService } from './assets/MaintenanceService.js'
+export { CatalogService } from './assets/CatalogService.js'
+export { CategorySpecService } from './assets/CategorySpecService.js'
+export { AttachmentService } from './assets/AttachmentService.js'
+export { InventoryService } from './assets/InventoryService.js'
+export { WorkflowService } from './assets/WorkflowService.js'
+export { ReminderService } from './assets/ReminderService.js'
+
+// Maintenance/Warehouse
+export { WarehouseCatalogService } from './maintenanceWarehouse/WarehouseCatalogService.js'
+export { StockDocumentService } from './maintenanceWarehouse/StockDocumentService.js'
+export { StockReportService } from './maintenanceWarehouse/StockReportService.js'
+export { StockService } from './maintenanceWarehouse/StockService.js'
+export { RepairService } from './maintenanceWarehouse/RepairService.js'
+export { OpsAttachmentService } from './maintenanceWarehouse/OpsAttachmentService.js'
+
+// CMDB
+export { SchemaService } from './cmdb/SchemaService.js'
+export { CiService } from './cmdb/CiService.js'
+export { RelationshipService } from './cmdb/RelationshipService.js'
+export { ServiceMappingService } from './cmdb/ServiceMappingService.js'

@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod'
+import type { NetworkSnapshot } from './types.js'
 
 // ====================
 // COMMON SCHEMAS
@@ -241,7 +242,7 @@ export function buildPlannerPrompt(context: {
     intent: string
     scope: { deviceIds: string[]; sites: string[]; vendors: string[] }
     devicesContext: Array<{ id: string; name: string; hostname: string; vendor: string; role: string }>
-    networkSnapshot: Record<string, unknown>
+    networkSnapshot: NetworkSnapshot
 }): string {
     return `Create a TaskGraph for the following network change request.
 

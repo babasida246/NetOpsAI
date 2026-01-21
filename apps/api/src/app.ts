@@ -4,13 +4,16 @@
 import Fastify, { type FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
+import multipart from '@fastify/multipart'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import type { Pool } from 'pg'
 import type { Redis } from 'ioredis'
+import type { PgClient } from '@infra/postgres'
 
 import { env } from './config/env.js'
+import { initI18n } from './config/i18n.js'
 import { errorHandler, requestIdHook } from './shared/middleware/index.js'
 
 // Modules
@@ -23,10 +26,12 @@ import { ConversationRepository, conversationRoutes } from './modules/conversati
 import { AdminRepository, adminRoutes } from './modules/admin/index.js'
 import { netopsRoutes } from './modules/netops/index.js'
 import { toolsRoutes } from './modules/tools/tools.routes.js'
+import { registerAssetModule } from './routes/v1/assets.module.js'
 
 export interface AppDependencies {
     db: Pool
     redis: Redis
+    pgClient: PgClient
 }
 
 export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> {
@@ -56,10 +61,28 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
         contentSecurityPolicy: false
     })
 
-    // Rate limiting
-    await fastify.register(rateLimit, {
-        max: env.RATE_LIMIT_MAX,
-        timeWindow: env.RATE_LIMIT_WINDOW_MS
+    // Rate limiting (optional)
+    if (env.ENABLE_RATE_LIMIT === 'true') {
+        await fastify.register(rateLimit, {
+            max: env.RATE_LIMIT_MAX,
+            timeWindow: env.RATE_LIMIT_WINDOW_MS
+        })
+        fastify.log.info(`Rate limiting enabled: ${env.RATE_LIMIT_MAX} requests per ${env.RATE_LIMIT_WINDOW_MS}ms`)
+    } else {
+        fastify.log.info('Rate limiting disabled')
+    }
+
+    // Multipart uploads
+    await fastify.register(multipart)
+
+    // Initialize i18n
+    await initI18n()
+    fastify.log.info('i18n initialized with languages: en, vi')
+
+    // Middleware to detect language from header
+    fastify.addHook('onRequest', async (request, reply) => {
+        const lang = request.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en'
+        request.language = ['en', 'vi'].includes(lang) ? lang : 'en'
     })
 
     // Swagger/OpenAPI
@@ -100,10 +123,11 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
                 { name: 'Admin - Users', description: 'User management (admin only)' },
                 { name: 'Admin - System', description: 'System administration' },
                 { name: 'Admin - Audit', description: 'Audit logs' },
-                { name: 'NetOps', description: 'Network operations and device management' }
+                { name: 'NetOps', description: 'Network operations and device management' },
+                { name: 'Assets', description: 'IT asset management' },
+                { name: 'Maintenance', description: 'Asset maintenance tickets' }
             ]
         },
-        exposeRoute: true
     })
 
     // Swagger UI
@@ -192,6 +216,9 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
     await fastify.register(async (toolsApp) => {
         await toolsRoutes(toolsApp, authService)
     })
+
+    // Assets
+    await registerAssetModule(fastify, { pgClient: deps.pgClient })
 
     // ==================== Docs Routes ====================
 

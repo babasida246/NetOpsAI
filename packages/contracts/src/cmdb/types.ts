@@ -1,0 +1,197 @@
+import type {
+    CiStatus,
+    Environment,
+    CmdbFieldType,
+    SpecVersionStatus,
+    RelationshipStatus
+} from '@domain/core'
+
+export interface CiTypeRecord {
+    id: string
+    code: string
+    name: string
+    description?: string | null
+    createdAt: Date
+}
+
+export interface CiTypeVersionRecord {
+    id: string
+    typeId: string
+    version: number
+    status: SpecVersionStatus
+    createdBy?: string | null
+    createdAt: Date
+}
+
+export interface CiAttrDefRecord {
+    id: string
+    versionId: string
+    key: string
+    label: string
+    fieldType: CmdbFieldType
+    required: boolean
+    unit?: string | null
+    enumValues?: string[] | null
+    pattern?: string | null
+    minValue?: number | null
+    maxValue?: number | null
+    stepValue?: number | null
+    minLen?: number | null
+    maxLen?: number | null
+    defaultValue?: unknown
+    isSearchable: boolean
+    isFilterable: boolean
+    sortOrder: number
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface CiAttrDefInput {
+    key: string
+    label: string
+    fieldType: CmdbFieldType
+    required?: boolean
+    unit?: string | null
+    enumValues?: string[] | null
+    pattern?: string | null
+    minValue?: number | null
+    maxValue?: number | null
+    stepValue?: number | null
+    minLen?: number | null
+    maxLen?: number | null
+    defaultValue?: unknown
+    isSearchable?: boolean
+    isFilterable?: boolean
+    sortOrder?: number
+    isActive?: boolean
+}
+
+export interface CiAttrDefCreateInput extends CiAttrDefInput {
+    versionId: string
+}
+
+export type CiAttrDefUpdatePatch = Partial<CiAttrDefInput>
+
+export interface CiRecord {
+    id: string
+    typeId: string
+    name: string
+    ciCode: string
+    status: CiStatus
+    environment: Environment
+    assetId?: string | null
+    locationId?: string | null
+    ownerTeam?: string | null
+    notes?: string | null
+    createdAt: Date
+    updatedAt: Date
+}
+
+export interface CiAttrValueRecord {
+    id: string
+    ciId: string
+    versionId: string
+    key: string
+    value?: unknown
+    updatedAt: Date
+}
+
+export interface CiCreateInput {
+    typeId: string
+    name: string
+    ciCode: string
+    status?: CiStatus
+    environment?: Environment
+    assetId?: string | null
+    locationId?: string | null
+    ownerTeam?: string | null
+    notes?: string | null
+}
+
+export interface CiUpdatePatch {
+    name?: string
+    status?: CiStatus
+    environment?: Environment
+    assetId?: string | null
+    locationId?: string | null
+    ownerTeam?: string | null
+    notes?: string | null
+}
+
+export interface CiAttrValueInput {
+    key: string
+    value?: unknown
+}
+
+export interface RelationshipTypeRecord {
+    id: string
+    code: string
+    name: string
+    reverseName?: string | null
+    allowedFromTypeId?: string | null
+    allowedToTypeId?: string | null
+}
+
+export interface RelationshipRecord {
+    id: string
+    relTypeId: string
+    fromCiId: string
+    toCiId: string
+    status: RelationshipStatus
+    sinceDate?: string | null
+    note?: string | null
+    createdAt: Date
+}
+
+export interface CmdbServiceRecord {
+    id: string
+    code: string
+    name: string
+    criticality?: string | null
+    owner?: string | null
+    sla?: string | null
+    status?: string | null
+    createdAt: Date
+}
+
+export interface CmdbServiceMemberRecord {
+    id: string
+    serviceId: string
+    ciId: string
+    role?: string | null
+    createdAt: Date
+}
+
+export interface CiListFilters {
+    q?: string
+    status?: CiStatus
+    environment?: Environment
+    typeId?: string
+    page?: number
+    limit?: number
+}
+
+export interface CiPage {
+    items: CiRecord[]
+    total: number
+    page: number
+    limit: number
+}
+
+export interface RelationshipFilters {
+    ciId: string
+}
+
+export interface CmdbServiceFilters {
+    q?: string
+    page?: number
+    limit?: number
+}
+
+export interface CmdbServicePage {
+    items: CmdbServiceRecord[]
+    total: number
+    page: number
+    limit: number
+}

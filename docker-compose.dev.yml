@@ -15,7 +15,6 @@ services:
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
       - ./packages/infra-postgres/src/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./packages/infra-postgres/src/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -73,6 +72,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
       ADMIN_NAME: ${ADMIN_NAME:-Dev Admin}
+      DB_BOOTSTRAP: "false"
       CI: "true"
     volumes:
       - .:/app
@@ -87,7 +87,7 @@ services:
       - /app/packages/providers/node_modules
       - /app/packages/security/node_modules
       - /app/packages/tools/node_modules
-      - /app/apps/gateway-api/node_modules
+      - /app/apps/api/node_modules
     ports:
       - "${API_PORT:-3000}:3000"
       - "9229:9229"

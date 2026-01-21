@@ -4,3 +4,4 @@ packages:
   - 'packages/mcp-servers/core/*'
 onlyBuiltDependencies:
   - esbuild
+  - bcrypt

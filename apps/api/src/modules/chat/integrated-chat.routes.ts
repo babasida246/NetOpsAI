@@ -4,6 +4,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { IntegratedChatService } from './integrated-chat.service.js'
 import { chatCompletionRequestSchema } from './chat.schema.js'
+import type { ChatCompletionRequest } from './chat.schema.js'
 import { z } from 'zod'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { UnauthorizedError, ForbiddenError, NotFoundError } from '../../shared/errors/http-errors.js'
@@ -139,7 +140,7 @@ export async function integratedChatRoutes(
         const data = sendMessageSchema.parse(request.body)
         const userId = request.user!.sub
 
-        const messages: any[] = []
+        const messages: ChatCompletionRequest['messages'] = []
         if (data.systemPrompt) {
             messages.push({ role: 'system', content: data.systemPrompt })
         }
@@ -150,7 +151,8 @@ export async function integratedChatRoutes(
                 model: data.model,
                 messages,
                 temperature: data.temperature,
-                maxTokens: data.maxTokens
+                maxTokens: data.maxTokens,
+                stream: false
             },
             {
                 userId,

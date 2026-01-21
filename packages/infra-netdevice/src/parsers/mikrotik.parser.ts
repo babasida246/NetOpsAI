@@ -16,6 +16,7 @@ import type {
     ParseError,
     NormalizedConfig,
     NormalizedInterface,
+    NormalizedVlan,
     NormalizedNatRule,
     NormalizedFirewallPolicy,
     NormalizedStaticRoute,
@@ -289,7 +290,10 @@ export class MikroTikParser extends BaseParser {
         }
     }
 
-    private parseInterfaceLine(line: string, section: string): Partial<NormalizedInterface> | null {
+    private parseInterfaceLine(
+        line: string,
+        section: string
+    ): (NormalizedInterface & { vlanId?: number }) | null {
         const name = this.extractKeyValue(line, 'name')
         if (!name) return null
 
@@ -309,7 +313,7 @@ export class MikroTikParser extends BaseParser {
             ips: [],
             description: comment || undefined,
             vlanId: vlanIdStr ? parseInt(vlanIdStr, 10) : undefined
-        } as any
+        }
     }
 
     private parseIpAddressLine(line: string): { address: string; prefix: number; interface: string } | null {
@@ -366,7 +370,7 @@ export class MikroTikParser extends BaseParser {
             action: this.mapMikroTikAction(action),
             enabled: !disabled,
             log,
-            comment
+            comment: comment || undefined
         }
     }
 

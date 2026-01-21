@@ -12,9 +12,7 @@ test.describe('Layout spacing', () => {
       reachable = false
     }
 
-    if (!reachable) {
-      test.skip('Web UI base URL is not reachable; skipping layout checks.')
-    }
+    expect(reachable, 'Web UI base URL must be reachable for layout checks.').toBe(true)
 
     await page.goto('/login')
     await page.evaluate(() => {
@@ -25,14 +23,13 @@ test.describe('Layout spacing', () => {
 
     for (const path of primaryPages) {
       const response = await page.goto(path, { waitUntil: 'domcontentloaded' }).catch(() => null)
-      if (!response || !response.ok()) {
-        test.skip(`Skipping layout check for ${path} (response: ${response ? response.status() : 'offline'})`)
-      }
+      expect(
+        response?.ok(),
+        `Expected ${path} to load successfully (response: ${response ? response.status() : 'offline'}).`
+      ).toBe(true)
       const shell = page.locator('main .page-shell').first()
       const count = await shell.count()
-      if (count === 0) {
-        test.skip(`No .page-shell found on ${path}; app may be serving an outdated build.`)
-      }
+      expect(count, `Expected .page-shell on ${path}.`).toBeGreaterThan(0)
       await expect(shell).toBeVisible({ timeout: 10000 })
 
       const metrics = await shell.evaluate((el) => {

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Apps
-mkdir -p apps/gateway-api/src/{routes/{v1,v2,workflows,admin},middleware,adapters,websocket}
+mkdir -p apps/api/src/{routes/{v1,v2,workflows,admin},middleware,adapters,websocket}
 mkdir -p apps/gateway-mcp/src/{handlers,transport}
 mkdir -p apps/gateway-cli/src/{commands,utils}
 

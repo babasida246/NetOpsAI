@@ -49,10 +49,10 @@ validate_step "Infrastructure builds" "cd packages/infra-postgres && pnpm build"
 
 echo ""
 echo "🌐 Phase 4: Presentation Layer"
-validate_step "API app exists" "test -d apps/gateway-api"
+validate_step "API app exists" "test -d apps/api"
 validate_step "MCP app exists" "test -d apps/gateway-mcp"
 validate_step "CLI app exists" "test -d apps/gateway-cli"
-validate_step "API builds" "cd apps/gateway-api && pnpm build"
+validate_step "API builds" "cd apps/api && pnpm build"
 
 echo ""
 echo "🛠️ Phase 5: MCP Servers & Tools"

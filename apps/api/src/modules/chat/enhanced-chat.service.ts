@@ -726,7 +726,8 @@ export class EnhancedChatService {
                 content: m.content
             })),
             maxTokens: options?.maxTokens || 500,
-            temperature: options?.temperature || 0.3
+            temperature: options?.temperature || 0.3,
+            stream: false
         })
 
         return response.choices[0]?.message?.content || ''

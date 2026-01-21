@@ -5,8 +5,10 @@ import { generateConfigCommand, type Vendor } from '@tools/registry'
 import { UnauthorizedError } from '../../shared/errors/http-errors.js'
 import type { AuthService } from '../auth/auth.service.js'
 
+const vendorValues = ['cisco', 'fortigate', 'mikrotik'] as const satisfies Vendor[]
+
 const generateSchema = z.object({
-    vendor: z.enum(['cisco', 'fortigate', 'mikrotik'] satisfies Vendor[]),
+    vendor: z.enum(vendorValues),
     action: z.enum([
         'baseline',
         'wan_uplink',

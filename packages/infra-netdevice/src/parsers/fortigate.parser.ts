@@ -165,6 +165,16 @@ export class FortiGateParser extends BaseParser {
                 const iface = this.parseInterface(editName, block)
                 if (iface) {
                     config.interfaces.push(iface)
+                    if (typeof iface.accessVlan === 'number') {
+                        const vlanId = iface.accessVlan
+                        if (!config.vlans.find(vlan => vlan.id === vlanId)) {
+                            config.vlans.push({
+                                id: vlanId,
+                                name: iface.name,
+                                l3GatewayIps: []
+                            })
+                        }
+                    }
                 }
                 return
             }
@@ -364,9 +374,10 @@ export class FortiGateParser extends BaseParser {
     }
 
     private parseStaticRoute(id: string, block: Record<string, string>): NormalizedStaticRoute | null {
-        if (!block.dst) return null
+        if (!block.dst && !block.gateway) return null
 
-        const [dest, mask] = block.dst.split(' ')
+        const destination = block.dst ? block.dst : '0.0.0.0 0.0.0.0'
+        const [dest, mask] = destination.split(' ')
         const parsed = this.parseIpWithMask(dest, mask)
         if (!parsed) return null
 
