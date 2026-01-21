@@ -1,0 +1,212 @@
+{
+  "timestamp": "2026-01-21T07:00:06.614Z",
+  "totalIssues": 17,
+  "issuesByRoute": {
+    "/": [
+      {
+        "route": "/",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/chat": [
+      {
+        "route": "/chat",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/stats": [
+      {
+        "route": "/stats",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/models": [
+      {
+        "route": "/models",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/models/orchestration": [
+      {
+        "route": "/models/orchestration",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/tools": [
+      {
+        "route": "/tools",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/cmdb": [
+      {
+        "route": "/cmdb",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/assets": [
+      {
+        "route": "/assets",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/assets/catalogs": [
+      {
+        "route": "/assets/catalogs",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/maintenance": [
+      {
+        "route": "/maintenance",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/stock": [
+      {
+        "route": "/warehouse/stock",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/documents": [
+      {
+        "route": "/warehouse/documents",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/ledger": [
+      {
+        "route": "/warehouse/ledger",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/spare-parts": [
+      {
+        "route": "/warehouse/spare-parts",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/warehouses": [
+      {
+        "route": "/warehouse/warehouses",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/warehouse/reports": [
+      {
+        "route": "/warehouse/reports",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ],
+    "/admin": [
+      {
+        "route": "/admin",
+        "type": "untranslated-key",
+        "text": "document.currentScript.parentElement"
+      }
+    ]
+  },
+  "allIssues": [
+    {
+      "route": "/",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/chat",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/stats",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/models",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/models/orchestration",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/tools",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/cmdb",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/assets",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/assets/catalogs",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/maintenance",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/stock",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/documents",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/ledger",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/spare-parts",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/warehouses",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/warehouse/reports",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    },
+    {
+      "route": "/admin",
+      "type": "untranslated-key",
+      "text": "document.currentScript.parentElement"
+    }
+  ]
+}

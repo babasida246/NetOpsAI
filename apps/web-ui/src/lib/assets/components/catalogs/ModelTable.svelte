@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
   import { Pencil, Trash2 } from 'lucide-svelte';
   import type { AssetCategory, AssetModel, Vendor } from '$lib/api/assetCatalogs';
@@ -22,11 +23,11 @@
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
   <Table>
     <TableHead>
-      <TableHeadCell>Model</TableHeadCell>
-      <TableHeadCell>Brand</TableHeadCell>
-      <TableHeadCell>Category</TableHeadCell>
-      <TableHeadCell>Vendor</TableHeadCell>
-      <TableHeadCell class="w-32">Actions</TableHeadCell>
+      <TableHeadCell>{$isLoading ? 'Model' : $_('assets.model')}</TableHeadCell>
+      <TableHeadCell>{$isLoading ? 'Brand' : $_('assets.brand')}</TableHeadCell>
+      <TableHeadCell>{$isLoading ? 'Category' : $_('assets.category')}</TableHeadCell>
+      <TableHeadCell>{$isLoading ? 'Vendor' : $_('assets.vendor')}</TableHeadCell>
+      <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
     </TableHead>
     <TableBody>
       {#each models as model}

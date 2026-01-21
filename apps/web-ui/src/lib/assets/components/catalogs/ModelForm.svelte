@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Select, Spinner } from 'flowbite-svelte';
   import {
     createModel,
@@ -190,26 +191,26 @@
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
-      <Label class="mb-2">Model</Label>
+        <Label class="mb-2">{$isLoading ? 'Model' : $_('common.model')}</Label>
       <Input bind:value={form.model} placeholder="Latitude 7420" />
     </div>
     <div>
-      <Label class="mb-2">Brand</Label>
-      <Input bind:value={form.brand} placeholder="Dell" />
+        <Label class="mb-2">{$isLoading ? 'Brand' : $_('common.brand')}</Label>
+        <Input bind:value={form.brand} placeholder={$isLoading ? 'Dell' : $_('assets.placeholders.brand')} />
     </div>
     <div>
-      <Label class="mb-2">Category</Label>
+      <Label class="mb-2">{$isLoading ? 'Category' : $_('assets.category')}</Label>
       <Select bind:value={form.categoryId} on:change={() => useVersionDefs = false}>
-        <option value="">No category</option>
+        <option value="">{$isLoading ? 'No category' : $_('assets.noCategory')}</option>
         {#each categories as category}
           <option value={category.id}>{category.name}</option>
         {/each}
       </Select>
     </div>
     <div>
-      <Label class="mb-2">Vendor</Label>
-      <Select bind:value={form.vendorId}>
-        <option value="">No vendor</option>
+        <Label class="mb-2">{$isLoading ? 'Vendor' : $_('common.vendor')}</Label>
+        <Select bind:value={form.vendorId}>
+          <option value="">{$isLoading ? 'No vendor' : $_('assets.noVendor')}</option>
         {#each vendors as vendor}
           <option value={vendor.id}>{vendor.name}</option>
         {/each}
@@ -218,7 +219,7 @@
   </div>
   {#if form.categoryId}
     <div>
-      <Label class="mb-2">Specifications</Label>
+        <Label class="mb-2">{$isLoading ? 'Specifications' : $_('assets.specifications')}</Label>
       {#if specLoading}
         <div class="flex justify-center py-4">
           <Spinner size="6" />

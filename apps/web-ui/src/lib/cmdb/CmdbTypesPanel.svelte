@@ -124,15 +124,15 @@
   <div class="space-y-3">
     <div>
       <label for="type-code" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Code' : $_('common.code')}</label>
-      <Input id="type-code" bind:value={code} placeholder="APP" />
+      <Input id="type-code" bind:value={code} placeholder={$isLoading ? 'APP' : $_('cmdb.type.placeholders.code')} />
     </div>
     <div>
       <label for="type-name" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Name' : $_('common.name')}</label>
-      <Input id="type-name" bind:value={name} placeholder="Application" />
+      <Input id="type-name" bind:value={name} placeholder={$isLoading ? 'Application' : $_('cmdb.type.placeholders.typeName')} />
     </div>
     <div>
       <label for="type-desc" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Description' : $_('models.description')}</label>
-      <Input id="type-desc" bind:value={description} placeholder="Optional description" />
+      <Input id="type-desc" bind:value={description} placeholder={$isLoading ? 'Optional description' : $_('cmdb.type.placeholders.typeDescription')} />
     </div>
   </div>
   <svelte:fragment slot="footer">

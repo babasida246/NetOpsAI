@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Select, Spinner, Textarea } from 'flowbite-svelte';
   import { getCategorySpecDefs, type AssetCategory, type CategorySpecDef } from '$lib/api/assetCatalogs';
 
@@ -139,20 +140,20 @@
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
     <div>
-      <Label class="mb-2">Category Filter</Label>
+        <Label class="mb-2">{$isLoading ? 'Category Filter' : $_('assets.categoryFilter')}</Label>
       <Select
         bind:value={categoryId}
         on:change={(event) => loadSpecDefs((event.currentTarget as HTMLSelectElement).value)}
       >
-        <option value="">All categories</option>
+        <option value="">{$isLoading ? 'All categories' : $_('assets.allCategories')}</option>
         {#each categories as category}
           <option value={category.id}>{category.name}</option>
         {/each}
       </Select>
     </div>
     <div class="flex gap-2">
-      <Button color="alternative" on:click={clearFilters}>Clear</Button>
-      <Button on:click={applyFilters}>Apply</Button>
+        <Button color="alternative" on:click={clearFilters}>{$isLoading ? 'Clear' : $_('common.clear')}</Button>
+        <Button on:click={applyFilters}>{$isLoading ? 'Apply' : $_('common.apply')}</Button>
     </div>
   </div>
 
@@ -167,7 +168,7 @@
           <Label class="mb-1">{def.label}</Label>
           {#if def.fieldType === 'enum'}
             <Select value={getStringValue(def.key)} on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
-              <option value="">Any</option>
+              <option value="">{$isLoading ? 'Any' : $_('assets.any')}</option>
               {#each def.enumValues ?? [] as option}
                 <option value={option}>{option}</option>
               {/each}
@@ -188,9 +189,9 @@
             </div>
           {:else if def.fieldType === 'boolean'}
             <Select value={getBooleanValue(def.key)} on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
-              <option value="">Any</option>
-              <option value="true">Yes</option>
-              <option value="false">No</option>
+              <option value="">{$isLoading ? 'Any' : $_('assets.any')}</option>
+            <option value="true">{$isLoading ? 'Yes' : $_('common.yes')}</option>
+            <option value="false">{$isLoading ? 'No' : $_('common.no')}</option>
             </Select>
           {:else if def.fieldType === 'number' || def.fieldType === 'port'}
             <Input

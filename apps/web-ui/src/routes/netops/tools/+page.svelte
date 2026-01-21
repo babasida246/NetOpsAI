@@ -113,9 +113,9 @@
       <div>
         <Label>{$isLoading ? 'Vendor' : $_('netops.toolsPage.vendor')}</Label>
         <Select bind:value={vendor}>
-          <option value="cisco">Cisco</option>
-          <option value="fortigate">Fortigate</option>
-          <option value="mikrotik">MikroTik</option>
+          <option value="cisco">{$isLoading ? 'Cisco' : $_('netops.toolsPage.vendorOptions.cisco')}</option>
+          <option value="fortigate">{$isLoading ? 'Fortigate' : $_('netops.toolsPage.vendorOptions.fortigate')}</option>
+          <option value="mikrotik">{$isLoading ? 'MikroTik' : $_('netops.toolsPage.vendorOptions.mikrotik')}</option>
         </Select>
       </div>
       <div>

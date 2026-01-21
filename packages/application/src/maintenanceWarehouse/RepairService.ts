@@ -110,7 +110,7 @@ export class RepairService {
 
         const result = await this.unitOfWork.withTransaction(async (tx) => {
             let stockDocumentId: string | null = input.stockDocumentId ?? null
-            let unitCost = input.unitCost ?? null
+            const unitCost = input.unitCost ?? null
 
             if (input.partId && input.warehouseId) {
                 const line: StockDocumentLineInput = {

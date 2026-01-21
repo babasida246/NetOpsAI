@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { page } from '$app/stores';
   import { Sidebar, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
   import { Network, GitBranch, FileText, Menu } from 'lucide-svelte';
@@ -21,7 +22,7 @@
   <!-- Mobile header -->
   <header class="lg:hidden sticky top-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
     <div class="flex items-center justify-between px-4 py-3">
-      <h1 class="text-xl font-semibold">NetOps</h1>
+      <h1 class="text-xl font-semibold">{$isLoading ? 'NetOps' : $_('netops.title')}</h1>
       <button 
         onclick={() => sidebarOpen = !sidebarOpen}
         class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -39,7 +40,7 @@
       {sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
     ">
       <div class="hidden lg:flex items-center px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <h1 class="text-xl font-semibold">NetOps Copilot</h1>
+        <h1 class="text-xl font-semibold">{$isLoading ? 'NetOps Copilot' : $_('netops.netopsCopilot')}</h1>
       </div>
       
       <Sidebar class="w-full">

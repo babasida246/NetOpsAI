@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { page } from '$app/stores';
   import { Button, Alert, Spinner, Tabs, TabItem, Accordion, AccordionItem } from 'flowbite-svelte';
   import { ArrowLeft, Play, CheckCircle, AlertTriangle, Rocket, X } from 'lucide-svelte';
@@ -147,7 +148,7 @@
   <div class="mb-4">
     <Button href="/netops/changes" color="alternative" size="sm">
       <ArrowLeft class="w-4 h-4 mr-2" />
-      Back to Changes
+      {$isLoading ? 'Back to Changes' : $_('netops.backToChanges')}
     </Button>
   </div>
   
@@ -214,14 +215,14 @@
       <!-- Intent Parameters -->
       <Accordion>
         <AccordionItem>
-          <span slot="header">Intent Parameters</span>
+          <span slot="header">{$isLoading ? 'Intent Parameters' : $_('netops.changeDetail.intentParameters')}</span>
           <JsonViewer data={change.params} />
         </AccordionItem>
         
         <!-- Plan Results -->
         {#if planResult}
           <AccordionItem>
-            <span slot="header">Plan Results</span>
+            <span slot="header">{$isLoading ? 'Plan Results' : $_('netops.changeDetail.planResults')}</span>
             <div class="space-y-4">
               {#if planResult.missing_info && planResult.missing_info.length > 0}
                 <Alert color="yellow">
@@ -247,7 +248,7 @@
         <!-- Verify Results -->
         {#if verifyResult}
           <AccordionItem>
-            <span slot="header">Verification Results</span>
+            <span slot="header">{$isLoading ? 'Verification Results' : $_('netops.changeDetail.verificationResults')}</span>
             <JsonViewer data={verifyResult} />
           </AccordionItem>
         {/if}
@@ -255,7 +256,7 @@
         <!-- Approval Results -->
         {#if approvalResult}
           <AccordionItem>
-            <span slot="header">Approval Decision</span>
+            <span slot="header">{$isLoading ? 'Approval Decision' : $_('netops.changeDetail.approvalDecision')}</span>
             <div class="space-y-4">
               <div>
                 <p class="font-semibold mb-2">Decision:</p>
@@ -291,7 +292,7 @@
       <!-- Change Sets per Device -->
       {#if change.changeSets && change.changeSets.length > 0}
         <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-          <h2 class="text-lg font-semibold mb-4">Device Change Sets</h2>
+          <h2 class="text-lg font-semibold mb-4">{$isLoading ? 'Device Change Sets' : $_('netops.changeDetail.deviceChangeSets')}</h2>
           
           <Tabs>
             {#each change.changeSets as changeSet}
@@ -303,14 +304,14 @@
                 <div class="space-y-6 py-4">
                   <!-- Candidate Config -->
                   <div>
-                    <h3 class="font-semibold mb-2">Candidate Configuration</h3>
+                    <h3 class="font-semibold mb-2">{$isLoading ? 'Candidate Configuration' : $_('netops.changeDetail.candidateConfiguration')}</h3>
                     <CodeViewer code={changeSet.candidate_config} />
                   </div>
                   
                   <!-- Diff -->
                   {#if changeSet.diff}
                     <div>
-                      <h3 class="font-semibold mb-2">Configuration Diff</h3>
+                      <h3 class="font-semibold mb-2">{$isLoading ? 'Configuration Diff' : $_('netops.changeDetail.configurationDiff')}</h3>
                       <div class="border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-900 overflow-hidden">
                         <pre class="p-4 overflow-auto text-xs text-gray-100 font-mono max-h-96">{@html changeSet.diff.split('\n').map(line => {
                           if (line.startsWith('+') && !line.startsWith('+++')) {
@@ -329,7 +330,7 @@
                   <!-- Steps -->
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <h3 class="font-semibold mb-2">Precheck Steps</h3>
+                      <h3 class="font-semibold mb-2">{$isLoading ? 'Precheck Steps' : $_('netops.changeDetail.precheckSteps')}</h3>
                       <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
                         {#each changeSet.precheck_steps as step}
                           <div class="text-sm">
@@ -343,7 +344,7 @@
                     </div>
                     
                     <div>
-                      <h3 class="font-semibold mb-2">Apply Steps</h3>
+                      <h3 class="font-semibold mb-2">{$isLoading ? 'Apply Steps' : $_('netops.changeDetail.applySteps')}</h3>
                       <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
                         {#each changeSet.apply_steps as step}
                           <div class="text-sm">
@@ -357,7 +358,7 @@
                     </div>
                     
                     <div>
-                      <h3 class="font-semibold mb-2">Postcheck Steps</h3>
+                      <h3 class="font-semibold mb-2">{$isLoading ? 'Postcheck Steps' : $_('netops.changeDetail.postcheckSteps')}</h3>
                       <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
                         {#each changeSet.postcheck_steps as step}
                           <div class="text-sm">
@@ -371,7 +372,7 @@
                     </div>
                     
                     <div>
-                      <h3 class="font-semibold mb-2">Rollback Plan</h3>
+                      <h3 class="font-semibold mb-2">{$isLoading ? 'Rollback Plan' : $_('netops.changeDetail.rollbackPlan')}</h3>
                       <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 space-y-2">
                         {#each changeSet.rollback_plan as step}
                           <div class="text-sm">

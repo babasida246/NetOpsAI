@@ -42,11 +42,19 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
     <div>
       <label for="attr-key" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Key' : $_('cmdb.type.key')}</label>
-      <Input id="attr-key" bind:value={draft.key} placeholder="hostname" />
+      <Input
+        id="attr-key"
+        bind:value={draft.key}
+        placeholder={$isLoading ? 'hostname' : $_('cmdb.type.placeholders.key')}
+      />
     </div>
     <div>
       <label for="attr-label" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Label' : $_('cmdb.type.label')}</label>
-      <Input id="attr-label" bind:value={draft.label} placeholder="Hostname" />
+      <Input
+        id="attr-label"
+        bind:value={draft.label}
+        placeholder={$isLoading ? 'Hostname' : $_('cmdb.type.placeholders.hostname')}
+      />
     </div>
     <div>
       <label for="attr-type" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Type' : $_('cmdb.type.type')}</label>
@@ -58,7 +66,7 @@
     </div>
     <div>
       <label for="attr-enum" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Enum values' : $_('cmdb.type.enumValues')}</label>
-      <Input id="attr-enum" bind:value={draft.enumValues} placeholder="a, b, c" />
+      <Input id="attr-enum" bind:value={draft.enumValues} placeholder={$isLoading ? 'a, b, c' : $_('cmdb.type.placeholders.enumValues')} />
     </div>
     <label class="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
       <input type="checkbox" checked={draft.required} onchange={(e) => draft.required = (e.currentTarget as HTMLInputElement).checked} />

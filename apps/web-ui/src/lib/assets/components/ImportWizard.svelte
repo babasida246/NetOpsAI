@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Modal, Spinner } from 'flowbite-svelte';
   import {
     commitAssetImport,
@@ -186,7 +187,7 @@
 
 <Modal bind:open on:close={reset} size="lg">
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">Import Assets</h3>
+    <h3 class="text-xl font-semibold">{$isLoading ? 'Import Assets' : $_('assets.importAssets')}</h3>
   </svelte:fragment>
 
   {#if error}
@@ -210,15 +211,15 @@
     {#if preview}
       <div class="rounded-lg bg-slate-50 dark:bg-slate-900/40 p-4 text-sm">
         <div class="flex justify-between">
-          <span>Total rows</span>
+          <span>{$isLoading ? 'Total rows' : $_('assets.totalRows')}</span>
           <span class="font-semibold">{preview.total}</span>
         </div>
         <div class="flex justify-between">
-          <span>Valid</span>
+          <span>{$isLoading ? 'Valid' : $_('assets.valid')}</span>
           <span class="font-semibold text-emerald-600">{preview.validCount}</span>
         </div>
         <div class="flex justify-between">
-          <span>Invalid</span>
+          <span>{$isLoading ? 'Invalid' : $_('assets.invalid')}</span>
           <span class="font-semibold text-red-600">{preview.invalidCount}</span>
         </div>
       </div>

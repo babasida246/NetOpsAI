@@ -16,7 +16,7 @@ describe('AdminRepository', () => {
 
     describe('findUsers', () => {
         it('should return paginated users', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '3' }] })
                 .mockResolvedValueOnce({
                     rows: [
@@ -54,7 +54,7 @@ describe('AdminRepository', () => {
         })
 
         it('should filter by role', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '1' }] })
                 .mockResolvedValueOnce({
                     rows: [{
@@ -81,7 +81,7 @@ describe('AdminRepository', () => {
         })
 
         it('should search by email or name', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '1' }] })
                 .mockResolvedValueOnce({
                     rows: [{
@@ -109,7 +109,7 @@ describe('AdminRepository', () => {
 
     describe('createUser', () => {
         it('should create a new user', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: 'new-user-id',
                     email: 'newuser@example.com',
@@ -138,7 +138,7 @@ describe('AdminRepository', () => {
 
     describe('updateUser', () => {
         it('should update user role', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testUser.id,
                     email: testUser.email,
@@ -157,7 +157,7 @@ describe('AdminRepository', () => {
         })
 
         it('should deactivate user', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testUser.id,
                     email: testUser.email,
@@ -178,7 +178,7 @@ describe('AdminRepository', () => {
 
     describe('deleteUser', () => {
         it('should delete user and return true', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rowCount: 1 })
+             (mockPool.query as any).mockResolvedValue({ rowCount: 1 })
 
             const result = await adminRepo.deleteUser(testUser.id)
 
@@ -186,7 +186,7 @@ describe('AdminRepository', () => {
         })
 
         it('should return false when user not found', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rowCount: 0 })
+             (mockPool.query as any).mockResolvedValue({ rowCount: 0 })
 
             const result = await adminRepo.deleteUser('nonexistent')
 
@@ -196,7 +196,7 @@ describe('AdminRepository', () => {
 
     describe('getSystemStats', () => {
         it('should return system statistics', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({
                     rows: [{ total: '100', active: '80', new_today: '5' }]
                 })
@@ -221,7 +221,7 @@ describe('AdminRepository', () => {
 
     describe('createAuditLog', () => {
         it('should create an audit log entry', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: 'audit-log-id',
                     user_id: testAdmin.id,
@@ -253,7 +253,7 @@ describe('AdminRepository', () => {
 
     describe('findAuditLogs', () => {
         it('should return paginated audit logs', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '50' }] })
                 .mockResolvedValueOnce({
                     rows: [
@@ -293,7 +293,7 @@ describe('AdminRepository', () => {
         })
 
         it('should filter by action', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '10' }] })
                 .mockResolvedValueOnce({
                     rows: [{

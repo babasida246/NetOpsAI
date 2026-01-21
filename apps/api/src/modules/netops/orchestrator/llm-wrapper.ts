@@ -345,7 +345,7 @@ export class NetOpsLLMWrapper {
         metrics: { promptTokens: number; completionTokens: number; latencyMs: number; retries: number }
     }> {
         let lastError: Error | null = null
-        let totalTokens = { prompt: 0, completion: 0 }
+        const totalTokens = { prompt: 0, completion: 0 }
         let totalLatency = 0
 
         for (let attempt = 0; attempt < this.config.maxRetries; attempt++) {

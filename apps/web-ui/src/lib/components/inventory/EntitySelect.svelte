@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { _, isLoading } from '$lib/i18n';
 
 	let {
 		label,
@@ -103,7 +104,7 @@
 		{#if isOpen && !disabled}
 			<div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
 				{#if filtered.length === 0}
-					<div class="p-4 text-sm text-gray-500 text-center">No results found</div>
+					<div class="p-4 text-sm text-gray-500 text-center">{$isLoading ? 'No results found' : $_('common.noResults')}</div>
 				{:else}
 					{#each filtered as option}
 						<button

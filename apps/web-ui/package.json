@@ -14,6 +14,9 @@
         "test:coverage": "vitest --coverage"
     },
     "devDependencies": {
+        "@babel/parser": "^7.28.6",
+        "@babel/traverse": "^7.28.6",
+        "@babel/types": "^7.28.6",
         "@playwright/test": "^1.57.0",
         "@sveltejs/adapter-node": "^5.0.0",
         "@sveltejs/kit": "^2.0.0",
@@ -23,7 +26,9 @@
         "@types/node": "^20.0.0",
         "@vitest/ui": "^4.0.16",
         "autoprefixer": "^10.4.0",
+        "fast-glob": "^3.3.3",
         "jsdom": "^27.3.0",
+        "picocolors": "^1.1.1",
         "postcss": "^8.4.0",
         "svelte": "^5.0.0",
         "svelte-check": "^4.0.0",

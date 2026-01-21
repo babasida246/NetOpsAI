@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { _, isLoading } from '$lib/i18n';
 	import { lotsAPI } from '$lib/api/inventory';
 	import type { InventoryLot } from '$lib/types/inventory';
 
@@ -92,7 +93,7 @@
 	{:else if error}
 		<div class="text-sm text-red-600 dark:text-red-400">Error: {error}</div>
 	{:else if lots.length === 0}
-		<div class="text-sm text-gray-500">No lots available for this item</div>
+		<div class="text-sm text-gray-500">{$isLoading ? 'No lots available for this item' : $_('warehouse.noLotsAvailable')}</div>
 	{:else}
 		<div class="space-y-2 max-h-96 overflow-y-auto">
 			{#each lots as lot}
@@ -118,7 +119,7 @@
 									</span>
 								{:else if expiringSoon}
 									<span class="text-xs px-2 py-0.5 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300 rounded-full font-medium">
-										EXPIRING SOON
+										{$isLoading ? 'EXPIRING SOON' : $_('warehouse.expiringSoon')}
 									</span>
 								{/if}
 							</div>

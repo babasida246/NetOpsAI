@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Label, Select } from 'flowbite-svelte';
   import type { CategorySpecVersion } from '$lib/api/assetCatalogs';
 
@@ -30,9 +31,9 @@
 
 <div class="flex flex-wrap gap-3 items-center">
   <div class="min-w-[220px]">
-    <Label class="mb-2">Spec Version</Label>
+    <Label class="mb-2">{$isLoading ? 'Spec Version' : $_('assets.specVersion')}</Label>
     <Select bind:value={selectedVersionId} on:change={handleSelect}>
-      <option value="" disabled>Select version</option>
+      <option value="" disabled>{$isLoading ? 'Select version' : $_('assets.selectVersion')}</option>
       {#each versions as version}
         <option value={version.id}>
           v{version.version} ({version.status})
@@ -42,11 +43,11 @@
   </div>
   <div class="flex gap-2 items-end">
     <Button size="sm" color="alternative" on:click={() => dispatch('createDraft')} disabled={saving}>
-      New Draft
+      {$isLoading ? 'New Draft' : $_('assets.newDraft')}
     </Button>
     {#if selectedVersion?.status === 'draft'}
       <Button size="sm" on:click={() => dispatch('publish')} disabled={saving}>
-        Publish
+        {$isLoading ? 'Publish' : $_('assets.publish')}
       </Button>
     {/if}
   </div>

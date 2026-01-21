@@ -529,7 +529,7 @@ export class NetOpsRepository {
         const timestampField = this.getStatusTimestampField(status)
         const setClauses = [`status = $1`]
         const params: unknown[] = [status]
-        let paramIndex = 2
+        const paramIndex = 2
 
         if (timestampField) {
             setClauses.push(`${timestampField} = NOW()`)

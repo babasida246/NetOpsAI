@@ -149,9 +149,9 @@
   <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">NetOps Devices</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'NetOps Devices' : $_('netops.devicesPage.title')}</h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {devices.length} devices
+          {$isLoading ? `${devices.length} devices` : $_('netops.devicesPage.summary', { count: devices.length })}
           {#if Object.keys(vendorCounts()).length > 0}
             - {Object.entries(vendorCounts()).map(([v, c]) => `${c} ${v}`).join(' - ')}
           {/if}
@@ -161,11 +161,11 @@
       <div class="flex gap-2">
         <Button color="alternative" on:click={() => showImportModal = true}>
           <Upload class="w-4 h-4 mr-2" />
-          Import CSV
+          {$isLoading ? 'Import CSV' : $_('netops.devicesPage.actions.importCsv')}
         </Button>
         <Button on:click={() => showCreateModal = true}>
           <Plus class="w-4 h-4 mr-2" />
-          Add Device
+          {$isLoading ? 'Add Device' : $_('netops.devicesPage.actions.addDevice')}
         </Button>
         <Button color="alternative" on:click={loadDevices}>
           <RefreshCw class="w-4 h-4" />
@@ -177,29 +177,29 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <Label class="mb-2">Search</Label>
+          <Label class="mb-2">{$isLoading ? 'Search' : $_('netops.devicesPage.filters.search')}</Label>
           <Input
             bind:value={searchQuery}
-            placeholder="Name or IP..."
+            placeholder={$isLoading ? 'Name or IP...' : $_('netops.devicesPage.filters.searchPlaceholder')}
           >
             <Search slot="left" class="w-4 h-4" />
           </Input>
         </div>
         
         <div>
-          <Label class="mb-2">Vendor</Label>
+          <Label class="mb-2">{$isLoading ? 'Vendor' : $_('netops.devicesPage.filters.vendor')}</Label>
           <Select bind:value={filterVendor}>
-            <option value="">All Vendors</option>
-            <option value="cisco">Cisco</option>
-            <option value="mikrotik">MikroTik</option>
-            <option value="fortigate">FortiGate</option>
+            <option value="">{$isLoading ? 'All Vendors' : $_('netops.devicesPage.filters.allVendors')}</option>
+            <option value="cisco">{$isLoading ? 'Cisco' : $_('netops.toolsPage.vendorOptions.cisco')}</option>
+            <option value="mikrotik">{$isLoading ? 'MikroTik' : $_('netops.toolsPage.vendorOptions.mikrotik')}</option>
+            <option value="fortigate">{$isLoading ? 'FortiGate' : $_('netops.toolsPage.vendorOptions.fortigate')}</option>
           </Select>
         </div>
         
         <div>
-          <Label class="mb-2">Site</Label>
+          <Label class="mb-2">{$isLoading ? 'Site' : $_('netops.devicesPage.filters.site')}</Label>
           <Select bind:value={filterSite}>
-            <option value="">All Sites</option>
+            <option value="">{$isLoading ? 'All Sites' : $_('netops.devicesPage.filters.allSites')}</option>
             {#each sites() as site}
               <option value={site}>{site}</option>
             {/each}
@@ -207,15 +207,15 @@
         </div>
         
         <div>
-          <Label class="mb-2">Role</Label>
+          <Label class="mb-2">{$isLoading ? 'Role' : $_('netops.devicesPage.filters.role')}</Label>
           <Select bind:value={filterRole}>
-            <option value="">All Roles</option>
-            <option value="core">Core</option>
-            <option value="distribution">Distribution</option>
-            <option value="access">Access</option>
-            <option value="edge">Edge</option>
-            <option value="firewall">Firewall</option>
-            <option value="wan">WAN</option>
+            <option value="">{$isLoading ? 'All Roles' : $_('netops.devicesPage.filters.allRoles')}</option>
+            <option value="core">{$isLoading ? 'Core' : $_('netops.devicesPage.roles.core')}</option>
+            <option value="distribution">{$isLoading ? 'Distribution' : $_('netops.devicesPage.roles.distribution')}</option>
+            <option value="access">{$isLoading ? 'Access' : $_('netops.devicesPage.roles.access')}</option>
+            <option value="edge">{$isLoading ? 'Edge' : $_('netops.devicesPage.roles.edge')}</option>
+            <option value="firewall">{$isLoading ? 'Firewall' : $_('netops.devicesPage.roles.firewall')}</option>
+            <option value="wan">{$isLoading ? 'WAN' : $_('netops.devicesPage.roles.wan')}</option>
           </Select>
         </div>
       </div>
@@ -223,7 +223,7 @@
       {#if searchQuery || filterVendor || filterSite || filterRole}
         <div class="mt-3">
           <Button size="xs" color="alternative" on:click={clearFilters}>
-            Clear Filters
+            {$isLoading ? 'Clear Filters' : $_('netops.devicesPage.actions.clearFilters')}
           </Button>
         </div>
       {/if}
@@ -241,11 +241,11 @@
     </div>
   {:else if filteredDevices().length === 0}
     <div class="text-center py-12">
-      <p class="text-gray-500 dark:text-gray-400">No devices found</p>
+      <p class="text-gray-500 dark:text-gray-400">{$isLoading ? 'No devices found' : $_('netops.devicesPage.empty')}</p>
       {#if devices.length === 0}
         <Button class="mt-4" on:click={() => showCreateModal = true}>
           <Plus class="w-4 h-4 mr-2" />
-          Add your first device
+          {$isLoading ? 'Add your first device' : $_('netops.devicesPage.emptyCta')}
         </Button>
       {/if}
     </div>
@@ -253,13 +253,13 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <Table>
         <TableHead>
-          <TableHeadCell>Name</TableHeadCell>
-          <TableHeadCell>Vendor</TableHeadCell>
-          <TableHeadCell>Role</TableHeadCell>
-          <TableHeadCell>Site</TableHeadCell>
-          <TableHeadCell>Management IP</TableHeadCell>
-          <TableHeadCell>Last Snapshot</TableHeadCell>
-          <TableHeadCell>Actions</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Name' : $_('netops.devicesPage.table.name')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Vendor' : $_('netops.devicesPage.table.vendor')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Role' : $_('netops.devicesPage.table.role')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Site' : $_('netops.devicesPage.table.site')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Management IP' : $_('netops.devicesPage.table.mgmtIp')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Last Snapshot' : $_('netops.devicesPage.table.lastSnapshot')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Actions' : $_('netops.devicesPage.table.actions')}</TableHeadCell>
         </TableHead>
         <TableBody>
           {#each filteredDevices() as device}
@@ -284,7 +284,7 @@
               </TableBodyCell>
               <TableBodyCell>
                 <Button size="xs" color="alternative" href="/netops/devices/{device.id}">
-                  View
+                  {$isLoading ? 'View' : $_('netops.devicesPage.actions.view')}
                 </Button>
               </TableBodyCell>
             </TableBodyRow>
@@ -298,7 +298,7 @@
 <!-- Create Device Modal -->
 <Modal bind:open={showCreateModal} size="lg">
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">Add New Device</h3>
+    <h3 class="text-xl font-semibold">{$isLoading ? 'Add New Device' : $_('netops.devicesPage.modals.createTitle')}</h3>
   </svelte:fragment>
   
   {#if createError}
@@ -307,61 +307,61 @@
   
   <div class="space-y-4">
     <div>
-      <Label for="name" class="mb-2">Name *</Label>
+      <Label for="name" class="mb-2">{$isLoading ? 'Name' : $_('netops.devicesPage.modals.fields.name')} *</Label>
       <Input id="name" bind:value={newDevice.name} required />
     </div>
     
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <Label for="vendor" class="mb-2">Vendor *</Label>
+        <Label for="vendor" class="mb-2">{$isLoading ? 'Vendor' : $_('netops.devicesPage.modals.fields.vendor')} *</Label>
         <Select id="vendor" bind:value={newDevice.vendor}>
-          <option value="cisco">Cisco</option>
-          <option value="mikrotik">MikroTik</option>
-          <option value="fortigate">FortiGate</option>
+          <option value="cisco">{$isLoading ? 'Cisco' : $_('netops.toolsPage.vendorOptions.cisco')}</option>
+          <option value="mikrotik">{$isLoading ? 'MikroTik' : $_('netops.toolsPage.vendorOptions.mikrotik')}</option>
+          <option value="fortigate">{$isLoading ? 'FortiGate' : $_('netops.toolsPage.vendorOptions.fortigate')}</option>
         </Select>
       </div>
       
       <div>
-        <Label for="role" class="mb-2">Role *</Label>
+        <Label for="role" class="mb-2">{$isLoading ? 'Role' : $_('netops.devicesPage.modals.fields.role')} *</Label>
         <Select id="role" bind:value={newDevice.role}>
-          <option value="core">Core</option>
-          <option value="distribution">Distribution</option>
-          <option value="access">Access</option>
-          <option value="edge">Edge</option>
-          <option value="firewall">Firewall</option>
-          <option value="wan">WAN</option>
+          <option value="core">{$isLoading ? 'Core' : $_('netops.devicesPage.roles.core')}</option>
+          <option value="distribution">{$isLoading ? 'Distribution' : $_('netops.devicesPage.roles.distribution')}</option>
+          <option value="access">{$isLoading ? 'Access' : $_('netops.devicesPage.roles.access')}</option>
+          <option value="edge">{$isLoading ? 'Edge' : $_('netops.devicesPage.roles.edge')}</option>
+          <option value="firewall">{$isLoading ? 'Firewall' : $_('netops.devicesPage.roles.firewall')}</option>
+          <option value="wan">{$isLoading ? 'WAN' : $_('netops.devicesPage.roles.wan')}</option>
         </Select>
       </div>
     </div>
     
     <div>
-      <Label for="mgmt_ip" class="mb-2">Management IP *</Label>
+      <Label for="mgmt_ip" class="mb-2">{$isLoading ? 'Management IP' : $_('netops.devicesPage.modals.fields.mgmtIp')} *</Label>
       <Input id="mgmt_ip" bind:value={newDevice.mgmt_ip} placeholder="192.168.1.1" required />
     </div>
     
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <Label for="model" class="mb-2">Model</Label>
+        <Label for="model" class="mb-2">{$isLoading ? 'Model' : $_('netops.devicesPage.modals.fields.model')}</Label>
         <Input id="model" bind:value={newDevice.model} />
       </div>
       
       <div>
-        <Label for="site" class="mb-2">Site</Label>
+        <Label for="site" class="mb-2">{$isLoading ? 'Site' : $_('netops.devicesPage.modals.fields.site')}</Label>
         <Input id="site" bind:value={newDevice.site} />
       </div>
     </div>
     
     <div>
-      <Label for="os_version" class="mb-2">OS Version</Label>
+      <Label for="os_version" class="mb-2">{$isLoading ? 'OS Version' : $_('netops.devicesPage.modals.fields.osVersion')}</Label>
       <Input id="os_version" bind:value={newDevice.os_version} />
     </div>
   </div>
   
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showCreateModal = false}>Cancel</Button>
+      <Button color="alternative" on:click={() => showCreateModal = false}>{$isLoading ? 'Cancel' : $_('netops.devicesPage.modals.actions.cancel')}</Button>
       <Button on:click={handleCreateDevice} disabled={creating || !newDevice.name || !newDevice.mgmt_ip}>
-        {creating ? 'Creating...' : 'Create Device'}
+        {creating ? ($isLoading ? 'Creating...' : $_('netops.devicesPage.modals.actions.creating')) : ($isLoading ? 'Create Device' : $_('netops.devicesPage.modals.actions.create'))}
       </Button>
     </div>
   </svelte:fragment>
@@ -370,7 +370,7 @@
 <!-- Import CSV Modal -->
 <Modal bind:open={showImportModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">Import Devices from CSV</h3>
+    <h3 class="text-xl font-semibold">{$isLoading ? 'Import Devices from CSV' : $_('netops.devicesPage.modals.importTitle')}</h3>
   </svelte:fragment>
   
   {#if importError}
@@ -383,7 +383,7 @@
   
   <div class="space-y-4">
     <div>
-      <Label for="csv-file" class="mb-2">CSV File</Label>
+      <Label for="csv-file" class="mb-2">{$isLoading ? 'CSV File' : $_('netops.devicesPage.modals.csvFile')}</Label>
       <Input
         id="csv-file"
         type="file"
@@ -396,17 +396,16 @@
     </div>
     
     <Alert color="blue">
-      <p class="font-semibold mb-2">CSV Format:</p>
-      <pre class="text-xs">name,vendor,model,os_version,site,role,mgmt_ip
-core-sw-01,cisco,C9300,17.6.3,HQ,core,192.168.1.1</pre>
+      <p class="font-semibold mb-2">{$isLoading ? 'CSV Format:' : $_('netops.devicesPage.modals.formatTitle')}</p>
+      <pre class="text-xs">{$isLoading ? 'name,vendor,model,os_version,site,role,mgmt_ip\ncore-sw-01,cisco,C9300,17.6.3,HQ,core,192.168.1.1' : $_('netops.devicesPage.modals.formatExample')}</pre>
     </Alert>
   </div>
   
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showImportModal = false}>Cancel</Button>
+      <Button color="alternative" on:click={() => showImportModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
       <Button on:click={handleImport} disabled={importing || !importFile}>
-        {importing ? 'Importing...' : 'Import'}
+        {$isLoading ? 'Import' : $_('common.import')}
       </Button>
     </div>
   </svelte:fragment>

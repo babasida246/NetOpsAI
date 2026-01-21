@@ -1,4 +1,4 @@
-# NetOpsAI Gateway Documentation
+![alt text](image.png)# NetOpsAI Gateway Documentation
 
 Welcome to the NetOpsAI Gateway documentation. This index provides a guided path through all documentation.
 

@@ -1,0 +1,12 @@
+node_modules
+dist
+.svelte-kit
+build
+coverage
+.pnpm-store
+.turbo
+*.min.js
+**/.ignored_bcrypt
+playwright-report
+test-results
+logs

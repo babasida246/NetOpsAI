@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { Input, Label, Select, Textarea } from 'flowbite-svelte';
   import type { CategorySpecDef, SpecFieldType } from '$lib/api/assetCatalogs';
 
@@ -165,7 +166,7 @@
           disabled={def.isReadonly}
           on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}
         >
-          <option value="">Select option</option>
+          <option value="">{$isLoading ? 'Select option' : $_('assets.placeholders.selectOption')}</option>
           {#each def.enumValues ?? [] as option}
             <option value={option}>{option}</option>
           {/each}

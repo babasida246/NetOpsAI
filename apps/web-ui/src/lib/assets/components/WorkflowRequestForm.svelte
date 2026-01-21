@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Label, Select, Textarea } from 'flowbite-svelte';
   import { createWorkflowRequest } from '$lib/api/assetMgmt';
 
@@ -39,34 +40,34 @@
     <Alert color="red">{error}</Alert>
   {/if}
   <div>
-    <Label class="mb-2">Request Type</Label>
+    <Label class="mb-2">{$isLoading ? 'Request Type' : $_('assets.requestType')}</Label>
     <Select bind:value={requestType}>
-      <option value="assign">Assign</option>
-      <option value="return">Return</option>
-      <option value="move">Move</option>
-      <option value="repair">Repair</option>
-      <option value="dispose">Dispose</option>
+      <option value="assign">{$isLoading ? 'Assign' : $_('assets.assign')}</option>
+      <option value="return">{$isLoading ? 'Return' : $_('assets.return')}</option>
+      <option value="move">{$isLoading ? 'Move' : $_('assets.move')}</option>
+      <option value="repair">{$isLoading ? 'Repair' : $_('assets.repair')}</option>
+      <option value="dispose">{$isLoading ? 'Dispose' : $_('assets.dispose')}</option>
     </Select>
   </div>
   <div>
-    <Label class="mb-2">Asset ID</Label>
+    <Label class="mb-2">{$isLoading ? 'Asset ID' : $_('assets.assetId')}</Label>
     <Input bind:value={assetId} placeholder="UUID" />
   </div>
   <div class="grid grid-cols-2 gap-4">
     <div>
-      <Label class="mb-2">From Department</Label>
+      <Label class="mb-2">{$isLoading ? 'From Department' : $_('assets.fromDepartment')}</Label>
       <Input bind:value={fromDept} />
     </div>
     <div>
-      <Label class="mb-2">To Department</Label>
+      <Label class="mb-2">{$isLoading ? 'To Department' : $_('assets.toDepartment')}</Label>
       <Input bind:value={toDept} />
     </div>
   </div>
   <div>
-    <Label class="mb-2">Payload (JSON)</Label>
-    <Textarea bind:value={payload} rows="4" placeholder={'e.g. {"note":"optional"}'} />
+    <Label class="mb-2">{$isLoading ? 'Payload (JSON)' : $_('assets.payloadJson')}</Label>
+    <Textarea bind:value={payload} rows="4" placeholder={$isLoading ? 'e.g. {"note":"optional"}' : $_('assets.placeholders.optionalNote')} />
   </div>
   <Button on:click={handleSubmit} disabled={submitting}>
-    {submitting ? 'Submitting...' : 'Submit Request'}
+    {submitting ? ($isLoading ? 'Submitting...' : $_('common.submitting')) : ($isLoading ? 'Submit Request' : $_('assets.submitRequest'))}
   </Button>
 </div>

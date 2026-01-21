@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import type { SparePartRecord, StockDocumentLine } from '$lib/api/warehouse';
 
   let {
@@ -46,14 +47,14 @@
   <table class="min-w-full text-sm text-left text-slate-700 dark:text-slate-200">
     <thead class="bg-slate-50 dark:bg-slate-800 text-xs uppercase">
       <tr>
-        <th class="px-3 py-2">Part</th>
-        <th class="px-3 py-2">Qty</th>
-        <th class="px-3 py-2">Unit Cost</th>
-        <th class="px-3 py-2">Serial</th>
+        <th class="px-3 py-2">{$isLoading ? 'Part' : $_('warehouse.part')}</th>
+        <th class="px-3 py-2">{$isLoading ? 'Qty' : $_('warehouse.qty')}</th>
+        <th class="px-3 py-2">{$isLoading ? 'Unit Cost' : $_('warehouse.unitCost')}</th>
+        <th class="px-3 py-2">{$isLoading ? 'Serial' : $_('warehouse.serial')}</th>
         {#if docType === 'adjust'}
-          <th class="px-3 py-2">Direction</th>
+          <th class="px-3 py-2">{$isLoading ? 'Direction' : $_('warehouse.direction')}</th>
         {/if}
-        <th class="px-3 py-2">Note</th>
+        <th class="px-3 py-2">{$isLoading ? 'Note' : $_('warehouse.note')}</th>
         {#if !readonly}
           <th class="px-3 py-2 w-10"></th>
         {/if}
@@ -63,7 +64,7 @@
       {#if lines.length === 0}
         <tr>
           <td class="px-3 py-6 text-center text-slate-500" colspan={docType === 'adjust' ? 6 : 5}>
-            No lines added.
+            {$isLoading ? 'No lines added.' : $_('warehouse.noLines')}
           </td>
         </tr>
       {/if}
@@ -78,7 +79,7 @@
                 value={line.partId}
                 onchange={(event) => updateLine(index, 'partId', (event.currentTarget as HTMLSelectElement).value)}
               >
-                <option value="">Select part</option>
+                <option value="">{$isLoading ? 'Select part' : $_('warehouse.selectPart')}</option>
                 {#each partOptions as part}
                   <option value={part.id}>{part.label}</option>
                 {/each}
@@ -136,8 +137,8 @@
                   value={line.adjustDirection ?? 'plus'}
                   onchange={(event) => updateLine(index, 'adjustDirection', (event.currentTarget as HTMLSelectElement).value as 'plus' | 'minus')}
                 >
-                  <option value="plus">Plus</option>
-                  <option value="minus">Minus</option>
+                  <option value="plus">{$isLoading ? 'Plus' : $_('common.plus')}</option>
+                  <option value="minus">{$isLoading ? 'Minus' : $_('common.minus')}</option>
                 </select>
               {/if}
             </td>

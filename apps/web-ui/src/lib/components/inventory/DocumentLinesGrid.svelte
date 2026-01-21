@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { _, isLoading } from '$lib/i18n';
 	import type { InventoryDocumentLine, InventoryItem, WarehouseLocation, UOM, InventoryLot } from '$lib/types/inventory';
 	import EntitySelect from './EntitySelect.svelte';
 	import UomInput from './UomInput.svelte';
@@ -135,7 +136,7 @@
 								label=""
 								bind:value={line.itemId}
 								options={itemOptions}
-								placeholder="Select item..."
+								placeholder={$isLoading ? 'Select item...' : $_('assets.placeholders.selectItem')}
 								on:select={(e) => updateLine(index, 'itemId', e.detail)}
 							/>
 						{/if}
@@ -149,7 +150,7 @@
 									label=""
 									bind:value={line.sourceLocationId}
 									options={locationOptions}
-									placeholder="Select..."
+									placeholder={$isLoading ? 'Select...' : $_('assets.placeholders.select')}
 									on:select={(e) => updateLine(index, 'sourceLocationId', e.detail)}
 								/>
 							{/if}
@@ -164,7 +165,7 @@
 									label=""
 									bind:value={line.targetLocationId}
 									options={locationOptions}
-									placeholder="Select..."
+									placeholder={$isLoading ? 'Select...' : $_('assets.placeholders.select')}
 									on:select={(e) => updateLine(index, 'targetLocationId', e.detail)}
 								/>
 							{/if}
@@ -257,7 +258,7 @@
 								class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 								bind:value={line.note}
 								on:input={(e) => updateLine(index, 'note', e.currentTarget.value)}
-								placeholder="Optional note..."
+								placeholder={$isLoading ? 'Optional note...' : $_('assets.placeholders.optionalNote')}
 							/>
 						{/if}
 					</td>

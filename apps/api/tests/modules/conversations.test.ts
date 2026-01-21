@@ -16,7 +16,7 @@ describe('ConversationRepository', () => {
 
     describe('findById', () => {
         it('should return conversation when found', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testConversation.id,
                     user_id: testUser.id,
@@ -38,7 +38,7 @@ describe('ConversationRepository', () => {
         })
 
         it('should return null when not found', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rows: [] })
+             (mockPool.query as any).mockResolvedValue({ rows: [] })
 
             const conversation = await conversationRepo.findById('nonexistent', testUser.id)
 
@@ -48,7 +48,7 @@ describe('ConversationRepository', () => {
 
     describe('findAll', () => {
         it('should return paginated conversations', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '2' }] })
                 .mockResolvedValueOnce({
                     rows: [
@@ -89,7 +89,7 @@ describe('ConversationRepository', () => {
         })
 
         it('should filter by status', async () => {
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ count: '1' }] })
                 .mockResolvedValueOnce({
                     rows: [{
@@ -119,7 +119,7 @@ describe('ConversationRepository', () => {
 
     describe('create', () => {
         it('should create a new conversation', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testConversation.id,
                     user_id: testUser.id,
@@ -146,7 +146,7 @@ describe('ConversationRepository', () => {
 
     describe('update', () => {
         it('should update conversation title', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testConversation.id,
                     user_id: testUser.id,
@@ -170,7 +170,7 @@ describe('ConversationRepository', () => {
         })
 
         it('should archive conversation', async () => {
-            ; (mockPool.query as any).mockResolvedValue({
+             (mockPool.query as any).mockResolvedValue({
                 rows: [{
                     id: testConversation.id,
                     user_id: testUser.id,
@@ -196,7 +196,7 @@ describe('ConversationRepository', () => {
 
     describe('delete', () => {
         it('should delete conversation and return true', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rowCount: 1 })
+             (mockPool.query as any).mockResolvedValue({ rowCount: 1 })
 
             const result = await conversationRepo.delete(testConversation.id, testUser.id)
 
@@ -204,7 +204,7 @@ describe('ConversationRepository', () => {
         })
 
         it('should return false when conversation not found', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rowCount: 0 })
+             (mockPool.query as any).mockResolvedValue({ rowCount: 0 })
 
             const result = await conversationRepo.delete('nonexistent', testUser.id)
 
@@ -215,7 +215,7 @@ describe('ConversationRepository', () => {
     describe('createMessage', () => {
         it('should create a message in conversation', async () => {
             // First query: verify conversation
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({
                     rows: [{
                         id: testConversation.id,
@@ -257,7 +257,7 @@ describe('ConversationRepository', () => {
         })
 
         it('should return null for non-existent conversation', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rows: [] })
+             (mockPool.query as any).mockResolvedValue({ rows: [] })
 
             const message = await conversationRepo.createMessage(
                 'nonexistent',

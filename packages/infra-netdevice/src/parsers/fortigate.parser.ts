@@ -81,7 +81,7 @@ export class FortiGateParser extends BaseParser {
                     const match = line.match(/^set\s+(\S+)\s+(.+)$/i)
                     if (match) {
                         const key = match[1]
-                        let value = match[2].replace(/"/g, '').trim()
+                        const value = match[2].replace(/"/g, '').trim()
                         currentBlock[key] = value
                     }
                     continue

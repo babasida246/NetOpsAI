@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+	import { _, isLoading } from '$lib/i18n';
 	import { hasPermission, type Permission } from '$lib/stores/permissionStore';
 	
 	let {
@@ -23,7 +24,7 @@
 		<slot />
 	</div>
 {:else if fallback === 'show'}
-	<div class="opacity-50" title="You don't have permission for this action">
+	<div class="opacity-50" title={$isLoading ? "You don't have permission for this action" : $_('warehouse.permissionDenied')}>
 		<slot />
 	</div>
 {/if}

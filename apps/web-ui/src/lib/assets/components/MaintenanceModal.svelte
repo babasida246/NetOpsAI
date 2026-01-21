@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Modal, Select } from 'flowbite-svelte';
   import type { MaintenanceSeverity } from '$lib/api/assets';
 
@@ -36,37 +37,37 @@
 
 <Modal bind:open on:close={reset}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">Open Maintenance {assetCode ? `(${assetCode})` : ''}</h3>
+    <h3 class="text-lg font-semibold">{$isLoading ? 'Open Maintenance' : $_('maintenance.openMaintenance')} {assetCode ? `(${assetCode})` : ''}</h3>
   </svelte:fragment>
 
   <div class="space-y-4">
     <div>
-      <Label class="mb-2">Title</Label>
-      <Input bind:value={title} placeholder="Issue summary" />
+      <Label class="mb-2">{$isLoading ? 'Title' : $_('maintenance.ticketTitle')}</Label>
+      <Input bind:value={title} placeholder={$isLoading ? 'Issue summary' : $_('assets.placeholders.issueSummary')} />
     </div>
     <div>
-      <Label class="mb-2">Severity</Label>
+      <Label class="mb-2">{$isLoading ? 'Severity' : $_('maintenance.severity')}</Label>
       <Select bind:value={severity}>
-        <option value="low">Low</option>
-        <option value="medium">Medium</option>
-        <option value="high">High</option>
-        <option value="critical">Critical</option>
+        <option value="low">{$isLoading ? 'Low' : $_('maintenance.low')}</option>
+        <option value="medium">{$isLoading ? 'Medium' : $_('maintenance.medium')}</option>
+        <option value="high">{$isLoading ? 'High' : $_('maintenance.high')}</option>
+        <option value="critical">{$isLoading ? 'Critical' : $_('maintenance.critical')}</option>
       </Select>
     </div>
     <div>
-      <Label class="mb-2">Diagnosis</Label>
-      <Input bind:value={diagnosis} placeholder="Optional diagnosis" />
+      <Label class="mb-2">{$isLoading ? 'Diagnosis' : $_('maintenance.diagnosis')}</Label>
+      <Input bind:value={diagnosis} placeholder={$isLoading ? 'Optional diagnosis' : $_('assets.placeholders.optionalDiagnosis')} />
     </div>
     <div>
-      <Label class="mb-2">Resolution</Label>
-      <Input bind:value={resolution} placeholder="Optional resolution" />
+      <Label class="mb-2">{$isLoading ? 'Resolution' : $_('maintenance.resolution')}</Label>
+      <Input bind:value={resolution} placeholder={$isLoading ? 'Optional resolution' : $_('assets.placeholders.optionalResolution')} />
     </div>
   </div>
 
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => { open = false; }}>Cancel</Button>
-      <Button on:click={submit} disabled={!title}>Create</Button>
+      <Button color="alternative" on:click={() => { open = false; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+      <Button on:click={submit} disabled={!title}>{$isLoading ? 'Create' : $_('common.create')}</Button>
     </div>
   </svelte:fragment>
 </Modal>

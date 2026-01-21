@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button } from 'flowbite-svelte';
   import SpecFieldForm from './SpecFieldForm.svelte';
   import SpecDefsTable from './SpecDefsTable.svelte';
@@ -240,11 +241,13 @@
       {saving ? 'Saving...' : editingId ? 'Update Field' : 'Add Field'}
     </Button>
     {#if editingId}
-      <Button color="alternative" on:click={resetForm} disabled={disabled}>Cancel</Button>
+      <Button color="alternative" on:click={resetForm} disabled={disabled}>
+        {$isLoading ? 'Cancel' : $_('common.cancel')}
+      </Button>
     {/if}
     {#if specDefs.length === 0 && canApplyTemplate}
       <Button color="alternative" on:click={applyTemplate} disabled={saving}>
-        Apply Template
+        {$isLoading ? 'Apply Template' : $_('assets.applyTemplate')}
       </Button>
     {/if}
   </div>

@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
   import { Pencil, Trash2 } from 'lucide-svelte';
   import { createVendor, deleteVendor, updateVendor } from '$lib/api/assetCatalogs';
@@ -69,32 +70,32 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div>
-        <Label class="mb-2">Vendor name</Label>
-        <Input bind:value={form.name} placeholder="Dell" />
+        <Label class="mb-2">{$isLoading ? 'Vendor name' : $_('assets.vendorName')}</Label>
+        <Input bind:value={form.name} placeholder={$isLoading ? 'Dell' : $_('assets.placeholders.vendorName')} />
       </div>
       <div>
-        <Label class="mb-2">Tax code</Label>
-        <Input bind:value={form.taxCode} placeholder="Optional" />
+        <Label class="mb-2">{$isLoading ? 'Tax code' : $_('assets.taxCode')}</Label>
+        <Input bind:value={form.taxCode} placeholder={$isLoading ? 'Optional' : $_('assets.placeholders.taxCode')} />
       </div>
       <div>
-        <Label class="mb-2">Phone</Label>
-        <Input bind:value={form.phone} placeholder="Optional" />
+        <Label class="mb-2">{$isLoading ? 'Phone' : $_('assets.phone')}</Label>
+        <Input bind:value={form.phone} placeholder={$isLoading ? 'Optional' : $_('assets.placeholders.phone')} />
       </div>
       <div>
-        <Label class="mb-2">Email</Label>
-        <Input bind:value={form.email} placeholder="Optional" />
+        <Label class="mb-2">{$isLoading ? 'Email' : $_('assets.email')}</Label>
+        <Input bind:value={form.email} placeholder={$isLoading ? 'Optional' : $_('assets.placeholders.email')} />
       </div>
       <div class="md:col-span-2">
-        <Label class="mb-2">Address</Label>
-        <Input bind:value={form.address} placeholder="Optional" />
+        <Label class="mb-2">{$isLoading ? 'Address' : $_('assets.address')}</Label>
+        <Input bind:value={form.address} placeholder={$isLoading ? 'Optional' : $_('assets.placeholders.address')} />
       </div>
     </div>
     <div class="flex gap-2">
       <Button on:click={save} disabled={saving || !form.name.trim()}>
-        {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
+        {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : editingId ? ($isLoading ? 'Update' : $_('common.update')) : ($isLoading ? 'Add' : $_('common.add'))}
       </Button>
       {#if editingId}
-        <Button color="alternative" on:click={reset}>Cancel</Button>
+        <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
       {/if}
     </div>
   </div>
@@ -102,11 +103,11 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
     <Table>
       <TableHead>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell>Tax code</TableHeadCell>
-        <TableHeadCell>Phone</TableHeadCell>
-        <TableHeadCell>Email</TableHeadCell>
-        <TableHeadCell class="w-32">Actions</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Tax code' : $_('assets.taxCode')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Phone' : $_('assets.phone')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Email' : $_('assets.email')}</TableHeadCell>
+        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
       </TableHead>
       <TableBody>
         {#each vendors as vendor}

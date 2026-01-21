@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { createEventDispatcher } from 'svelte';
+	import { _, isLoading } from '$lib/i18n';
 	import type { Currency, FxRate } from '$lib/types/inventory';
 	import { fxRatesAPI } from '$lib/api/inventory';
 
@@ -58,7 +59,7 @@
 			</div>
 			<div class="flex-1">
 				<h3 class="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
-					Currency Conversion Preview
+					{$isLoading ? 'Currency Conversion Preview' : $_('warehouse.currencyConversion')}
 				</h3>
 				
 				{#if loading}
@@ -98,7 +99,7 @@
 						{/if}
 					</div>
 				{:else}
-					<p class="text-sm text-blue-700 dark:text-blue-400">No exchange rate available</p>
+					<p class="text-sm text-blue-700 dark:text-blue-400">{$isLoading ? 'No exchange rate available' : $_('warehouse.noExchangeRate')}</p>
 				{/if}
 			</div>
 		</div>

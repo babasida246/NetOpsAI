@@ -1,5 +1,6 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Label, Select } from 'flowbite-svelte';
   import { scanInventoryAsset } from '$lib/api/assetMgmt';
 
@@ -44,13 +45,13 @@
   {/if}
   <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
     <div>
-      <Label class="mb-2">Asset Code</Label>
+      <Label class="mb-2">{$isLoading ? 'Asset Code' : $_('assets.assetCode')}</Label>
       <Input bind:value={assetCode} placeholder="ASSET-001" />
     </div>
     <div>
-      <Label class="mb-2">Scanned Location</Label>
+      <Label class="mb-2">{$isLoading ? 'Scanned Location' : $_('assets.scannedLocation')}</Label>
       <Select bind:value={scannedLocationId}>
-        <option value="">Select location</option>
+        <option value="">{$isLoading ? 'Select location' : $_('assets.placeholders.selectLocation')}</option>
         {#each locations as location}
           <option value={location.id}>{location.name}</option>
         {/each}
@@ -58,7 +59,7 @@
     </div>
     <div class="flex items-end">
       <Button on:click={handleScan} disabled={scanning || !assetCode}>
-        {scanning ? 'Scanning...' : 'Scan'}
+        {scanning ? ($isLoading ? 'Scanning...' : $_('assets.scanning')) : ($isLoading ? 'Scan' : $_('assets.scan'))}
       </Button>
     </div>
   </div>

@@ -1,6 +1,7 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button, Input, Label, Select, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Pencil, Trash2 } from 'lucide-svelte';
   import { createLocation, deleteLocation, updateLocation } from '$lib/api/assetCatalogs';
 
@@ -57,13 +58,13 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
-        <Label class="mb-2">Location name</Label>
+        <Label class="mb-2">{$isLoading ? 'Location name' : $_('assets.locationName')}</Label>
         <Input bind:value={form.name} placeholder="HQ / Floor 2" />
       </div>
       <div>
-        <Label class="mb-2">Parent location</Label>
+        <Label class="mb-2">{$isLoading ? 'Parent location' : $_('assets.parentLocation')}</Label>
         <Select bind:value={form.parentId}>
-          <option value="">No parent</option>
+          <option value="">{$isLoading ? 'No parent' : $_('assets.noParent')}</option>
           {#each locations as location}
             <option value={location.id}>{location.name}</option>
           {/each}
@@ -75,7 +76,7 @@
         {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
       </Button>
       {#if editingId}
-        <Button color="alternative" on:click={reset}>Cancel</Button>
+        <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
       {/if}
     </div>
   </div>
@@ -83,10 +84,10 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
     <Table>
       <TableHead>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell>Parent</TableHeadCell>
-        <TableHeadCell>Path</TableHeadCell>
-        <TableHeadCell class="w-32">Actions</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Parent' : $_('assets.parent')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Path' : $_('assets.path')}</TableHeadCell>
+        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
       </TableHead>
       <TableBody>
         {#each locations as location}

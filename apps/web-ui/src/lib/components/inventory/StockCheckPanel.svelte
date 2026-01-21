@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+	import { _, isLoading } from '$lib/i18n';
 	import { reportsAPI } from '$lib/api/inventory';
 	import type { StockAvailable } from '$lib/types/inventory';
 
@@ -58,25 +59,25 @@
 	</h3>
 
 	{#if loading}
-		<div class="text-sm text-gray-500">Checking stock...</div>
+		<div class="text-sm text-gray-500">{$isLoading ? 'Checking stock...' : $_('warehouse.checkingStock')}</div>
 	{:else if error}
-		<div class="text-sm text-red-600 dark:text-red-400">Error: {error}</div>
+		<div class="text-sm text-red-600 dark:text-red-400">{$isLoading ? 'Error' : $_('common.error')}: {error}</div>
 	{:else if stockData.length === 0}
-		<div class="text-sm text-gray-500">No stock information available</div>
+		<div class="text-sm text-gray-500">{$isLoading ? 'No stock information available' : $_('warehouse.noStockInfo')}</div>
 	{:else}
 		<div class="space-y-3">
 			<!-- Summary -->
 			<div class="flex items-center justify-between p-3 {isSufficient ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'} rounded-lg">
 				<div>
 					<div class="text-xs {isSufficient ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
-						Total Available
+						{$isLoading ? 'Total Available' : $_('warehouse.totalAvailable')}
 					</div>
 					<div class="text-lg font-bold {isSufficient ? 'text-green-900 dark:text-green-300' : 'text-red-900 dark:text-red-300'}">
 						{totalAvailable.toLocaleString()}
 					</div>
 				</div>
 				<div>
-					<div class="text-xs text-gray-600 dark:text-gray-400">Required</div>
+					<div class="text-xs text-gray-600 dark:text-gray-400">{$isLoading ? 'Required' : $_('common.required')}</div>
 					<div class="text-lg font-medium text-gray-900 dark:text-white">
 						{requiredQuantity.toLocaleString()}
 					</div>

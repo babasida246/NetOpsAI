@@ -1,15 +1,16 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { page } from '$app/stores';
 
   let { children } = $props();
 
   const tabs = [
-    { href: '/warehouse/stock', label: 'Stock' },
-    { href: '/warehouse/documents', label: 'Documents' },
-    { href: '/warehouse/ledger', label: 'Ledger' },
-    { href: '/warehouse/parts', label: 'Spare Parts' },
-    { href: '/warehouse/warehouses', label: 'Warehouses' },
-    { href: '/warehouse/reports', label: 'Reports' }
+    { href: '/warehouse/stock', labelKey: 'warehouse.tabs.stock' },
+    { href: '/warehouse/documents', labelKey: 'warehouse.tabs.documents' },
+    { href: '/warehouse/ledger', labelKey: 'warehouse.tabs.ledger' },
+    { href: '/warehouse/parts', labelKey: 'warehouse.tabs.spareParts' },
+    { href: '/warehouse/warehouses', labelKey: 'warehouse.tabs.warehouses' },
+    { href: '/warehouse/reports', labelKey: 'warehouse.tabs.reports' }
   ];
 
   function isActive(href: string) {
@@ -19,9 +20,9 @@
 
 <div class="page-shell page-content py-6 lg:py-8 space-y-6">
   <div>
-    <h1 class="text-2xl font-semibold tracking-tight">Warehouse</h1>
+    <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'Warehouse' : $_('warehouse.title')}</h1>
     <p class="text-sm text-slate-500 dark:text-slate-400">
-      Manage stock, documents, and reporting for spare parts.
+      {$isLoading ? 'Manage stock, documents, and reporting for spare parts.' : $_('warehouse.description')}
     </p>
   </div>
 
@@ -35,7 +36,7 @@
             : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
         }`}
       >
-        {tab.label}
+        {$_(tab.labelKey)}
       </a>
     {/each}
   </div>

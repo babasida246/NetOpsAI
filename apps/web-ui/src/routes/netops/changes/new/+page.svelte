@@ -22,17 +22,17 @@
   let params = $state('{}');
   
   const steps = [
-    { number: 1, name: 'Basics', description: 'Title and intent type' },
-    { number: 2, name: 'Scope', description: 'Select devices' },
-    { number: 3, name: 'Parameters', description: 'Configure intent' },
-    { number: 4, name: 'Review', description: 'Confirm and create' }
+    { number: 1, key: 'basics' },
+    { number: 2, key: 'scope' },
+    { number: 3, key: 'parameters' },
+    { number: 4, key: 'review' }
   ];
   
   const commonIntents = [
-    { value: 'VLAN_CREATE_AND_TRUNK', label: 'Create VLAN and Trunk' },
-    { value: 'FORTIGATE_POLICY_ALLOW_SERVICE_WITH_LOG', label: 'FortiGate Allow Policy with Logging' },
-    { value: 'FORTIGATE_NAT_SNAT_DNAT', label: 'FortiGate NAT (SNAT/DNAT)' },
-    { value: 'CUSTOM', label: 'Custom Intent' }
+    { value: 'VLAN_CREATE_AND_TRUNK', label: '' },
+    { value: 'FORTIGATE_POLICY_ALLOW_SERVICE_WITH_LOG', label: '' },
+    { value: 'FORTIGATE_NAT_SNAT_DNAT', label: '' },
+    { value: 'CUSTOM', label: '' }
   ];
   
   const canGoNext = $derived(() => {
@@ -133,15 +133,15 @@
   <div class="mb-4">
     <Button href="/netops/changes" color="alternative" size="sm">
       <ArrowLeft class="w-4 h-4 mr-2" />
-      Back to Changes
+      {$isLoading ? 'Back to Changes' : $_('netops.changeForm.back')}
     </Button>
   </div>
   
   <!-- Header -->
   <div class="mb-8">
-    <h1 class="text-2xl font-semibold mb-2">Create Change Request</h1>
+    <h1 class="text-2xl font-semibold mb-2">{$isLoading ? 'Create Change Request' : $_('netops.changeForm.title')}</h1>
     <p class="text-gray-600 dark:text-gray-400">
-      Define your network change intent and scope
+      {$isLoading ? 'Define your network change intent and scope' : $_('netops.changeForm.subtitle')}
     </p>
   </div>
   
@@ -164,8 +164,8 @@
               {/if}
             </div>
             <div class="text-center mt-2">
-              <p class="text-sm font-medium">{step.name}</p>
-              <p class="text-xs text-gray-500 hidden sm:block">{step.description}</p>
+              <p class="text-sm font-medium">{$isLoading ? (step.key === 'basics' ? 'Basics' : step.key === 'scope' ? 'Scope' : step.key === 'parameters' ? 'Parameters' : 'Review') : $_('netops.changeForm.steps.' + step.key)}</p>
+              <p class="text-xs text-gray-500 hidden sm:block">{$isLoading ? (step.key === 'basics' ? 'Title and intent type' : step.key === 'scope' ? 'Select devices' : step.key === 'parameters' ? 'Configure intent' : 'Confirm and create') : $_('netops.changeForm.stepDescriptions.' + step.key)}</p>
             </div>
           </div>
           {#if step.number < steps.length}
@@ -187,45 +187,45 @@
   <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
     {#if currentStep === 1}
       <div class="space-y-4">
-        <h2 class="text-lg font-semibold mb-4">Basic Information</h2>
+        <h2 class="text-lg font-semibold mb-4">{$isLoading ? 'Basics' : $_('netops.changeForm.steps.basics')}</h2>
         
         <div>
-          <Label for="title" class="mb-2">Title *</Label>
+          <Label for="title" class="mb-2">{$isLoading ? 'Title' : $_('netops.changeForm.fields.title')} *</Label>
           <Input
             id="title"
             bind:value={title}
-            placeholder="e.g., Add VLAN 100 for PACS network"
+            placeholder={$isLoading ? 'e.g., Add VLAN 100 for PACS network' : $_('netops.changeForm.fields.titlePlaceholder')}
             required
           />
         </div>
         
         <div>
-          <Label for="intent" class="mb-2">Intent Type *</Label>
+          <Label for="intent" class="mb-2">{$isLoading ? 'Intent Type' : $_('netops.changeForm.fields.intentType')} *</Label>
           <Select id="intent" bind:value={intentType}>
-            <option value="">Select intent type...</option>
+            <option value="">{$isLoading ? 'Select intent type...' : $_('netops.changeForm.fields.intentPlaceholder')}</option>
             {#each commonIntents as intent}
-              <option value={intent.value}>{intent.label}</option>
+              <option value={intent.value}>{$isLoading ? intent.value : $_('netops.changeForm.intents.' + intent.value)}</option>
             {/each}
           </Select>
         </div>
         
         <div>
-          <Label for="risk" class="mb-2">Risk Tier</Label>
+          <Label for="risk" class="mb-2">{$isLoading ? 'Risk Tier' : $_('netops.changeForm.fields.riskTier')}</Label>
           <Select id="risk" bind:value={riskTier}>
-            <option value="low">Low</option>
-            <option value="med">Medium</option>
-            <option value="high">High</option>
+            <option value="low">{$isLoading ? 'Low' : $_('netops.changesPage.risks.low')}</option>
+            <option value="med">{$isLoading ? 'Medium' : $_('netops.changesPage.risks.med')}</option>
+            <option value="high">{$isLoading ? 'High' : $_('netops.changesPage.risks.high')}</option>
           </Select>
           <p class="text-xs text-gray-500 mt-1">
-            Risk tier determines approval requirements
+            {$isLoading ? 'Risk tier determines approval requirements' : $_('netops.changeForm.fields.riskNote')}
           </p>
         </div>
       </div>
     {:else if currentStep === 2}
       <div>
-        <h2 class="text-lg font-semibold mb-4">Select Devices</h2>
+        <h2 class="text-lg font-semibold mb-4">{$isLoading ? 'Select Devices' : $_('netops.changeForm.fields.selectDevices')}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Choose devices this change will affect
+          {$isLoading ? 'Choose devices this change will affect' : $_('netops.changeForm.fields.selectDevicesSubtitle')}
         </p>
         
         {#if loadingDevices}
@@ -233,9 +233,7 @@
             <Spinner />
           </div>
         {:else if devices.length === 0}
-          <Alert color="blue">
-            No devices available. Add devices first before creating changes.
-          </Alert>
+          <Alert color="blue">{$isLoading ? 'No devices available. Add devices first before creating changes.' : $_('netops.changeForm.alerts.noDevices')}</Alert>
         {:else}
           <div class="space-y-2 max-h-96 overflow-y-auto">
             {#each devices as device}
@@ -267,7 +265,7 @@
           {#if deviceScope.length > 0}
             <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Selected: {deviceScope.length} {deviceScope.length === 1 ? 'device' : 'devices'}
+                {$isLoading ? `Selected: ${deviceScope.length} devices` : $_('netops.changeForm.alerts.selectedDevices', { count: deviceScope.length })}
               </p>
             </div>
           {/if}
@@ -275,48 +273,44 @@
       </div>
     {:else if currentStep === 3}
       <div>
-        <h2 class="text-lg font-semibold mb-4">Intent Parameters</h2>
+        <h2 class="text-lg font-semibold mb-4">{$isLoading ? 'Intent Parameters' : $_('netops.changeForm.fields.intentParameters')}</h2>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Configure parameters for this change intent
+          {$isLoading ? 'Configure parameters for this change intent' : $_('netops.changeForm.fields.parametersHelp')}
         </p>
         
         <div>
-          <Label for="params" class="mb-2">Parameters (JSON)</Label>
+          <Label for="params" class="mb-2">{$isLoading ? 'Parameters (JSON)' : $_('netops.changeForm.fields.parameters')}</Label>
           <Textarea
             id="params"
             bind:value={params}
             rows={12}
             class="font-mono text-sm"
           />
-          <p class="text-xs text-gray-500 mt-1">
-            Provide intent-specific parameters in JSON format
-          </p>
+          <p class="text-xs text-gray-500 mt-1">{$isLoading ? 'Provide intent-specific parameters in JSON format' : $_('netops.changeForm.fields.parametersHelp')}</p>
         </div>
       </div>
     {:else if currentStep === 4}
       <div>
-        <h2 class="text-lg font-semibold mb-4">Review and Confirm</h2>
+        <h2 class="text-lg font-semibold mb-4">{$isLoading ? 'Review and Confirm' : $_('netops.changeForm.fields.reviewConfirm')}</h2>
         
         <div class="space-y-4">
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Title</p>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? 'Title' : $_('netops.changeForm.fields.title')}</p>
             <p class="text-lg">{title}</p>
           </div>
           
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Intent Type</p>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? 'Intent Type' : $_('netops.changeForm.fields.intentType')}</p>
             <p>{intentType}</p>
           </div>
           
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Risk Tier</p>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">{$isLoading ? 'Risk Tier' : $_('netops.changeForm.fields.riskTier')}</p>
             <StatusBadge type="risk" value={riskTier} />
           </div>
           
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-              Devices ({deviceScope.length})
-            </p>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{$isLoading ? `Devices (${deviceScope.length})` : `${$_('netops.changeForm.fields.devices')} (${deviceScope.length})`}</p>
             <div class="flex flex-wrap gap-2">
               {#each deviceScope as deviceId}
                 {@const device = devices.find(d => d.id === deviceId)}
@@ -328,7 +322,7 @@
           </div>
           
           <div>
-            <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Parameters</p>
+            <p class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">{$isLoading ? 'Parameters' : $_('netops.changeForm.fields.parametersLabel')}</p>
             <pre class="bg-gray-100 dark:bg-gray-900 p-3 rounded-lg text-xs overflow-x-auto">{params}</pre>
           </div>
         </div>
@@ -343,7 +337,7 @@
       on:click={() => currentStep > 1 ? currentStep-- : goto('/netops/changes')}
     >
       <ArrowLeft class="w-4 h-4 mr-2" />
-      {currentStep === 1 ? 'Cancel' : 'Previous'}
+      {currentStep === 1 ? ($isLoading ? 'Cancel' : $_('netops.changeForm.cta.cancel')) : ($isLoading ? 'Previous' : $_('netops.changeForm.cta.previous'))}
     </Button>
     
     {#if currentStep < 4}
@@ -351,12 +345,12 @@
         on:click={() => currentStep++}
         disabled={!canGoNext()}
       >
-        Next
+        {$isLoading ? 'Next' : $_('netops.changeForm.cta.next')}
         <ArrowRight class="w-4 h-4 ml-2" />
       </Button>
     {:else}
       <Button on:click={handleCreate} disabled={creating}>
-        {creating ? 'Creating...' : 'Create Change'}
+        {creating ? ($isLoading ? 'Creating...' : $_('netops.changeForm.cta.creating')) : ($isLoading ? 'Create Change' : $_('netops.changeForm.cta.create'))}
       </Button>
     {/if}
   </div>

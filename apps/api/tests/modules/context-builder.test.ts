@@ -76,7 +76,7 @@ describe('Context Builder', () => {
         })
 
         it('should query devices when filters but no explicit device IDs', async () => {
-            ; (mockPool.query as any).mockResolvedValueOnce({
+             (mockPool.query as any).mockResolvedValueOnce({
                 rows: [{ id: 'dev-x' }, { id: 'dev-y' }]
             })
 
@@ -95,7 +95,7 @@ describe('Context Builder', () => {
 
     describe('Config Digest', () => {
         it('should return null for device without config', async () => {
-            ; (mockPool.query as any).mockResolvedValueOnce({ rows: [] })
+             (mockPool.query as any).mockResolvedValueOnce({ rows: [] })
 
             const digest = await computeConfigDigest(mockPool, 'dev-no-config')
 
@@ -103,7 +103,7 @@ describe('Context Builder', () => {
         })
 
         it('should compute digest for device with normalized config', async () => {
-            ; (mockPool.query as any).mockResolvedValueOnce({
+             (mockPool.query as any).mockResolvedValueOnce({
                 rows: [{
                     hostname: 'switch-01',
                     vendor: 'cisco',
@@ -136,7 +136,7 @@ describe('Context Builder', () => {
         })
 
         it('should handle device with no normalized config', async () => {
-            ; (mockPool.query as any).mockResolvedValueOnce({
+             (mockPool.query as any).mockResolvedValueOnce({
                 rows: [{
                     hostname: 'router-01',
                     vendor: 'mikrotik',

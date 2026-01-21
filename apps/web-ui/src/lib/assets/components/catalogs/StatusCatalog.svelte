@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
   import type { AssetStatus } from '$lib/api/assets';
 
@@ -21,9 +22,9 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
     <Table>
       <TableHead>
-        <TableHeadCell>Value</TableHeadCell>
-        <TableHeadCell>Label</TableHeadCell>
-        <TableHeadCell>Description</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Value' : $_('assets.value')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Label' : $_('assets.label')}</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Description' : $_('assets.description')}</TableHeadCell>
       </TableHead>
       <TableBody>
         {#each statusRows as row}

@@ -69,7 +69,7 @@
     <div class="page-shell h-14 flex items-center justify-between gap-4">
       <a href="/chat" class="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
         <div class="h-8 w-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm">AI</div>
-        <span>NetOpsAI</span>
+        <span>{$isLoading ? '' : $_('common.brand')}</span>
       </a>
 
       <nav class="flex items-center gap-2">

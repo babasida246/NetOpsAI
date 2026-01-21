@@ -61,7 +61,7 @@ describe('AuthService', () => {
         })
 
         it('should throw UnauthorizedError for invalid email', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rows: [] })
+             (mockPool.query as any).mockResolvedValue({ rows: [] })
 
             await expect(authService.login({
                 email: 'nonexistent@example.com',
@@ -109,7 +109,7 @@ describe('AuthService', () => {
     describe('register', () => {
         it('should register a new user successfully', async () => {
             // First query checks email existence
-            ; (mockPool.query as any)
+             (mockPool.query as any)
                 .mockResolvedValueOnce({ rows: [{ exists: false }] })
                 // Second query creates user
                 .mockResolvedValueOnce({
@@ -137,7 +137,7 @@ describe('AuthService', () => {
         })
 
         it('should throw ConflictError when email exists', async () => {
-            ; (mockPool.query as any).mockResolvedValue({ rows: [{ exists: true }] })
+             (mockPool.query as any).mockResolvedValue({ rows: [{ exists: true }] })
 
             await expect(authService.register({
                 email: testUser.email,

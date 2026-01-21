@@ -124,7 +124,7 @@
   <div class="mb-4">
     <Button href="/netops/devices" color="alternative" size="sm">
       <ArrowLeft class="w-4 h-4 mr-2" />
-      Back to Devices
+      {$isLoading ? 'Back to Devices' : `${$_('common.back')} ${$_('nav.devices')}`}
     </Button>
   </div>
   
@@ -166,15 +166,15 @@
         <div class="flex gap-2">
           <Button on:click={handlePullConfig} disabled={pulling}>
             <Download class="w-4 h-4 mr-2" />
-            {pulling ? 'Pulling...' : 'Pull Config'}
+            {pulling ? ($isLoading ? 'Pulling...' : $_('netops.deviceDetail.actions.pulling')) : ($isLoading ? 'Pull Config' : $_('netops.deviceDetail.actions.pullConfig'))}
           </Button>
           <Button color="alternative" on:click={handleCollectFacts} disabled={collecting}>
             <Play class="w-4 h-4 mr-2" />
-            {collecting ? 'Collecting...' : 'Collect Facts'}
+            {collecting ? ($isLoading ? 'Collecting...' : $_('netops.deviceDetail.actions.collecting')) : ($isLoading ? 'Collect Facts' : $_('netops.deviceDetail.actions.collectFacts'))}
           </Button>
           <Button color="alternative" on:click={() => showLintModal = true}>
             <AlertCircle class="w-4 h-4 mr-2" />
-            Run Lint
+            {$isLoading ? 'Run Lint' : $_('netops.deviceDetail.actions.runLint')}
           </Button>
         </div>
       </div>
@@ -182,33 +182,29 @@
     
     <!-- Tabs -->
     <Tabs>
-      <TabItem open={activeTab === 'facts'} onclick={() => activeTab = 'facts'} title="Facts">
+      <TabItem open={activeTab === 'facts'} onclick={() => activeTab = 'facts'} title={$isLoading ? 'Facts' : $_('netops.deviceDetail.tabs.facts')}>
         <div class="py-4">
           {#if facts}
             <JsonViewer data={facts} />
           {:else}
-            <Alert color="blue">
-              No facts collected yet. Click "Collect Facts" to gather device information.
-            </Alert>
+            <Alert color="blue">{$isLoading ? 'No facts collected yet. Click "Collect Facts" to gather device information.' : $_('netops.deviceDetail.facts.empty')}</Alert>
           {/if}
         </div>
       </TabItem>
       
-      <TabItem open={activeTab === 'configs'} onclick={() => activeTab = 'configs'} title="Config Versions">
+      <TabItem open={activeTab === 'configs'} onclick={() => activeTab = 'configs'} title={$isLoading ? 'Config Versions' : $_('netops.deviceDetail.tabs.configs')}>
         <div class="py-4">
           {#if configs.length === 0}
-            <Alert color="blue">
-              No configs found. Click "Pull Config" to fetch the current configuration.
-            </Alert>
+            <Alert color="blue">{$isLoading ? 'No configs found. Click "Pull Config" to fetch the current configuration.' : $_('netops.deviceDetail.configs.empty')}</Alert>
           {:else}
             <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <Table>
                 <TableHead>
-                  <TableHeadCell>Collected At</TableHeadCell>
-                  <TableHeadCell>Source</TableHeadCell>
-                  <TableHeadCell>Created By</TableHeadCell>
-                  <TableHeadCell>Note</TableHeadCell>
-                  <TableHeadCell>Actions</TableHeadCell>
+                  <TableHeadCell>{$isLoading ? 'Collected At' : $_('netops.deviceDetail.configs.table.collectedAt')}</TableHeadCell>
+                  <TableHeadCell>{$isLoading ? 'Source' : $_('netops.deviceDetail.configs.table.source')}</TableHeadCell>
+                  <TableHeadCell>{$isLoading ? 'Created By' : $_('netops.deviceDetail.configs.table.createdBy')}</TableHeadCell>
+                  <TableHeadCell>{$isLoading ? 'Note' : $_('netops.deviceDetail.configs.table.note')}</TableHeadCell>
+                  <TableHeadCell>{$isLoading ? 'Actions' : $_('netops.deviceDetail.configs.table.actions')}</TableHeadCell>
                 </TableHead>
                 <TableBody>
                   {#each configs as config}
@@ -229,7 +225,7 @@
                       <TableBodyCell>
                         <Button href="/netops/configs/{config.id}" size="xs">
                           <FileText class="w-3 h-3 mr-1" />
-                          View
+                          {$isLoading ? 'View' : $_('netops.devicesPage.actions.view')}
                         </Button>
                       </TableBodyCell>
                     </TableBodyRow>
@@ -247,7 +243,7 @@
 <!-- Lint Modal -->
 <Modal bind:open={showLintModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">Run Lint Check</h3>
+    <h3 class="text-xl font-semibold">{$isLoading ? 'Run Lint Check' : $_('netops.deviceDetail.lint.title')}</h3>
   </svelte:fragment>
   
   {#if lintError}
@@ -256,12 +252,10 @@
   
   <div class="space-y-4">
     {#if configs.length === 0}
-      <Alert color="yellow">
-        No configs available. Pull a config first before running lint.
-      </Alert>
+      <Alert color="yellow">{$isLoading ? 'No configs available. Pull a config first before running lint.' : $_('netops.deviceDetail.lint.noConfigs')}</Alert>
     {:else}
       <div>
-        <Label for="rulepack" class="mb-2">Select Rulepack</Label>
+        <Label for="rulepack" class="mb-2">{$isLoading ? 'Select Rulepack' : $_('netops.deviceDetail.lint.selectRulepack')}</Label>
         <Select id="rulepack" bind:value={selectedRulepackId}>
           {#each rulepacks as rulepack}
             <option value={rulepack.id}>
@@ -272,20 +266,18 @@
         </Select>
       </div>
       
-      <Alert color="blue">
-        This will run lint checks on the latest config version.
-      </Alert>
+      <Alert color="blue">{$isLoading ? 'This will run lint checks on the latest config version.' : $_('netops.deviceDetail.lint.alert')}</Alert>
     {/if}
   </div>
   
   <svelte:fragment slot="footer">
     <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showLintModal = false}>Cancel</Button>
+      <Button color="alternative" on:click={() => showLintModal = false}>{$isLoading ? 'Cancel' : $_('netops.deviceDetail.lint.actions.cancel')}</Button>
       <Button 
         on:click={handleRunLint} 
         disabled={linting || !selectedRulepackId || configs.length === 0}
       >
-        {linting ? 'Running...' : 'Run Lint'}
+        {linting ? ($isLoading ? 'Running...' : $_('netops.deviceDetail.lint.actions.running')) : ($isLoading ? 'Run Lint' : $_('netops.deviceDetail.lint.actions.run'))}
       </Button>
     </div>
   </svelte:fragment>

@@ -67,11 +67,11 @@
   <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'Change Requests' : $_('netops.changes')}</h1>
+        <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'Change Requests' : $_('netops.changesPage.title')}</h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {changes.length} {changes.length === 1 ? ($isLoading ? 'change' : $_('netops.changes')) : ($isLoading ? 'changes' : $_('netops.changes'))}
+          {$isLoading ? `${changes.length} changes` : $_('netops.changesPage.summary', { count: changes.length })}
           {#if Object.keys(statusCounts()).length > 0}
-            - {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${s}`).join(' - ')}
+            - {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${$isLoading ? s : $_(`netops.changesPage.statuses.${s}`)}`).join(' - ')}
           {/if}
         </p>
       </div>
@@ -79,7 +79,7 @@
       <div class="flex gap-2">
         <Button href="/netops/changes/new">
           <Plus class="w-4 h-4 mr-2" />
-          New Change
+          {$isLoading ? 'New Change' : $_('netops.changesPage.actions.newChange')}
         </Button>
         <Button color="alternative" on:click={loadChanges}>
           <RefreshCw class="w-4 h-4" />
@@ -91,39 +91,39 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <Label class="mb-2">Search</Label>
+          <Label class="mb-2">{$isLoading ? 'Search' : $_('netops.changesPage.filters.search')}</Label>
           <Input
             bind:value={searchQuery}
-            placeholder="Search title..."
+            placeholder={$isLoading ? 'Search title...' : $_('netops.changesPage.filters.searchPlaceholder')}
           >
             <Search slot="left" class="w-4 h-4" />
           </Input>
         </div>
         
         <div>
-          <Label class="mb-2">Status</Label>
+          <Label class="mb-2">{$isLoading ? 'Status' : $_('netops.changesPage.filters.status')}</Label>
           <Select bind:value={filterStatus}>
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="planned">Planned</option>
-            <option value="candidate_ready">Candidate Ready</option>
-            <option value="verified">Verified</option>
-            <option value="waiting_approval">Waiting Approval</option>
-            <option value="approved">Approved</option>
-            <option value="deploying">Deploying</option>
-            <option value="deployed">Deployed</option>
-            <option value="closed">Closed</option>
-            <option value="rejected">Rejected</option>
+            <option value="">{$isLoading ? 'All Statuses' : $_('netops.changesPage.filters.allStatuses')}</option>
+            <option value="draft">{$isLoading ? 'Draft' : $_('netops.changesPage.statuses.draft')}</option>
+            <option value="planned">{$isLoading ? 'Planned' : $_('netops.changesPage.statuses.planned')}</option>
+            <option value="candidate_ready">{$isLoading ? 'Candidate Ready' : $_('netops.changesPage.statuses.candidate_ready')}</option>
+            <option value="verified">{$isLoading ? 'Verified' : $_('netops.changesPage.statuses.verified')}</option>
+            <option value="waiting_approval">{$isLoading ? 'Waiting Approval' : $_('netops.changesPage.statuses.waiting_approval')}</option>
+            <option value="approved">{$isLoading ? 'Approved' : $_('netops.changesPage.statuses.approved')}</option>
+            <option value="deploying">{$isLoading ? 'Deploying' : $_('netops.changesPage.statuses.deploying')}</option>
+            <option value="deployed">{$isLoading ? 'Deployed' : $_('netops.changesPage.statuses.deployed')}</option>
+            <option value="closed">{$isLoading ? 'Closed' : $_('netops.changesPage.statuses.closed')}</option>
+            <option value="rejected">{$isLoading ? 'Rejected' : $_('netops.changesPage.statuses.rejected')}</option>
           </Select>
         </div>
         
         <div>
-          <Label class="mb-2">Risk Tier</Label>
+          <Label class="mb-2">{$isLoading ? 'Risk Tier' : $_('netops.changesPage.filters.risk')}</Label>
           <Select bind:value={filterRisk}>
-            <option value="">All Risk Levels</option>
-            <option value="low">Low</option>
-            <option value="med">Medium</option>
-            <option value="high">High</option>
+            <option value="">{$isLoading ? 'All Risk Levels' : $_('netops.changesPage.filters.allRiskLevels')}</option>
+            <option value="low">{$isLoading ? 'Low' : $_('netops.changesPage.risks.low')}</option>
+            <option value="med">{$isLoading ? 'Medium' : $_('netops.changesPage.risks.med')}</option>
+            <option value="high">{$isLoading ? 'High' : $_('netops.changesPage.risks.high')}</option>
           </Select>
         </div>
       </div>
@@ -131,7 +131,7 @@
       {#if searchQuery || filterStatus || filterRisk}
         <div class="mt-3">
           <Button size="xs" color="alternative" on:click={clearFilters}>
-            Clear Filters
+            {$isLoading ? 'Clear Filters' : $_('netops.changesPage.actions.clearFilters')}
           </Button>
         </div>
       {/if}
@@ -149,11 +149,11 @@
     </div>
   {:else if filteredChanges().length === 0}
     <div class="text-center py-12">
-      <p class="text-gray-500 dark:text-gray-400">No change requests found</p>
+      <p class="text-gray-500 dark:text-gray-400">{$isLoading ? 'No change requests found' : $_('netops.changesPage.empty')}</p>
       {#if changes.length === 0}
         <Button class="mt-4" href="/netops/changes/new">
           <Plus class="w-4 h-4 mr-2" />
-          Create your first change
+          {$isLoading ? 'Create your first change' : $_('netops.changesPage.actions.createFirst')}
         </Button>
       {/if}
     </div>
@@ -161,13 +161,13 @@
     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <Table>
         <TableHead>
-          <TableHeadCell>Title</TableHeadCell>
-          <TableHeadCell>Status</TableHeadCell>
-          <TableHeadCell>Risk</TableHeadCell>
-          <TableHeadCell>Intent Type</TableHeadCell>
-          <TableHeadCell>Devices</TableHeadCell>
-          <TableHeadCell>Created</TableHeadCell>
-          <TableHeadCell>Actions</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Title' : $_('netops.changesPage.table.title')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Status' : $_('netops.changesPage.table.status')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Risk' : $_('netops.changesPage.table.risk')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Intent Type' : $_('netops.changesPage.table.intentType')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Devices' : $_('netops.changesPage.table.devices')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Created' : $_('netops.changesPage.table.created')}</TableHeadCell>
+          <TableHeadCell>{$isLoading ? 'Actions' : $_('netops.changesPage.table.actions')}</TableHeadCell>
         </TableHead>
         <TableBody>
           {#each filteredChanges() as change}
@@ -177,7 +177,7 @@
                   {change.title}
                 </a>
                 {#if change.created_by}
-                  <p class="text-xs text-gray-500 mt-1">by {change.created_by}</p>
+                  <p class="text-xs text-gray-500 mt-1">{change.created_by}</p>
                 {/if}
               </TableBodyCell>
               <TableBodyCell>
@@ -188,7 +188,7 @@
               </TableBodyCell>
               <TableBodyCell class="text-sm">{change.intent_type}</TableBodyCell>
               <TableBodyCell class="text-sm">
-                {change.device_scope.length} {change.device_scope.length === 1 ? 'device' : 'devices'}
+                {change.device_scope.length} {$isLoading ? 'devices' : $_('netops.devices')}
               </TableBodyCell>
               <TableBodyCell class="text-sm">
                 {formatDate(change.created_at)}
@@ -198,7 +198,7 @@
               </TableBodyCell>
               <TableBodyCell>
                 <Button size="xs" color="alternative" href="/netops/changes/{change.id}">
-                  View
+                  {$isLoading ? 'View' : $_('netops.changesPage.actions.view')}
                 </Button>
               </TableBodyCell>
             </TableBodyRow>

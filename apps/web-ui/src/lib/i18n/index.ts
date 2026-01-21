@@ -14,4 +14,5 @@ init({
 })
 
 // Export locale store and loading state for components to use
+// Note: In components, use these as $_ and $isLoading (with $ prefix for auto-subscription)
 export { locale, _, isLoading } from 'svelte-i18n'

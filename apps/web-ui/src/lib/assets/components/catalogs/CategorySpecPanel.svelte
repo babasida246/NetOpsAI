@@ -1,6 +1,7 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Alert, Button, Modal, Spinner } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import SpecWarnings from './SpecWarnings.svelte';
   import SpecVersionControls from './SpecVersionControls.svelte';
   import SpecDefsManager from './SpecDefsManager.svelte';
@@ -142,7 +143,7 @@
 <Modal bind:open size="xl" on:close={closePanel}>
   <svelte:fragment slot="header">
     <div>
-      <h3 class="text-lg font-semibold">Spec Fields</h3>
+      <h3 class="text-lg font-semibold">{$isLoading ? 'Spec Fields' : $_('assets.specFields')}</h3>
       <p class="text-sm text-gray-500">{category ? `Category: ${category.name}` : ''}</p>
     </div>
   </svelte:fragment>
@@ -187,7 +188,7 @@
 
   <svelte:fragment slot="footer">
     <div class="flex justify-end">
-      <Button color="alternative" on:click={closePanel}>Close</Button>
+      <Button color="alternative" on:click={closePanel}>{$isLoading ? 'Close' : $_('common.close')}</Button>
     </div>
   </svelte:fragment>
 </Modal>

@@ -1,6 +1,7 @@
-<script lang="ts">
+﻿<script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { Button, Input, Label, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { Pencil, Trash2 } from 'lucide-svelte';
   import { createCategory, deleteCategory, updateCategory } from '$lib/api/assetCatalogs';
   import CategorySpecPanel from './CategorySpecPanel.svelte';
@@ -66,15 +67,15 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
       <div>
-        <Label class="mb-2">Category name</Label>
-        <Input bind:value={name} placeholder="Laptop" />
+        <Label class="mb-2">{$isLoading ? 'Category name' : $_('assets.categoryName')}</Label>
+        <Input bind:value={name} placeholder={$isLoading ? 'Laptop' : $_('assets.placeholders.categoryName')} />
       </div>
       <div class="flex gap-2">
         <Button on:click={save} disabled={saving || !name.trim()}>
           {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
         </Button>
         {#if editingId}
-          <Button color="alternative" on:click={reset}>Cancel</Button>
+          <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
         {/if}
       </div>
     </div>
@@ -83,8 +84,8 @@
   <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
     <Table>
       <TableHead>
-        <TableHeadCell>Name</TableHeadCell>
-        <TableHeadCell class="w-32">Actions</TableHeadCell>
+        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
+        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
       </TableHead>
       <TableBody>
         {#each categories as category}

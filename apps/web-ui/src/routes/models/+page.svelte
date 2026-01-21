@@ -2,6 +2,7 @@
   import { Button, Badge, Card, Spinner, Toggle, Modal, Label, Input, Select, Textarea } from 'flowbite-svelte';
   import { Settings, TrendingUp, Zap, DollarSign, Plus, Edit, Trash2, Eye } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
+  import { get } from 'svelte/store';
   import {
     listModels,
     listProviders,
@@ -451,7 +452,8 @@
       diagramContainer.innerHTML = svg;
     } catch (error) {
       console.error('Failed to render diagram:', error);
-      diagramContainer.innerHTML = '<div class="text-red-500">Failed to render diagram</div>';
+      const t = get(_);
+      diagramContainer.innerHTML = `<div class="text-red-500">${t('models.errors.diagramRenderFailed')}</div>`;
     }
   }
 
@@ -620,7 +622,7 @@
                         <th class="px-4 py-3">{$isLoading ? 'Status' : $_('assets.status')}</th>
                         <th class="px-4 py-3">{$isLoading ? 'Context' : $_('models.context')}</th>
                         <th class="px-4 py-3">{$isLoading ? 'Cost $/1K' : $_('models.costPer1K')}</th>
-                        <th class="px-4 py-3">{$isLoading ? 'Capabilities' : $_('models.capabilities')}</th>
+                        <th class="px-4 py-3">{$isLoading ? 'Capabilities' : $_('models.table.capabilities')}</th>
                         <th class="px-4 py-3 text-right">{$isLoading ? 'Actions' : $_('common.actions')}</th>
                       </tr>
                     </thead>
@@ -700,20 +702,20 @@
                               </div>
                               <div class="flex items-center gap-2">
                                 <Toggle bind:checked={modelEdit.enabled} />
-                                <Label>Enabled</Label>
+                                <Label>{$isLoading ? 'Enabled' : $_('common.enabled')}</Label>
                               </div>
                               <div>
-                                <Label>Status</Label>
+                                <Label>{$isLoading ? 'Status' : $_('common.status')}</Label>
                                 <Select bind:value={modelEdit.status}>
-                                  <option value="active">Active</option>
-                                  <option value="inactive">Inactive</option>
-                                  <option value="deprecated">Deprecated</option>
+                                  <option value="active">{$isLoading ? 'Active' : $_('cmdb.active')}</option>
+                                  <option value="inactive">{$isLoading ? 'Inactive' : $_('cmdb.inactive')}</option>
+                                  <option value="deprecated">{$isLoading ? 'Deprecated' : $_('models.deprecated')}</option>
                                 </Select>
                               </div>
                             </div>
                             <div class="flex gap-2 mt-3 justify-end">
-                              <Button size="sm" on:click={saveModelEdit}>Save</Button>
-                              <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                              <Button size="sm" on:click={saveModelEdit}>{$isLoading ? 'Save' : $_('common.save')}</Button>
+                              <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
                             </div>
                           </td>
                         </tr>
@@ -722,16 +724,16 @@
                         <tr class="bg-slate-50/40 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
                           <td colspan="9" class="px-4 py-3">
                             <div class="flex items-center justify-between mb-2">
-                              <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
+                              <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{$isLoading ? 'Usage history (30d)' : $_('models.usage.usageHistory')}</h4>
                               <Badge color="primary" class="text-xs">{modelHistory[model.id].length}</Badge>
                             </div>
                             <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
                               {#each modelHistory[model.id] as h}
                                 <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-white dark:bg-slate-900">
                                   <div class="font-semibold text-slate-800 dark:text-white">{new Date(h.date).toLocaleDateString()}</div>
-                                  <div>Tokens: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
-                                  <div>Cost: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
-                                  <div>Messages: {h.messageCount ?? '-'}</div>
+                                  <div>{$isLoading ? 'Tokens' : $_('stats.tokens')}: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
+                                  <div>{$isLoading ? 'Cost' : $_('stats.cost')}: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
+                                  <div>{($isLoading ? 'Messages' : $_('stats.messages'))}: {h.messageCount ?? '-'}</div>
                                 </div>
                               {/each}
                             </div>
@@ -740,7 +742,7 @@
                       {:else if loadingModelHistory === model.id}
                         <tr class="border-b border-slate-200 dark:border-slate-800">
                           <td colspan="9" class="px-4 py-3 text-sm text-slate-500 flex items-center gap-2">
-                            <Spinner size="4" /> Loading history...
+                            <Spinner size="4" /> {$isLoading ? 'Loading history...' : $_('models.usage.loadingHistory')}
                           </td>
                         </tr>
                       {/if}
@@ -756,15 +758,15 @@
             <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
               <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                 <tr>
-                  <th class="px-4 py-3">Model</th>
-                  <th class="px-4 py-3">Provider</th>
-                  <th class="px-4 py-3">Tier</th>
-                  <th class="px-4 py-3">Priority</th>
-                  <th class="px-4 py-3">Status</th>
-                  <th class="px-4 py-3">Context</th>
-                  <th class="px-4 py-3">Cost $/1K</th>
-                  <th class="px-4 py-3">Capabilities</th>
-                  <th class="px-4 py-3 text-right">Actions</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Model' : $_('models.table.model')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Provider' : $_('models.table.provider')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Tier' : $_('models.table.tier')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Priority' : $_('models.table.priority')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Status' : $_('models.table.status')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Context' : $_('models.table.context')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Cost $/1K' : $_('models.table.costPer1k')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Capabilities' : $_('models.table.capabilities')}</th>
+                  <th class="px-4 py-3 text-right">{$isLoading ? 'Actions' : $_('models.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -794,16 +796,16 @@
                     </td>
                     <td class="px-4 py-3">
                       <div class="flex flex-wrap gap-2">
-                        {#if model.supportsStreaming}<Badge color="indigo">Streaming</Badge>{/if}
-                        {#if model.supportsFunctions}<Badge color="purple">Functions</Badge>{/if}
-                        {#if model.supportsVision}<Badge color="pink">Vision</Badge>{/if}
+                        {#if model.supportsStreaming}<Badge color="indigo">{$isLoading ? 'Streaming' : $_('models.capabilities.streaming')}</Badge>{/if}
+                        {#if model.supportsFunctions}<Badge color="purple">{$isLoading ? 'Functions' : $_('models.capabilities.functions')}</Badge>{/if}
+                        {#if model.supportsVision}<Badge color="pink">{$isLoading ? 'Vision' : $_('models.capabilities.vision')}</Badge>{/if}
                       </div>
                     </td>
                     <td class="px-4 py-3">
                       <div class="flex flex-wrap items-center justify-end gap-2">
                         <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, -10)}>-10</Button>
                         <Button size="xs" color="primary" onclick={() => handleUpdatePriority(model.id, 10)}>+10</Button>
-                        <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>Edit</Button>
+                        <Button size="xs" color="alternative" onclick={() => openModelEdit(model)}>{$isLoading ? 'Edit' : $_('common.edit')}</Button>
                         <Button size="xs" color="primary" onclick={() => loadModelHistoryEntries(model.id)}>
                           <TrendingUp class="w-4 h-4" />
                         </Button>
@@ -818,45 +820,45 @@
                       <td colspan="9" class="px-4 py-4">
                         <div class="grid gap-3 md:grid-cols-2">
                           <div>
-                            <Label>Display name</Label>
-                            <Input bind:value={modelEdit.displayName} placeholder="Friendly name" />
+                            <Label>{$isLoading ? 'Display name' : $_('models.displayName')}</Label>
+                            <Input bind:value={modelEdit.displayName} placeholder={$isLoading ? 'Friendly name' : $_('models.placeholders.displayName')} />
                           </div>
                           <div>
-                            <Label>Tier</Label>
+                            <Label>{$isLoading ? 'Tier' : $_('models.tier')}</Label>
                             <Input type="number" bind:value={modelEdit.tier} />
                           </div>
                           <div>
-                            <Label>Context window</Label>
+                            <Label>{$isLoading ? 'Context window' : $_('models.contextWindow')}</Label>
                             <Input type="number" bind:value={modelEdit.contextWindow} />
                           </div>
                           <div>
-                            <Label>Max tokens</Label>
+                            <Label>{$isLoading ? 'Max tokens' : $_('models.maxTokens')}</Label>
                             <Input type="number" bind:value={modelEdit.maxTokens} />
                           </div>
                           <div>
-                            <Label>Cost /1k input</Label>
+                            <Label>{$isLoading ? 'Cost /1k input' : $_('models.costPer1kInput')}</Label>
                             <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kInput} />
                           </div>
                           <div>
-                            <Label>Cost /1k output</Label>
+                            <Label>{$isLoading ? 'Cost /1k output' : $_('models.costPer1kOutput')}</Label>
                             <Input type="number" step="0.0001" bind:value={modelEdit.costPer1kOutput} />
                           </div>
                           <div class="flex items-center gap-2">
                             <Toggle bind:checked={modelEdit.enabled} />
-                            <Label>Enabled</Label>
+                            <Label>{$isLoading ? 'Enabled' : $_('common.enabled')}</Label>
                           </div>
                           <div>
-                            <Label>Status</Label>
+                            <Label>{$isLoading ? 'Status' : $_('common.status')}</Label>
                             <Select bind:value={modelEdit.status}>
-                              <option value="active">Active</option>
-                              <option value="inactive">Inactive</option>
-                              <option value="deprecated">Deprecated</option>
+                            <option value="active">{$isLoading ? 'Active' : $_('cmdb.active')}</option>
+                            <option value="inactive">{$isLoading ? 'Inactive' : $_('cmdb.inactive')}</option>
+                            <option value="deprecated">{$isLoading ? 'Deprecated' : $_('models.deprecated')}</option>
                             </Select>
                           </div>
                         </div>
                         <div class="flex gap-2 mt-3 justify-end">
-                          <Button size="sm" on:click={saveModelEdit}>Save</Button>
-                          <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>Cancel</Button>
+                          <Button size="sm" on:click={saveModelEdit}>{$isLoading ? 'Save' : $_('common.save')}</Button>
+                          <Button size="sm" color="primary" on:click={() => { editingModelId = null; modelEdit = {}; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
                         </div>
                       </td>
                     </tr>
@@ -865,16 +867,16 @@
                     <tr class="bg-slate-50/40 dark:bg-slate-800/40 border-b border-slate-200 dark:border-slate-800">
                       <td colspan="9" class="px-4 py-3">
                         <div class="flex items-center justify-between mb-2">
-                          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</h4>
+                          <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-200">{$isLoading ? 'Usage history (30d)' : $_('models.usage.usageHistory')}</h4>
                           <Badge color="primary" class="text-xs">{modelHistory[model.id].length}</Badge>
                         </div>
                         <div class="grid md:grid-cols-3 gap-2 text-xs text-slate-500">
                           {#each modelHistory[model.id] as h}
                             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-white dark:bg-slate-900">
                               <div class="font-semibold text-slate-800 dark:text-white">{new Date(h.date).toLocaleDateString()}</div>
-                              <div>Tokens: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
-                              <div>Cost: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
-                              <div>Messages: {h.messageCount ?? '-'}</div>
+                              <div>{$isLoading ? 'Tokens' : $_('stats.tokens')}: {h.totalTokens?.toLocaleString?.() ?? h.totalTokens}</div>
+                              <div>{$isLoading ? 'Cost' : $_('stats.cost')}: ${h.totalCost?.toFixed?.(4) ?? h.totalCost}</div>
+                              <div>{($isLoading ? 'Messages' : $_('stats.messages'))}: {h.messageCount ?? '-'}</div>
                             </div>
                           {/each}
                         </div>
@@ -883,7 +885,7 @@
                   {:else if loadingModelHistory === model.id}
                     <tr class="border-b border-slate-200 dark:border-slate-800">
                       <td colspan="9" class="px-4 py-3 text-sm text-slate-500 flex items-center gap-2">
-                        <Spinner size="4" /> Loading history...
+                        <Spinner size="4" /> {$isLoading ? 'Loading...' : $_('models.usage.loadingHistory')}
                       </td>
                     </tr>
                   {/if}
@@ -894,9 +896,9 @@
         {/if}
       {:else if selectedTab === 'providers'}
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div class="text-sm text-slate-500">Providers: {providers.length}</div>
+          <div class="text-sm text-slate-500">{$isLoading ? 'Providers' : $_('models.providers')}: {providers.length}</div>
           <Button size="sm" color="primary" onclick={() => showCreateProvider = !showCreateProvider}>
-            <Plus class="w-4 h-4 mr-1" /> {showCreateProvider ? 'Close' : 'New provider'}
+            <Plus class="w-4 h-4 mr-1" /> {showCreateProvider ? ($isLoading ? 'Close' : $_('common.close')) : ($isLoading ? 'New provider' : $_('models.createProvider'))}
           </Button>
         </div>
 
@@ -904,40 +906,40 @@
           <Card class="p-4 border border-slate-200 dark:border-slate-800 mb-4">
             <div class="grid md:grid-cols-3 gap-3">
               <div>
-                <Label>ID</Label>
+                <Label>{$isLoading ? 'ID' : $_('common.id')}</Label>
                 <Input bind:value={newProvider.id} placeholder="openai" />
               </div>
               <div>
-                <Label>Name</Label>
-                <Input bind:value={newProvider.name} placeholder="OpenAI" />
+                <Label>{$isLoading ? 'Name' : $_('common.name')}</Label>
+                <Input bind:value={newProvider.name} placeholder={$isLoading ? 'OpenAI' : $_('models.placeholders.providerName')} />
               </div>
               <div>
-                <Label>API Endpoint</Label>
+                <Label>{$isLoading ? 'API endpoint' : $_('models.apiEndpoint')}</Label>
                 <Input bind:value={newProvider.apiEndpoint} placeholder="https://..." />
               </div>
               <div>
-                <Label>Status</Label>
+                <Label>{$isLoading ? 'Status' : $_('common.status')}</Label>
                 <Select bind:value={newProvider.status}>
-                  <option value="active">Active</option>
-                  <option value="maintenance">Maintenance</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">{$isLoading ? 'Active' : $_('cmdb.active')}</option>
+                  <option value="maintenance">{$isLoading ? 'Maintenance' : $_('cmdb.maintenance')}</option>
+                  <option value="inactive">{$isLoading ? 'Inactive' : $_('cmdb.inactive')}</option>
                 </Select>
               </div>
             </div>
             <div class="mt-3 flex gap-2">
-              <Button size="sm" on:click={handleCreateProvider} disabled={!newProvider.id || !newProvider.name}>Create provider</Button>
-              <Button size="sm" color="primary" on:click={() => showCreateProvider = false}>Cancel</Button>
+              <Button size="sm" on:click={handleCreateProvider} disabled={!newProvider.id || !newProvider.name}>{$isLoading ? 'Create provider' : $_('models.createProvider')}</Button>
+              <Button size="sm" color="primary" on:click={() => showCreateProvider = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
             </div>
           </Card>
         {/if}
 
         <div class="flex flex-wrap gap-3 items-center mb-3">
-          <Input class="w-56" placeholder="Search provider" bind:value={providerSearch} />
+          <Input class="w-56" placeholder={$isLoading ? 'Search provider' : $_('models.searchProvider')} bind:value={providerSearch} />
           <Select class="w-40" bind:value={providerStatusFilter}>
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="inactive">Inactive</option>
+            <option value="all">{$isLoading ? 'All statuses' : $_('models.allStatuses')}</option>
+            <option value="active">{$isLoading ? 'Active' : $_('cmdb.active')}</option>
+            <option value="maintenance">{$isLoading ? 'Maintenance' : $_('cmdb.maintenance')}</option>
+            <option value="inactive">{$isLoading ? 'Inactive' : $_('cmdb.inactive')}</option>
           </Select>
         </div>
 
@@ -945,13 +947,13 @@
           <table class="w-full text-sm text-left text-gray-600 dark:text-gray-200">
             <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
               <tr>
-                <th class="px-4 py-3">Provider</th>
-                <th class="px-4 py-3">Status</th>
-                <th class="px-4 py-3">Endpoint</th>
-                <th class="px-4 py-3">Auth</th>
-                <th class="px-4 py-3">Rate limit</th>
-                <th class="px-4 py-3">Capabilities</th>
-                <th class="px-4 py-3 text-right">Actions</th>
+                <th class="px-4 py-3">{$isLoading ? 'Provider' : $_('models.table.provider')}</th>
+                <th class="px-4 py-3">{$isLoading ? 'Status' : $_('models.table.status')}</th>
+                <th class="px-4 py-3">{$isLoading ? 'API endpoint' : $_('models.apiEndpoint')}</th>
+                <th class="px-4 py-3">{$isLoading ? 'Auth' : $_('models.auth')}</th>
+                <th class="px-4 py-3">{$isLoading ? 'Rate limit' : $_('models.rateLimit')}</th>
+                <th class="px-4 py-3">{$isLoading ? 'Capabilities' : $_('models.table.capabilities')}</th>
+                <th class="px-4 py-3 text-right">{$isLoading ? 'Actions' : $_('models.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -973,22 +975,22 @@
                   <td class="px-4 py-3">{provider.rateLimitPerMinute ? `${provider.rateLimitPerMinute}/min` : '-'}</td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap gap-2">
-                      {#if provider.capabilities.streaming}<Badge color="blue">Streaming</Badge>{/if}
-                      {#if provider.capabilities.functions}<Badge color="purple">Functions</Badge>{/if}
-                      {#if provider.capabilities.vision}<Badge color="pink">Vision</Badge>{/if}
+                      {#if provider.capabilities.streaming}<Badge color="blue">{$isLoading ? 'Streaming' : $_('models.capabilities.streaming')}</Badge>{/if}
+                      {#if provider.capabilities.functions}<Badge color="purple">{$isLoading ? 'Functions' : $_('models.capabilities.functions')}</Badge>{/if}
+                      {#if provider.capabilities.vision}<Badge color="pink">{$isLoading ? 'Vision' : $_('models.capabilities.vision')}</Badge>{/if}
                     </div>
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex flex-wrap items-center gap-2 justify-end">
                       <Button size="xs" color="primary" onclick={() => handleHealthCheck(provider.id)}>
-                        {loadingHealth === provider.id ? 'Checking...' : 'Health'}
+                        {loadingHealth === provider.id ? ($isLoading ? 'Loading...' : $_('models.health.checking')) : ($isLoading ? 'Health' : $_('models.health.label'))}
                       </Button>
                       {#if providerHealth[provider.id]}
                         <Badge color={providerHealth[provider.id]?.status === 'healthy' ? 'green' : providerHealth[provider.id]?.status === 'degraded' ? 'yellow' : 'red'}>
                           {providerHealth[provider.id]?.status}
                         </Badge>
                       {/if}
-                      <Button size="xs" color="alternative" onclick={() => openProviderEdit(provider)}>Edit</Button>
+                        <Button size="xs" color="alternative" onclick={() => openProviderEdit(provider)}>{$isLoading ? 'Edit' : $_('common.edit')}</Button>
                       <Button size="xs" color="primary" onclick={() => loadProviderHistoryEntries(provider.id)}>
                         <TrendingUp class="w-4 h-4" />
                       </Button>
@@ -1000,43 +1002,43 @@
                     {#if editingProviderId === provider.id}
                       <div class="mt-3 grid gap-3 md:grid-cols-2">
                         <div>
-                          <Label>Name</Label>
+                          <Label>{$isLoading ? 'Name' : $_('common.name')}</Label>
                           <Input bind:value={providerEdit.name} />
                         </div>
                         <div>
-                          <Label>Status</Label>
+                          <Label>{$isLoading ? 'Status' : $_('common.status')}</Label>
                           <Select bind:value={providerEdit.status}>
-                            <option value="active">Active</option>
-                            <option value="maintenance">Maintenance</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="active">{$isLoading ? 'Active' : $_('models.active')}</option>
+                            <option value="maintenance">{$isLoading ? 'Maintenance' : $_('models.maintenance')}</option>
+                            <option value="inactive">{$isLoading ? 'Inactive' : $_('models.inactive')}</option>
                           </Select>
                         </div>
                         <div>
-                          <Label>API Endpoint</Label>
+                          <Label>{$isLoading ? 'API endpoint' : $_('models.apiEndpoint')}</Label>
                           <Input bind:value={providerEdit.apiEndpoint} />
                         </div>
                         <div>
-                          <Label>API Key</Label>
+                          <Label>{$isLoading ? 'API Key' : $_('models.apiKey')}</Label>
                           <Input type="password" bind:value={providerEdit.apiKey} placeholder="******" />
                         </div>
                         <div>
-                          <Label>Credits remaining</Label>
+                          <Label>{$isLoading ? 'Credits' : $_('models.credits')}</Label>
                           <Input type="number" step="0.0001" bind:value={providerEdit.creditsRemaining} />
                         </div>
                         <div>
-                          <Label>Tokens used</Label>
+                          <Label>{$isLoading ? 'Tokens' : $_('stats.tokens')}</Label>
                           <Input type="number" bind:value={providerEdit.tokensUsed} />
                         </div>
                       </div>
                       <div class="flex gap-2 mt-3 justify-end">
-                        <Button size="sm" on:click={saveProviderEdit}>Save</Button>
-                        <Button size="sm" color="primary" on:click={() => { editingProviderId = null; providerEdit = {}; }}>Cancel</Button>
+                        <Button size="sm" on:click={saveProviderEdit}>{$isLoading ? 'Save' : $_('common.save')}</Button>
+                        <Button size="sm" color="primary" on:click={() => { editingProviderId = null; providerEdit = {}; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
                       </div>
                     {/if}
 
                     {#if providerHistory[provider.id]}
                       <div class="mt-3 text-xs text-slate-500 space-y-1">
-                        <div class="font-semibold text-slate-700 dark:text-slate-200">Usage history (30d)</div>
+                        <div class="font-semibold text-slate-700 dark:text-slate-200">{$isLoading ? 'Usage history (30d)' : $_('models.usage.usageHistory')}</div>
                         <div class="grid md:grid-cols-2 gap-2">
                           {#each providerHistory[provider.id] as h}
                             <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-2 bg-slate-50 dark:bg-slate-800/50">
@@ -1050,7 +1052,7 @@
                       </div>
                     {:else if loadingProviderHistory === provider.id}
                       <div class="mt-2 text-xs text-slate-500 flex items-center gap-2">
-                        <Spinner size="4" /> Loading history...
+                        <Spinner size="4" /> {$isLoading ? 'Loading...' : $_('models.usage.loadingHistory')}
                       </div>
                     {/if}
                   </td>
@@ -1063,14 +1065,14 @@
         <div class="space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">OpenRouter Available Models</h2>
-              <p class="text-sm text-gray-600 dark:text-gray-400">Browse remote models and import into your catalog.</p>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{$isLoading ? 'OpenRouter Available Models' : $_('models.openrouter.browseRemoteModels')}</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{$isLoading ? 'Browse remote models and import into your catalog.' : $_('models.openrouter.browseRemoteModels')}</p>
             </div>
             <div class="flex gap-2 items-center">
-              <Input class="w-48" placeholder="Search models" bind:value={openRouterSearch} />
-              <Input class="w-24" type="number" bind:value={remoteLimit} placeholder="Limit" />
+              <Input class="w-48" placeholder={$isLoading ? 'Search models' : $_('models.search')} bind:value={openRouterSearch} />
+              <Input class="w-24" type="number" bind:value={remoteLimit} placeholder={$isLoading ? 'Limit' : $_('models.openrouter.limit')} />
               <Button size="sm" on:click={() => { remotePage = 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>
-                {loadingOpenRouterModels ? 'Loading...' : 'Refresh'}
+                {loadingOpenRouterModels ? ($isLoading ? 'Loading...' : $_('models.openrouter.loading')) : ($isLoading ? 'Refresh' : $_('models.openrouter.refresh'))}
               </Button>
             </div>
           </div>
@@ -1079,18 +1081,18 @@
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-300">
               <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                 <tr>
-                  <th class="px-4 py-3">Model</th>
-                  <th class="px-4 py-3">Prompt $/1k</th>
-                  <th class="px-4 py-3">Completion $/1k</th>
-                  <th class="px-4 py-3">Context</th>
-                  <th class="px-4 py-3 text-right">Action</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Model' : $_('models.table.model')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Prompt $/1k' : $_('models.openrouter.promptCost')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Completion $/1k' : $_('models.openrouter.completionCost')}</th>
+                  <th class="px-4 py-3">{$isLoading ? 'Context' : $_('models.table.context')}</th>
+                  <th class="px-4 py-3 text-right">{$isLoading ? 'Actions' : $_('models.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {#if loadingOpenRouterModels}
-                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">Loading...</td></tr>
+                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">{$isLoading ? 'Loading...' : $_('models.openrouter.loading')}</td></tr>
                 {:else if openRouterModels.length === 0}
-                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">No models</td></tr>
+                  <tr><td colspan="5" class="px-4 py-4 text-center text-slate-500">{$isLoading ? 'No models' : $_('models.openrouter.noModels')}</td></tr>
                 {:else}
                   {#each openRouterModels as remote}
                     <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
@@ -1106,7 +1108,7 @@
                       <td class="px-4 py-3">{remote.contextLength ?? '—'}</td>
                       <td class="px-4 py-3 text-right">
                         <Button size="xs" on:click={() => openImportModal(remote)} disabled={importingModel}>
-                          Add
+                          {$isLoading ? 'Add' : $_('common.add')}
                         </Button>
                       </td>
                     </tr>
@@ -1117,25 +1119,25 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <Button size="sm" color="primary" onclick={() => { if (remotePage > 1) { remotePage -= 1; loadOpenRouterExtras(); } }} disabled={remotePage === 1 || loadingOpenRouterModels}>Prev</Button>
-            <span class="text-sm text-slate-600 dark:text-slate-300">Page {remotePage}</span>
-            <Button size="sm" color="primary" onclick={() => { remotePage += 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>Next</Button>
+            <Button size="sm" color="primary" onclick={() => { if (remotePage > 1) { remotePage -= 1; loadOpenRouterExtras(); } }} disabled={remotePage === 1 || loadingOpenRouterModels}>{$isLoading ? 'Prev' : $_('pagination.prev')}</Button>
+            <span class="text-sm text-slate-600 dark:text-slate-300">{$isLoading ? 'Page' : $_('pagination.page')} {remotePage}</span>
+            <Button size="sm" color="primary" onclick={() => { remotePage += 1; loadOpenRouterExtras(); }} disabled={loadingOpenRouterModels}>{$isLoading ? 'Next' : $_('pagination.next')}</Button>
           </div>
         </div>
       {:else if selectedTab === 'orchestration'}
         <div class="mb-4 flex justify-between items-center flex-wrap gap-3">
           <div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Orchestration Rules</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Define model selection and fallback strategies</p>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{$isLoading ? 'Orchestration Rules' : $_('models.orchestration')}</h2>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{$isLoading ? 'Define model selection and fallback strategies' : $_('models.orchestrationDescription')}</p>
           </div>
           <div class="flex gap-2">
             <Button onclick={showDiagram} color="primary">
               <Eye class="w-4 h-4 mr-2" />
-              View Diagram
+              {$isLoading ? 'View Diagram' : $_('models.viewDiagram')}
             </Button>
             <Button onclick={() => openOrchestrationModal()}>
               <Plus class="w-4 h-4 mr-2" />
-              New Rule
+              {$isLoading ? 'New Rule' : $_('models.createRule')}
             </Button>
           </div>
         </div>
@@ -1187,24 +1189,24 @@
 
         <div class="mt-6">
           <div class="flex items-center justify-between mb-2">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent usage logs</h3>
-            <Badge color="primary" class="text-xs">{usageLogs.length} entries</Badge>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{$isLoading ? 'Usage history (30d)' : $_('models.usage.usageHistory')}</h3>
+            <Badge color="primary" class="text-xs">{$isLoading ? `${usageLogs.length} entries` : $_('stats.entries', { count: usageLogs.length })}</Badge>
           </div>
           <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
             <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
               <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                 <tr>
-                  <th class="px-6 py-3">When</th>
-                  <th class="px-6 py-3">Model</th>
-                  <th class="px-6 py-3">Provider</th>
-                  <th class="px-6 py-3">Tokens</th>
-                  <th class="px-6 py-3">Cost</th>
-                  <th class="px-6 py-3">Messages</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Date' : $_('stats.date')}</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Model' : $_('models.table.model')}</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Provider' : $_('models.table.provider')}</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Tokens' : $_('stats.tokens')}</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Cost' : $_('stats.cost')}</th>
+                  <th class="px-6 py-3">{$isLoading ? 'Messages' : $_('stats.messages')}</th>
                 </tr>
               </thead>
               <tbody>
                 {#if usageLogs.length === 0}
-                  <tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">No usage records</td></tr>
+                  <tr><td colspan="6" class="px-6 py-4 text-center text-slate-500">{$isLoading ? 'No usage records' : $_('models.usage.noUsageRecords')}</td></tr>
                 {:else}
                   {#each usageLogs as log}
                     <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
@@ -1229,38 +1231,38 @@
 <!-- Orchestration Rule Modal -->
 <Modal bind:open={showOrchestrationModal} size="lg">
   <h3 class="text-xl font-semibold mb-4">
-    {editingRule ? 'Edit' : 'Create'} Orchestration Rule
+    {editingRule ? ($isLoading ? 'Edit' : $_('common.edit')) : ($isLoading ? 'Create' : $_('common.create'))} {$isLoading ? 'Orchestration Rule' : $_('models.orchestration')}
   </h3>
 
   <div class="space-y-4">
     <div>
-      <Label for="rule-name">Name</Label>
-      <Input id="rule-name" bind:value={ruleForm.name} placeholder="My Orchestration Rule" />
+      <Label for="rule-name">{$isLoading ? 'Name' : $_('common.name')}</Label>
+      <Input id="rule-name" bind:value={ruleForm.name} placeholder={$isLoading ? 'My Orchestration Rule' : $_('models.placeholders.ruleName')} />
     </div>
 
     <div>
-      <Label for="rule-description">Description</Label>
-      <Textarea id="rule-description" bind:value={ruleForm.description} rows={2} placeholder="Optional description" />
+      <Label for="rule-description">{$isLoading ? 'Description' : $_('common.description')}</Label>
+      <Textarea id="rule-description" bind:value={ruleForm.description} rows={2} placeholder={$isLoading ? 'Optional description' : $_('models.placeholders.optionalDescription')} />
     </div>
 
     <div>
-      <Label for="rule-strategy">Strategy</Label>
+      <Label for="rule-strategy">{$isLoading ? 'Strategy' : $_('models.strategy')}</Label>
       <Select id="rule-strategy" bind:value={ruleForm.strategy}>
-        <option value="fallback">Fallback (try models in order)</option>
-        <option value="load_balance">Load Balance</option>
-        <option value="cost_optimize">Cost Optimize</option>
-        <option value="quality_first">Quality First</option>
-        <option value="custom">Custom</option>
+        <option value="fallback">{$isLoading ? 'Fallback (try models in order)' : $_('models.fallback')}</option>
+        <option value="load_balance">{$isLoading ? 'Load Balance' : $_('models.loadBalancing')}</option>
+        <option value="cost_optimize">{$isLoading ? 'Cost Optimize' : $_('models.costOptimized')}</option>
+        <option value="quality_first">{$isLoading ? 'Quality First' : $_('models.qualityFirst')}</option>
+        <option value="custom">{$isLoading ? 'Custom' : $_('models.custom')}</option>
       </Select>
     </div>
 
     <div>
-      <Label for="rule-priority">Priority (lower = higher priority)</Label>
+      <Label for="rule-priority">{$isLoading ? 'Priority' : $_('models.priority')} (lower = higher priority)</Label>
       <Input id="rule-priority" type="number" bind:value={ruleForm.priority} />
     </div>
 
     <div>
-      <Label>Model Sequence</Label>
+      <Label>{$isLoading ? 'Model Sequence' : $_('models.modelSequence')}</Label>
       <div class="space-y-2">
         {#each ruleForm.modelSequence as model, idx}
           <div class="flex gap-2">
@@ -1281,30 +1283,30 @@
           ruleForm.modelSequence = [...ruleForm.modelSequence, next];
         }}>
           <Plus class="w-4 h-4 mr-2" />
-          Add Model
+          {$isLoading ? 'Add' : $_('common.add')} {$isLoading ? 'Model' : $_('models.model')}
         </Button>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
       <Toggle bind:checked={ruleForm.enabled} />
-      <Label>Enabled</Label>
+      <Label>{$isLoading ? 'Enabled' : $_('common.enabled')}</Label>
     </div>
   </div>
 
   <div class="flex gap-2 mt-6">
     <Button onclick={handleSaveRule} disabled={!ruleForm.name || ruleForm.modelSequence.length === 0}>
-      Save Rule
+      {$isLoading ? 'Save' : $_('common.save')}
     </Button>
     <Button color="primary" onclick={() => showOrchestrationModal = false}>
-      Cancel
+      {$isLoading ? 'Cancel' : $_('common.cancel')}
     </Button>
   </div>
 </Modal>
 
 <!-- Diagram Modal -->
 <Modal bind:open={showDiagramModal} size="xl">
-  <h3 class="text-xl font-semibold mb-4">Orchestration Flow Diagram</h3>
+  <h3 class="text-xl font-semibold mb-4">{$isLoading ? 'Orchestration Flow Diagram' : $_('models.orchestrationDiagram')}</h3>
   
   <div bind:this={diagramContainer} class="bg-white dark:bg-gray-800 p-4 rounded-lg overflow-auto">
     <!-- Mermaid diagram will render here -->
@@ -1322,7 +1324,7 @@
     <p class="text-sm text-slate-600 dark:text-slate-300 mb-3">{selectedRemote.id}</p>
     <div class="space-y-3">
       <div>
-        <Label>Priority</Label>
+        <Label>{$isLoading ? 'Priority' : $_('models.priority')}</Label>
         <Input type="number" bind:value={importPriority} />
       </div>
       <div class="text-sm text-slate-500">

@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
   import { addServiceMember, getServiceDetail, listCis, removeServiceMember, updateService, type CiRecord, type CmdbServiceMember, type CmdbServiceRecord } from '$lib/api/cmdb';
 
@@ -112,7 +113,7 @@
 
 {#if !serviceId}
   <div class="rounded-lg border border-dashed border-slate-200 dark:border-slate-700 p-6 text-slate-500">
-    Select a service to view details.
+    {$isLoading ? 'Select a service to view details.' : $_('cmdb.selectService')}
   </div>
 {:else if loading}
   <div class="flex justify-center py-10">
@@ -125,7 +126,7 @@
     {/if}
 
     <div class="space-y-2">
-      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Service Details</h3>
+      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">{$isLoading ? 'Service Details' : $_('cmdb.serviceDetails')}</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label for="service-code" class="text-sm font-medium text-slate-700 dark:text-slate-300">Code</label>
@@ -156,23 +157,23 @@
     </div>
 
     <div class="space-y-2">
-      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Members</h3>
+      <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">{$isLoading ? 'Members' : $_('cmdb.members')}</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
         <div>
           <label for="member-ci" class="text-sm font-medium text-slate-700 dark:text-slate-300">CI</label>
           <Select id="member-ci" bind:value={memberCiId}>
-            <option value="">Select CI</option>
+            <option value="">{$isLoading ? 'Select CI' : $_('cmdb.selectCi')}</option>
             {#each cis as ci}
               <option value={ci.id}>{ci.ciCode} - {ci.name}</option>
             {/each}
           </Select>
         </div>
         <div>
-          <label for="member-role" class="text-sm font-medium text-slate-700 dark:text-slate-300">Role</label>
+          <label for="member-role" class="text-sm font-medium text-slate-700 dark:text-slate-300">{$isLoading ? 'Role' : $_('cmdb.role')}</label>
           <Input id="member-role" bind:value={memberRole} placeholder="primary / dependency" />
         </div>
         <div>
-          <Button disabled={!memberCiId || saving} onclick={addMember}>Add Member</Button>
+          <Button disabled={!memberCiId || saving} onclick={addMember}>{$isLoading ? 'Add Member' : $_('cmdb.addMember')}</Button>
         </div>
       </div>
 
@@ -180,7 +181,7 @@
         <Table>
           <TableHead>
             <TableHeadCell>CI</TableHeadCell>
-            <TableHeadCell>Role</TableHeadCell>
+            <TableHeadCell>{$isLoading ? 'Role' : $_('cmdb.role')}</TableHeadCell>
             <TableHeadCell></TableHeadCell>
           </TableHead>
           <TableBody>

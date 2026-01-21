@@ -1,4 +1,5 @@
-<script lang="ts">
+﻿<script lang="ts">
+  import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Modal, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
   import { Plus, Search } from 'lucide-svelte';
   import { createService, listServices, type CmdbServiceRecord } from '$lib/api/cmdb';
@@ -71,17 +72,17 @@
 <div class="space-y-4">
   <div class="flex flex-col lg:flex-row gap-3 lg:items-end lg:justify-between">
     <div>
-      <h2 class="text-lg font-semibold">Services</h2>
-      <p class="text-sm text-slate-500">{meta.total} services</p>
+      <h2 class="text-lg font-semibold">{$isLoading ? 'Services' : $_('cmdb.services')}</h2>
+      <p class="text-sm text-slate-500">{meta.total} {$isLoading ? 'services' : $_('cmdb.services').toLowerCase()}</p>
     </div>
     <div class="flex flex-wrap gap-2 items-center">
       <div class="relative">
         <Search class="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-        <Input class="pl-9" bind:value={query} placeholder="Search services..." />
+        <Input class="pl-9" bind:value={query} placeholder={$isLoading ? 'Search services...' : $_('cmdb.searchServices')} />
       </div>
-      <Button color="alternative" onclick={() => loadServices(1)}>Search</Button>
+      <Button color="alternative" onclick={() => loadServices(1)}>{$isLoading ? 'Search' : $_('common.search')}</Button>
       <Button onclick={openCreate}>
-        <Plus class="w-4 h-4 mr-2" /> New Service
+        <Plus class="w-4 h-4 mr-2" /> {$isLoading ? 'New Service' : $_('cmdb.newService')}
       </Button>
     </div>
   </div>
@@ -99,13 +100,13 @@
       {:else}
         <Table>
           <TableHead>
-            <TableHeadCell>Code</TableHeadCell>
-            <TableHeadCell>Name</TableHeadCell>
+            <TableHeadCell>{$isLoading ? 'Code' : $_('cmdb.code')}</TableHeadCell>
+            <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
           </TableHead>
           <TableBody>
             {#if services.length === 0}
               <TableBodyRow>
-                <TableBodyCell colspan="2" class="text-center text-slate-500">No services found.</TableBodyCell>
+                <TableBodyCell colspan="2" class="text-center text-slate-500">{$isLoading ? 'No services found.' : $_('cmdb.noServices')}</TableBodyCell>
               </TableBodyRow>
             {:else}
               {#each services as service}
@@ -132,16 +133,16 @@
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">New Service</h3>
+    <h3 class="text-lg font-semibold">{$isLoading ? 'New Service' : $_('cmdb.newService')}</h3>
   </svelte:fragment>
   <div class="space-y-3">
     <div>
       <label for="service-code" class="text-sm font-medium text-slate-700 dark:text-slate-300">Code</label>
-      <Input id="service-code" bind:value={code} placeholder="SVC-APP" />
+      <Input id="service-code" bind:value={code} placeholder={$isLoading ? 'SVC-APP' : $_('cmdb.type.placeholders.serviceCode')} />
     </div>
     <div>
       <label for="service-name" class="text-sm font-medium text-slate-700 dark:text-slate-300">Name</label>
-      <Input id="service-name" bind:value={name} placeholder="Hospital App" />
+      <Input id="service-name" bind:value={name} placeholder={$isLoading ? 'Hospital App' : $_('cmdb.type.placeholders.serviceName')} />
     </div>
     <div>
       <label for="service-criticality" class="text-sm font-medium text-slate-700 dark:text-slate-300">Criticality</label>
