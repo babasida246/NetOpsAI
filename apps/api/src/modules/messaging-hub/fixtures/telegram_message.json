@@ -1,0 +1,16 @@
+{
+    "update_id": 123456789,
+    "message": {
+        "message_id": 42,
+        "date": 1700000000,
+        "text": "ping",
+        "chat": {
+            "id": 987654321,
+            "type": "private"
+        },
+        "from": {
+            "id": 111222333,
+            "username": "demo_user"
+        }
+    }
+}

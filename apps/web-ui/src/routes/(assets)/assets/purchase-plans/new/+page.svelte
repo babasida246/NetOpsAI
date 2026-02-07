@@ -71,7 +71,7 @@
         }))
       }
 
-      const response = await fetch('/api/v1/qlts/purchase-plans', {
+      const response = await fetch('/api/v1/assets/purchase-plans', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -86,14 +86,14 @@
 
       if (action === 'submit') {
         const approvers = ['00000000-0000-0000-0000-000000000001']
-        await fetch(`/api/v1/qlts/purchase-plans/${data.id}/submit`, {
+        await fetch(`/api/v1/assets/purchase-plans/${data.id}/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ approvers })
         })
       }
 
-      goto('/qlts/purchase-plans')
+      goto('/assets/purchase-plans')
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : 'Unknown error'
     } finally {
@@ -105,7 +105,7 @@
 <div class="mx-auto max-w-6xl p-6">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">{$_('qlts.purchasePlan.form.createTitle')}</h1>
-    <a href="/qlts/purchase-plans" class="rounded-lg px-4 py-2 font-medium transition-colors hover:bg-gray-100">
+    <a href="/assets/purchase-plans" class="rounded-lg px-4 py-2 font-medium transition-colors hover:bg-gray-100">
       {$_('common.cancel')}
     </a>
   </div>
@@ -260,9 +260,7 @@
                       type="number" 
                       bind:value={line.estimatedCost}
                       min="0"
-                      step="0.01"
                       class="w-full rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                      required
                     />
                   </td>
                   <td class="border-t px-3 py-1">
@@ -274,40 +272,40 @@
                   </td>
                   <td class="border-t px-3 py-1">
                     {#if lines.length > 1}
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onclick={() => removeLine(index)}
-                        class="rounded-lg bg-red-600 px-2 py-0.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+                        class="text-red-500 hover:text-red-700"
                       >
-                        ×
+                        ✕
                       </button>
                     {/if}
                   </td>
                 </tr>
               {/each}
-            </tbody>
-            <tfoot>
-              <tr class="font-bold">
+              <tr>
                 <td colspan="4" class="border-t px-3 py-1 text-right">{$_('qlts.common.total')}:</td>
-                <td colspan="3" class="border-t px-3 py-1">{calculateTotal().toLocaleString('vi-VN')} VND</td>
+                <td class="border-t px-3 py-1 font-semibold">{calculateTotal().toLocaleString()}</td>
+                <td class="border-t px-3 py-1"></td>
+                <td class="border-t px-3 py-1"></td>
               </tr>
-            </tfoot>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
 
     <div class="flex justify-end gap-3">
-      <button 
-        type="button" 
+      <button
+        type="button"
         onclick={() => saveDraft()}
         disabled={saving}
-        class="rounded-lg border-2 border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-100"
+        class="rounded-lg border border-gray-300 px-4 py-2 font-medium transition-colors hover:bg-gray-50 disabled:opacity-50"
       >
         {$_('qlts.common.saveDraft')}
       </button>
-      <button 
-        type="button" 
+      <button
+        type="button"
         onclick={() => saveAndSubmit()}
         disabled={saving}
         class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"

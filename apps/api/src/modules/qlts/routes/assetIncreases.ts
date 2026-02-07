@@ -19,7 +19,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
 
     const workflowService = new WorkflowService(pgClient, approvalRepo)
 
-    // POST /api/v1/qlts/asset-increases
+    // POST /api/v1/assets/asset-increases
     fastify.post('/', async (request, reply) => {
         const userId = request.user?.id || 'system'
         const validated = CreateAssetIncreaseSchema.parse(request.body)
@@ -27,7 +27,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // GET /api/v1/qlts/asset-increases
+    // GET /api/v1/assets/asset-increases
     fastify.get('/', async (request, reply) => {
         const query = ListAssetIncreasesQuerySchema.parse(request.query)
         const result = await assetIncreaseRepo.list(query)
@@ -42,7 +42,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         }
     })
 
-    // GET /api/v1/qlts/asset-increases/:id
+    // GET /api/v1/assets/asset-increases/:id
     fastify.get('/:id', async (request, reply) => {
         const { id } = request.params as { id: string }
         const doc = await assetIncreaseRepo.getById(id)
@@ -52,7 +52,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // PUT /api/v1/qlts/asset-increases/:id
+    // PUT /api/v1/assets/asset-increases/:id
     fastify.put('/:id', {
         schema: {
             params: {
@@ -77,7 +77,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // POST /api/v1/qlts/asset-increases/:id/submit
+    // POST /api/v1/assets/asset-increases/:id/submit
     fastify.post('/:id/submit', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvers } = SubmitAssetIncreaseSchema.parse(request.body)
@@ -99,7 +99,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { status: 'submitted', approvals: approvalRecords } }
     })
 
-    // POST /api/v1/qlts/asset-increases/:id/approve
+    // POST /api/v1/assets/asset-increases/:id/approve
     fastify.post('/:id/approve', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvalId, note } = ApproveRejectSchema.parse(request.body)
@@ -117,7 +117,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { approved: true, allApproved } }
     })
 
-    // POST /api/v1/qlts/asset-increases/:id/reject
+    // POST /api/v1/assets/asset-increases/:id/reject
     fastify.post('/:id/reject', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvalId, note } = ApproveRejectSchema.parse(request.body)
@@ -133,7 +133,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { rejected: true } }
     })
 
-    // POST /api/v1/qlts/asset-increases/:id/post
+    // POST /api/v1/assets/asset-increases/:id/post
     fastify.post('/:id/post', async (request, reply) => {
         const { id } = request.params as { id: string }
         const userId = request.user?.id || 'system'
@@ -207,7 +207,7 @@ export const assetIncreaseRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { posted: true, assetsCreated: doc.lines.length } }
     })
 
-    // DELETE /api/v1/qlts/asset-increases/:id/cancel
+    // DELETE /api/v1/assets/asset-increases/:id/cancel
     fastify.delete('/:id/cancel', async (request, reply) => {
         const { id } = request.params as { id: string }
         const userId = request.user?.id || 'system'

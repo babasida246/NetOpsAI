@@ -128,8 +128,7 @@ export function isRouteAllowed(pathname: string, caps: Capabilities): boolean {
     pathname.startsWith('/maintenance') ||
     pathname.startsWith('/warehouse') ||
     pathname.startsWith('/cmdb') ||
-    pathname.startsWith('/reports') ||
-    pathname.startsWith('/qlts')
+    pathname.startsWith('/reports')
   ) {
     return caps.canManageAssets;
   }

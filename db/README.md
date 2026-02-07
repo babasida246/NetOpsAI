@@ -13,6 +13,8 @@ This directory contains database initialization, seed, and management scripts fo
 ### Data Management
 - **`seed-data.sql`** - Seed data for development/testing
   - Organizations, warehouses, locations, vendors, models, users, roles
+- **`seed-all.sql`** - Combined seed for full project demo data
+  - Includes base data, asset management, and QLTS workflow demo
 - **`cleanup-test-data.sql`** - Remove E2E/test data from database
 - **`cleanup-seed.sql`** - (Old) Cleanup script
 - **`verify_inventory.sql`** - Verification queries for inventory data
@@ -51,3 +53,14 @@ docker cp db/seed-data.sql netopsai-gateway-postgres:/tmp/
 
 # Load data
 docker exec -i netopsai-gateway-postgres psql -U postgres -d netopsai_gateway -f /tmp/seed-data.sql
+```
+
+### Load Full Seed Data (All Modules)
+
+```bash
+# Copy to container
+docker cp db/seed-all.sql netopsai-gateway-postgres:/tmp/
+
+# Load data
+docker exec -i netopsai-gateway-postgres psql -U postgres -d netopsai_gateway -f /tmp/seed-all.sql
+```

@@ -5,6 +5,8 @@ import {
     AssetRepo,
     AssignmentRepo,
     AttachmentRepo,
+    ApprovalRepo,
+    AssetIncreaseRepo,
     CatalogRepo,
     CategorySpecRepo,
     CategorySpecVersionRepo,
@@ -18,6 +20,7 @@ import {
     MaintenanceRepo,
     MovementRepo,
     OpsEventRepo,
+    PurchasePlanRepo,
     SparePartRepo,
     StockDocumentRepo,
     RelationshipRepo,
@@ -63,6 +66,7 @@ import { reportsRoutes } from '../reports/reports.routes.js'
 import { cmdbRoutes } from '../cmdb/cmdb.routes.js'
 import { warehouseRoutes } from '../warehouse/warehouse.routes.js'
 import { stockDocumentRoutes } from '../warehouse/stock-documents.routes.js'
+import { qltsRoutes } from '../../../modules/qlts/routes/index.js'
 
 export interface AssetModuleDeps {
     pgClient: PgClient
@@ -84,6 +88,9 @@ export async function registerAssetModule(
     const inventoryRepo = new InventoryRepo(deps.pgClient)
     const workflowRepo = new WorkflowRepo(deps.pgClient)
     const reminderRepo = new ReminderRepo(deps.pgClient)
+    const purchasePlanRepo = new PurchasePlanRepo(deps.pgClient)
+    const assetIncreaseRepo = new AssetIncreaseRepo(deps.pgClient)
+    const approvalRepo = new ApprovalRepo(deps.pgClient)
     const stockReportRepo = new StockReportRepo(deps.pgClient)
     const warehouseRepo = new WarehouseRepo(deps.pgClient)
     const sparePartRepo = new SparePartRepo(deps.pgClient)
@@ -166,5 +173,21 @@ export async function registerAssetModule(
         ciInventoryReportService,
         relationshipAnalyticsService,
         auditTrailService
+    })
+
+    await fastify.register(async (qltsApp) => {
+        qltsApp.decorate('diContainer', {
+            resolve<T>(key: string): T {
+                const registry: Record<string, unknown> = {
+                    pgClient: deps.pgClient,
+                    purchasePlanRepo,
+                    assetIncreaseRepo,
+                    approvalRepo
+                }
+                return registry[key] as T
+            }
+        })
+
+        await qltsApp.register(qltsRoutes, { prefix: '/api/v1/assets' })
     })
 }

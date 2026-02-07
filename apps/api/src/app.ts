@@ -28,6 +28,7 @@ import { netopsRoutes } from './modules/netops/index.js'
 import { toolsRoutes } from './modules/tools/tools.routes.js'
 import { registerAssetModule } from './routes/v1/assets/assets.module.js'
 // import { registerQltsModule } from './routes/v1/qlts.module.js'  // Commented out missing module
+import { registerMessagingHubModule } from './modules/messaging-hub/messaging-hub.module.js'
 import { LicenseService, licenseRoutes } from './modules/licenses/index.js'
 import { AccessoryService, accessoryRoutes } from './modules/accessories/index.js'
 import { ConsumableService, consumableRoutes } from './modules/consumables/index.js'
@@ -237,6 +238,11 @@ export async function buildApp(deps: AppDependencies): Promise<FastifyInstance> 
     // Conversations
     const conversationRepo = new ConversationRepository(deps.db)
     await conversationRoutes(fastify, conversationRepo, authService)
+
+    // Messaging Hub (ChatOps)
+    await fastify.register(async (hubApp) => {
+        await registerMessagingHubModule(hubApp, { db: deps.db, redis: deps.redis })
+    }, { prefix: '/api/v1' })
 
     // Admin
     const adminRepo = new AdminRepository(deps.db)

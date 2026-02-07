@@ -14,7 +14,7 @@
       if (selectedPriority !== 'all') params.append('minPriority', selectedPriority)
       if (selectedCategory !== 'all') params.append('categoryId', selectedCategory)
 
-      const response = await fetch(`/api/v1/qlts/purchase-plans/suggestions?${params}`)
+      const response = await fetch(`/api/v1/assets/purchase-plans/suggestions?${params}`)
       const data = await response.json()
       suggestions = data.suggestions || []
     } catch (error) {
@@ -53,7 +53,7 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold">{$_('qlts.purchasePlan.dashboard.title')}</h1>
     <a
-      href="/qlts/purchase-plans/new"
+      href="/assets/purchase-plans/new"
       class="rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700"
     >
       {$_('qlts.purchasePlan.dashboard.createNew')}

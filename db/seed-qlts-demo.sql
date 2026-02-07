@@ -1,120 +1,150 @@
 -- Seed data for QLTS simplified workflow demo
--- This script adds sample data for purchase planning and asset increase workflow
+-- Idempotent seed aligned with current schema
 
--- Add inventory tracking data to existing asset models
-UPDATE asset_models SET
+-- Update inventory tracking data by category
+UPDATE asset_models
+SET
     min_stock_qty = 10,
     current_stock_qty = 3,
     avg_daily_consumption = 0.5,
     avg_weekly_consumption = 3.5,
     lead_time_days = 7,
     updated_at = NOW()
-WHERE name LIKE '%Laptop%' OR name LIKE '%Desktop%';
+WHERE category_id IN (
+    SELECT id FROM asset_categories WHERE name IN ('Laptop', 'Desktop')
+);
 
-UPDATE asset_models SET
-    min_stock_qty = 50,
-    current_stock_qty = 15,
-    avg_daily_consumption = 2.0,
-    avg_weekly_consumption = 14.0,
-    lead_time_days = 3,
+UPDATE asset_models
+SET
+    min_stock_qty = 8,
+    current_stock_qty = 2,
+    avg_daily_consumption = 0.2,
+    avg_weekly_consumption = 1.4,
+    lead_time_days = 10,
     updated_at = NOW()
-WHERE name LIKE '%Monitor%' OR name LIKE '%Screen%';
+WHERE category_id IN (
+    SELECT id FROM asset_categories WHERE name IN ('Server', 'Firewall')
+);
 
-UPDATE asset_models SET
-    min_stock_qty = 20,
-    current_stock_qty = 5,
-    avg_daily_consumption = 1.0,
-    avg_weekly_consumption = 7.0,
-    lead_time_days = 5,
-    updated_at = NOW()
-WHERE name LIKE '%Keyboard%' OR name LIKE '%Mouse%';
+-- Clear previous seed consumption logs
+DELETE FROM asset_consumption_logs
+WHERE note = 'seed-qlts-demo';
 
 -- Add consumption logs for the last 30 days
-INSERT INTO asset_consumption_logs (model_id, quantity, consumed_by, consumed_at, note)
-SELECT 
+INSERT INTO asset_consumption_logs (
+    model_id,
+    consumption_date,
+    quantity,
+    reason,
+    note,
+    created_by,
+    created_at
+)
+SELECT
     m.id,
-    floor(random() * 3 + 1)::int,
-    '00000000-0000-0000-0000-000000000001',
     CURRENT_DATE - (floor(random() * 30))::int,
-    'Daily usage tracking'
+    floor(random() * 3 + 1)::int,
+    'issued',
+    'seed-qlts-demo',
+    'seed-admin',
+    NOW()
 FROM asset_models m
 WHERE m.min_stock_qty IS NOT NULL
-    AND random() < 0.3
+  AND random() < 0.3
 LIMIT 50;
 
 -- Sample Purchase Plan (Draft)
 DO $$
 DECLARE
-    plan_id uuid := gen_random_uuid();
+    plan_id uuid := '11000000-0000-0000-0000-000000000001';
     line_counter int := 1;
     model_rec record;
+    unit_cost numeric;
 BEGIN
-    -- Create purchase plan header
     INSERT INTO purchase_plan_docs (
         id, doc_no, doc_date, fiscal_year,
-        org_unit_name, required_by_date, purpose,
-        total_cost, currency, status, created_by
+        org_unit_name, title, description,
+        total_estimated_cost, currency, status, created_by
     ) VALUES (
         plan_id,
         'PP-2024-0001',
         CURRENT_DATE,
         2024,
-        'Phòng IT',
-        CURRENT_DATE + INTERVAL '30 days',
-        'Bổ sung thiết bị cho phòng IT theo kế hoạch năm 2024',
-        0, -- Will be updated after adding lines
+        'Phong IT',
+        'Ke hoach bo sung thiet bi 2024',
+        'Bo sung thiet bi theo ke hoach nam 2024',
+        0,
         'VND',
         'draft',
         '00000000-0000-0000-0000-000000000001'
-    );
+    )
+    ON CONFLICT (doc_no) DO UPDATE SET
+        doc_date = EXCLUDED.doc_date,
+        fiscal_year = EXCLUDED.fiscal_year,
+        org_unit_name = EXCLUDED.org_unit_name,
+        title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        total_estimated_cost = EXCLUDED.total_estimated_cost,
+        currency = EXCLUDED.currency,
+        status = EXCLUDED.status,
+        created_by = EXCLUDED.created_by,
+        updated_at = NOW();
 
-    -- Add lines from models needing purchase
+    DELETE FROM purchase_plan_lines WHERE doc_id = plan_id;
+
     FOR model_rec IN (
-        SELECT 
+        SELECT
             m.id,
-            m.name,
+            m.model,
             m.category_id,
+            m.current_stock_qty,
+            m.min_stock_qty,
+            m.avg_daily_consumption,
             GREATEST(
                 m.min_stock_qty - COALESCE(m.current_stock_qty, 0),
                 CEIL(COALESCE(m.avg_daily_consumption, 1) * COALESCE(m.lead_time_days, 7) * 2)
-            ) as suggested_qty,
-            CASE 
-                WHEN COALESCE(m.current_stock_qty, 0) <= 3 THEN 'critical'
-                WHEN COALESCE(m.current_stock_qty, 0) <= 7 THEN 'high'
-                WHEN COALESCE(m.current_stock_qty, 0) <= 14 THEN 'medium'
+            ) AS suggested_qty,
+            CASE
+                WHEN COALESCE(m.current_stock_qty, 0) <= 1 THEN 'high'
+                WHEN COALESCE(m.current_stock_qty, 0) <= 3 THEN 'medium'
                 ELSE 'low'
-            END as priority
+            END AS priority
         FROM asset_models m
         WHERE m.min_stock_qty IS NOT NULL
-            AND COALESCE(m.current_stock_qty, 0) < m.min_stock_qty
+          AND COALESCE(m.current_stock_qty, 0) < m.min_stock_qty
         LIMIT 10
     ) LOOP
+        unit_cost := 20000000 + floor(random() * 10000000);
+
         INSERT INTO purchase_plan_lines (
-            doc_id, line_no, model_id, model_name, category_id,
-            quantity, unit, estimated_cost,
-            suggestion_reason, current_stock, min_stock, priority
+            doc_id, line_no, model_id, category_id,
+            item_description, quantity, unit,
+            estimated_unit_cost, estimated_total_cost,
+            suggestion_reason, current_stock, min_stock, avg_consumption,
+            priority
         ) VALUES (
             plan_id,
             line_counter,
             model_rec.id,
-            model_rec.name,
             model_rec.category_id,
+            model_rec.model,
             model_rec.suggested_qty,
-            'cái',
-            20000000 + floor(random() * 10000000),
-            'Tồn kho dưới mức tối thiểu',
-            (SELECT current_stock_qty FROM asset_models WHERE id = model_rec.id),
-            (SELECT min_stock_qty FROM asset_models WHERE id = model_rec.id),
+            'cai',
+            unit_cost,
+            model_rec.suggested_qty * unit_cost,
+            'low_stock',
+            model_rec.current_stock_qty,
+            model_rec.min_stock_qty,
+            model_rec.avg_daily_consumption,
             model_rec.priority
         );
-        
+
         line_counter := line_counter + 1;
     END LOOP;
 
-    -- Update total cost
     UPDATE purchase_plan_docs
-    SET total_cost = (
-        SELECT COALESCE(SUM(quantity * estimated_cost), 0)
+    SET total_estimated_cost = (
+        SELECT COALESCE(SUM(estimated_total_cost), 0)
         FROM purchase_plan_lines
         WHERE doc_id = plan_id
     )
@@ -124,12 +154,12 @@ END $$;
 -- Sample Purchase Plan (Submitted & Approved)
 DO $$
 DECLARE
-    plan_id uuid := gen_random_uuid();
-    approval_id uuid := gen_random_uuid();
+    plan_id uuid := '11000000-0000-0000-0000-000000000002';
 BEGIN
     INSERT INTO purchase_plan_docs (
         id, doc_no, doc_date, fiscal_year,
-        org_unit_name, purpose, total_cost, currency,
+        org_unit_name, title, description,
+        total_estimated_cost, currency,
         status, created_by, submitted_by, submitted_at,
         approved_by, approved_at
     ) VALUES (
@@ -137,8 +167,9 @@ BEGIN
         'PP-2024-0002',
         CURRENT_DATE - INTERVAL '5 days',
         2024,
-        'Phòng Kế toán',
-        'Mua sắm thiết bị văn phòng Q1/2024',
+        'Phong Ke toan',
+        'Mua sam thiet bi van phong Q1/2024',
+        'Ke hoach mua sam thiet bi van phong',
         50000000,
         'VND',
         'approved',
@@ -147,96 +178,172 @@ BEGIN
         CURRENT_DATE - INTERVAL '4 days',
         '00000000-0000-0000-0000-000000000002',
         CURRENT_DATE - INTERVAL '3 days'
-    );
+    )
+    ON CONFLICT (doc_no) DO UPDATE SET
+        doc_date = EXCLUDED.doc_date,
+        fiscal_year = EXCLUDED.fiscal_year,
+        org_unit_name = EXCLUDED.org_unit_name,
+        title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        total_estimated_cost = EXCLUDED.total_estimated_cost,
+        currency = EXCLUDED.currency,
+        status = EXCLUDED.status,
+        created_by = EXCLUDED.created_by,
+        submitted_by = EXCLUDED.submitted_by,
+        submitted_at = EXCLUDED.submitted_at,
+        approved_by = EXCLUDED.approved_by,
+        approved_at = EXCLUDED.approved_at,
+        updated_at = NOW();
+
+    DELETE FROM purchase_plan_lines WHERE doc_id = plan_id;
 
     INSERT INTO purchase_plan_lines (
-        doc_id, line_no, model_name, quantity, unit, estimated_cost
-    ) VALUES 
-        (plan_id, 1, 'Máy in laser Canon LBP3300', 2, 'cái', 15000000),
-        (plan_id, 2, 'Máy scan Fujitsu fi-7160', 1, 'cái', 20000000),
-        (plan_id, 3, 'Bàn làm việc 1m6', 5, 'cái', 3000000);
+        doc_id, line_no, item_description, quantity, unit,
+        estimated_unit_cost, estimated_total_cost
+    ) VALUES
+        (plan_id, 1, 'May in laser Canon LBP3300', 2, 'cai', 15000000, 30000000),
+        (plan_id, 2, 'May scan Fujitsu fi-7160', 1, 'cai', 20000000, 20000000),
+        (plan_id, 3, 'Ban lam viec 1m6', 5, 'cai', 3000000, 15000000)
+    ON CONFLICT (doc_id, line_no) DO UPDATE SET
+        item_description = EXCLUDED.item_description,
+        quantity = EXCLUDED.quantity,
+        unit = EXCLUDED.unit,
+        estimated_unit_cost = EXCLUDED.estimated_unit_cost,
+        estimated_total_cost = EXCLUDED.estimated_total_cost;
 
-    -- Approval record
     INSERT INTO approvals (
         id, entity_type, entity_id, step_no,
-        approver_user_id, required_at, decision,
-        decided_by, decided_at
+        approver_id, approver_name, decision,
+        decided_at, created_at
     ) VALUES (
-        approval_id,
+        '11000000-0000-0000-0000-000000000101',
         'purchase_plan',
         plan_id,
         1,
         '00000000-0000-0000-0000-000000000002',
-        CURRENT_DATE - INTERVAL '4 days',
+        'Finance Manager',
         'approved',
-        '00000000-0000-0000-0000-000000000002',
-        CURRENT_DATE - INTERVAL '3 days'
-    );
+        CURRENT_DATE - INTERVAL '3 days',
+        NOW()
+    )
+    ON CONFLICT (entity_type, entity_id, step_no) DO UPDATE SET
+        approver_id = EXCLUDED.approver_id,
+        approver_name = EXCLUDED.approver_name,
+        decision = EXCLUDED.decision,
+        decided_at = EXCLUDED.decided_at,
+        created_at = EXCLUDED.created_at;
 END $$;
 
 -- Sample Asset Increase (Draft)
 DO $$
 DECLARE
-    doc_id uuid := gen_random_uuid();
+    draft_doc_id uuid := '11000000-0000-0000-0000-000000000003';
+    laptop_model_id uuid;
+    laptop_category_id uuid;
 BEGIN
+    SELECT id, category_id INTO laptop_model_id, laptop_category_id
+    FROM asset_models
+    WHERE model ILIKE '%Laptop%'
+    LIMIT 1;
+
     INSERT INTO asset_increase_docs (
         id, doc_no, doc_date, increase_type,
         org_unit_name, vendor_name, invoice_no, invoice_date,
         total_cost, currency, status, created_by
     ) VALUES (
-        doc_id,
+        draft_doc_id,
         'AI-2024-0001',
         CURRENT_DATE,
         'purchase',
-        'Phòng IT',
-        'Công ty TNHH Công nghệ ABC',
+        'Phong IT',
+        'Cong ty TNHH Cong nghe ABC',
         'HD-2024-001',
         CURRENT_DATE - INTERVAL '2 days',
         75000000,
         'VND',
         'draft',
         '00000000-0000-0000-0000-000000000001'
-    );
+    )
+    ON CONFLICT (doc_no) DO UPDATE SET
+        doc_date = EXCLUDED.doc_date,
+        increase_type = EXCLUDED.increase_type,
+        org_unit_name = EXCLUDED.org_unit_name,
+        vendor_name = EXCLUDED.vendor_name,
+        invoice_no = EXCLUDED.invoice_no,
+        invoice_date = EXCLUDED.invoice_date,
+        total_cost = EXCLUDED.total_cost,
+        currency = EXCLUDED.currency,
+        status = EXCLUDED.status,
+        created_by = EXCLUDED.created_by,
+        updated_at = NOW();
+
+    DELETE FROM asset_increase_lines WHERE doc_id = draft_doc_id;
 
     INSERT INTO asset_increase_lines (
-        doc_id, line_no, asset_name, quantity, unit,
-        original_cost, current_value, location_name,
-        custodian_name, acquisition_date
-    ) VALUES 
-        (doc_id, 1, 'Laptop Dell Latitude 5520', 3, 'cái', 25000000, 25000000, 'Phòng IT - Tầng 3', 'Nguyễn Văn A', CURRENT_DATE),
-        (doc_id, 2, 'Màn hình LG 24 inch', 5, 'cái', 5000000, 5000000, 'Phòng IT - Tầng 3', 'Trần Thị B', CURRENT_DATE);
+        doc_id, line_no, asset_code, asset_name,
+        category_id, model_id, serial_number,
+        quantity, unit, original_cost, current_value,
+        location_name, custodian_name, acquisition_date
+    ) VALUES
+        (draft_doc_id, 1, 'LT-2024-DRAFT-001', 'Laptop Dell Latitude 5520',
+         laptop_category_id, laptop_model_id, 'SN-DRAFT-001',
+         3, 'cai', 25000000, 25000000,
+         'Phong IT - Tang 3', 'Nguyen Van A', CURRENT_DATE),
+        (draft_doc_id, 2, 'MON-2024-DRAFT-001', 'Man hinh LG 24 inch',
+         laptop_category_id, laptop_model_id, 'SN-DRAFT-002',
+         5, 'cai', 5000000, 5000000,
+         'Phong IT - Tang 3', 'Tran Thi B', CURRENT_DATE)
+    ON CONFLICT (doc_id, line_no) DO UPDATE SET
+        asset_code = EXCLUDED.asset_code,
+        asset_name = EXCLUDED.asset_name,
+        category_id = EXCLUDED.category_id,
+        model_id = EXCLUDED.model_id,
+        serial_number = EXCLUDED.serial_number,
+        quantity = EXCLUDED.quantity,
+        unit = EXCLUDED.unit,
+        original_cost = EXCLUDED.original_cost,
+        current_value = EXCLUDED.current_value,
+        location_name = EXCLUDED.location_name,
+        custodian_name = EXCLUDED.custodian_name,
+        acquisition_date = EXCLUDED.acquisition_date;
 END $$;
 
 -- Sample Asset Increase (Posted - creates actual assets)
 DO $$
 DECLARE
-    doc_id uuid := gen_random_uuid();
-    line1_id uuid := gen_random_uuid();
-    line2_id uuid := gen_random_uuid();
-    asset1_id uuid := gen_random_uuid();
-    asset2_id uuid := gen_random_uuid();
+    posted_doc_id uuid := '11000000-0000-0000-0000-000000000004';
+    line1_id uuid := '11000000-0000-0000-0000-000000000201';
+    line2_id uuid := '11000000-0000-0000-0000-000000000202';
+    asset1_id uuid := '11000000-0000-0000-0000-000000000301';
+    asset2_id uuid := '11000000-0000-0000-0000-000000000302';
     laptop_model_id uuid;
     laptop_category_id uuid;
+    model_vendor_id uuid;
 BEGIN
-    -- Get a laptop model
-    SELECT id, category_id INTO laptop_model_id, laptop_category_id
-    FROM asset_models 
-    WHERE name LIKE '%Laptop%' 
+    SELECT id, category_id, vendor_id
+    INTO laptop_model_id, laptop_category_id, model_vendor_id
+    FROM asset_models
+    WHERE model ILIKE '%Laptop%'
     LIMIT 1;
+
+    IF laptop_model_id IS NULL THEN
+        RETURN;
+    END IF;
 
     INSERT INTO asset_increase_docs (
         id, doc_no, doc_date, increase_type,
-        org_unit_name, vendor_name, invoice_no, invoice_date,
+        org_unit_name, vendor_id, vendor_name, invoice_no, invoice_date,
         total_cost, currency, status, created_by,
         submitted_by, submitted_at, approved_by, approved_at,
         posted_by, posted_at
     ) VALUES (
-        doc_id,
+        posted_doc_id,
         'AI-2024-0002',
         CURRENT_DATE - INTERVAL '10 days',
         'purchase',
-        'Phòng Kế toán',
-        'Công ty CP Thiết bị văn phòng XYZ',
+        'Phong Ke toan',
+        model_vendor_id,
+        'Cong ty CP Thiet bi van phong XYZ',
         'HD-2024-002',
         CURRENT_DATE - INTERVAL '12 days',
         30000000,
@@ -249,7 +356,28 @@ BEGIN
         CURRENT_DATE - INTERVAL '8 days',
         '00000000-0000-0000-0000-000000000001',
         CURRENT_DATE - INTERVAL '7 days'
-    );
+    )
+    ON CONFLICT (doc_no) DO UPDATE SET
+        doc_date = EXCLUDED.doc_date,
+        increase_type = EXCLUDED.increase_type,
+        org_unit_name = EXCLUDED.org_unit_name,
+        vendor_id = EXCLUDED.vendor_id,
+        vendor_name = EXCLUDED.vendor_name,
+        invoice_no = EXCLUDED.invoice_no,
+        invoice_date = EXCLUDED.invoice_date,
+        total_cost = EXCLUDED.total_cost,
+        currency = EXCLUDED.currency,
+        status = EXCLUDED.status,
+        created_by = EXCLUDED.created_by,
+        submitted_by = EXCLUDED.submitted_by,
+        submitted_at = EXCLUDED.submitted_at,
+        approved_by = EXCLUDED.approved_by,
+        approved_at = EXCLUDED.approved_at,
+        posted_by = EXCLUDED.posted_by,
+        posted_at = EXCLUDED.posted_at,
+        updated_at = NOW();
+
+    DELETE FROM asset_increase_lines WHERE doc_id = posted_doc_id;
 
     INSERT INTO asset_increase_lines (
         id, doc_id, line_no, asset_code, asset_name,
@@ -258,47 +386,51 @@ BEGIN
         location_name, custodian_name,
         acquisition_date, in_service_date,
         asset_id
-    ) VALUES 
-        (line1_id, doc_id, 1, 'LT-2024-001', 'Laptop HP ProBook 450 G9',
+    ) VALUES
+        (line1_id, posted_doc_id, 1, 'LT-2024-001', 'Laptop HP ProBook 450 G9',
          laptop_category_id, laptop_model_id, 'SN12345678',
-         1, 'cái', 20000000, 20000000,
-         'Phòng Kế toán - Tầng 2', 'Phạm Văn C',
+         1, 'cai', 20000000, 20000000,
+         'Phong Ke toan - Tang 2', 'Pham Van C',
          CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days',
          asset1_id),
-        (line2_id, doc_id, 2, 'LT-2024-002', 'Laptop HP ProBook 450 G9',
+        (line2_id, posted_doc_id, 2, 'LT-2024-002', 'Laptop HP ProBook 450 G9',
          laptop_category_id, laptop_model_id, 'SN87654321',
-         1, 'cái', 20000000, 20000000,
-         'Phòng Kế toán - Tầng 2', 'Lê Thị D',
+         1, 'cai', 20000000, 20000000,
+         'Phong Ke toan - Tang 2', 'Le Thi D',
          CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days',
-         asset2_id);
+         asset2_id)
+    ON CONFLICT (doc_id, line_no) DO UPDATE SET
+        asset_code = EXCLUDED.asset_code,
+        asset_name = EXCLUDED.asset_name,
+        category_id = EXCLUDED.category_id,
+        model_id = EXCLUDED.model_id,
+        serial_number = EXCLUDED.serial_number,
+        quantity = EXCLUDED.quantity,
+        unit = EXCLUDED.unit,
+        original_cost = EXCLUDED.original_cost,
+        current_value = EXCLUDED.current_value,
+        location_name = EXCLUDED.location_name,
+        custodian_name = EXCLUDED.custodian_name,
+        acquisition_date = EXCLUDED.acquisition_date,
+        in_service_date = EXCLUDED.in_service_date,
+        asset_id = EXCLUDED.asset_id;
 
-    -- Create actual assets
     INSERT INTO assets (
-        id, code, name, category_id, model_id,
-        serial_number, original_cost, current_value,
-        acquisition_date, in_service_date, status,
-        location_id, custodian_id, created_by,
-        ref_doc_type, source_doc_id, source_doc_no
-    ) VALUES 
-        (asset1_id, 'LT-2024-001', 'Laptop HP ProBook 450 G9',
-         laptop_category_id, laptop_model_id, 'SN12345678',
-         20000000, 20000000,
-         CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days',
-         'active', NULL, NULL,
-         '00000000-0000-0000-0000-000000000001',
-         'asset_increase', doc_id, 'AI-2024-0002'),
-        (asset2_id, 'LT-2024-002', 'Laptop HP ProBook 450 G9',
-         laptop_category_id, laptop_model_id, 'SN87654321',
-         20000000, 20000000,
-         CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE - INTERVAL '7 days',
-         'active', NULL, NULL,
-         '00000000-0000-0000-0000-000000000001',
-         'asset_increase', doc_id, 'AI-2024-0002');
-
-    -- Update model stock
-    UPDATE asset_models
-    SET current_stock_qty = COALESCE(current_stock_qty, 0) + 2
-    WHERE id = laptop_model_id;
+        id, asset_code, model_id, serial_no, status,
+        purchase_date, vendor_id, notes
+    ) VALUES
+        (asset1_id, 'LT-2024-001', laptop_model_id, 'SN12345678', 'in_use',
+         CURRENT_DATE - INTERVAL '10 days', model_vendor_id, 'seed-qlts-demo: posted asset'),
+        (asset2_id, 'LT-2024-002', laptop_model_id, 'SN87654321', 'in_use',
+         CURRENT_DATE - INTERVAL '10 days', model_vendor_id, 'seed-qlts-demo: posted asset')
+    ON CONFLICT (asset_code) DO UPDATE SET
+        model_id = EXCLUDED.model_id,
+        serial_no = EXCLUDED.serial_no,
+        status = EXCLUDED.status,
+        purchase_date = EXCLUDED.purchase_date,
+        vendor_id = EXCLUDED.vendor_id,
+        notes = EXCLUDED.notes,
+        updated_at = NOW();
 END $$;
 
-COMMENT ON SCRIPT IS 'QLTS seed data: Adds sample purchase plans, asset increase docs, consumption logs, and inventory tracking for demo';
+COMMENT ON SCRIPT IS 'QLTS seed data: purchase plans, asset increase docs, and inventory tracking demo';

@@ -21,14 +21,14 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
     const workflowService = new WorkflowService(pgClient, approvalRepo)
     const suggestionService = new PurchaseSuggestionService(pgClient)
 
-    // GET /api/v1/qlts/purchase-plans/suggestions
+    // GET /api/v1/assets/purchase-plans/suggestions
     fastify.get('/suggestions', async (request, reply) => {
         const { categoryId, minPriority } = request.query as { categoryId?: string; minPriority?: 'low' | 'medium' | 'high' | 'critical' }
         const suggestions = await suggestionService.calculateSuggestions({ categoryId, minPriority })
         return { suggestions }
     })
 
-    // POST /api/v1/qlts/purchase-plans
+    // POST /api/v1/assets/purchase-plans
     fastify.post('/', async (request, reply) => {
         const userId = request.user?.id || 'system'
         const validated = CreatePurchasePlanSchema.parse(request.body)
@@ -36,7 +36,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // GET /api/v1/qlts/purchase-plans
+    // GET /api/v1/assets/purchase-plans
     fastify.get('/', async (request, reply) => {
         const query = ListPurchasePlansQuerySchema.parse(request.query)
         const result = await purchasePlanRepo.list(query)
@@ -51,7 +51,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         }
     })
 
-    // GET /api/v1/qlts/purchase-plans/:id
+    // GET /api/v1/assets/purchase-plans/:id
     fastify.get('/:id', async (request, reply) => {
         const { id } = request.params as { id: string }
         const doc = await purchasePlanRepo.getById(id)
@@ -61,7 +61,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // PUT /api/v1/qlts/purchase-plans/:id
+    // PUT /api/v1/assets/purchase-plans/:id
     fastify.put('/:id', async (request, reply) => {
         const { id } = request.params as { id: string }
         const existing = await purchasePlanRepo.getById(id)
@@ -76,7 +76,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: doc }
     })
 
-    // POST /api/v1/qlts/purchase-plans/:id/submit
+    // POST /api/v1/assets/purchase-plans/:id/submit
     fastify.post('/:id/submit', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvers } = SubmitPurchasePlanSchema.parse(request.body)
@@ -98,7 +98,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { status: 'submitted', approvals: approvalRecords } }
     })
 
-    // POST /api/v1/qlts/purchase-plans/:id/approve
+    // POST /api/v1/assets/purchase-plans/:id/approve
     fastify.post('/:id/approve', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvalId, note } = ApproveRejectSchema.parse(request.body)
@@ -116,7 +116,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { approved: true, allApproved } }
     })
 
-    // POST /api/v1/qlts/purchase-plans/:id/reject
+    // POST /api/v1/assets/purchase-plans/:id/reject
     fastify.post('/:id/reject', async (request, reply) => {
         const { id } = request.params as { id: string }
         const { approvalId, note } = ApproveRejectSchema.parse(request.body)
@@ -132,7 +132,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { rejected: true } }
     })
 
-    // POST /api/v1/qlts/purchase-plans/:id/post
+    // POST /api/v1/assets/purchase-plans/:id/post
     fastify.post('/:id/post', async (request, reply) => {
         const { id } = request.params as { id: string }
         const userId = request.user?.id || 'system'
@@ -151,7 +151,7 @@ export const purchasePlanRoutes: FastifyPluginAsync = async (fastify) => {
         return { data: { posted: true } }
     })
 
-    // DELETE /api/v1/qlts/purchase-plans/:id/cancel
+    // DELETE /api/v1/assets/purchase-plans/:id/cancel
     fastify.delete('/:id/cancel', async (request, reply) => {
         const { id } = request.params as { id: string }
         const userId = request.user?.id || 'system'

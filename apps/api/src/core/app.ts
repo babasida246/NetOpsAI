@@ -39,9 +39,9 @@ import { netopsRoutes } from '../modules/netops/index.js'
 import { toolsRoutes } from '../modules/tools/tools.routes.js'
 import { driversRoutes } from '../modules/drivers/index.js'
 import { documentsRoutes } from '../modules/documents/index.js'
+import { registerMessagingHubModule } from '../modules/messaging-hub/messaging-hub.module.js'
 // Import full asset module from routes/v1 (includes cmdb, inventory, maintenance, reports)
 import { registerAssetModule } from '../routes/v1/assets/assets.module.js'
-import { registerQltsModule } from '../routes/v1/qlts/qlts.module.js'
 import { createApiError, createErrorResponse } from '../shared/utils/response.utils.js'
 
 export interface AppDependencies {
@@ -223,13 +223,13 @@ export async function createApp(deps: AppDependencies): Promise<FastifyInstance>
     }
 
     try {
-        console.log('🔧 Registering QLTS module...')
-        await fastify.register(async (qltsApp) => {
-            await registerQltsModule(qltsApp, { pgClient: deps.pgClient })
-        }, { prefix: '/api' })
-        console.log('✅ QLTS module registered successfully')
+        console.log('🔧 Registering messaging hub module...')
+        await fastify.register(async (hubApp) => {
+            await registerMessagingHubModule(hubApp, { db: deps.db, redis: deps.redis })
+        }, { prefix: '/api/v1' })
+        console.log('✅ Messaging hub module registered successfully')
     } catch (error) {
-        console.error('❌ Failed to register QLTS module:', error)
+        console.error('❌ Failed to register messaging hub module:', error)
         throw error
     }
 

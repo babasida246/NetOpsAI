@@ -1,0 +1,20 @@
+{
+    "update_id": 123456790,
+    "callback_query": {
+        "id": "cbq-001",
+        "data": "00000000-0000-0000-0000-000000000123",
+        "from": {
+            "id": 111222333,
+            "username": "demo_user"
+        },
+        "message": {
+            "message_id": 43,
+            "date": 1700000001,
+            "text": "ALERT: sample",
+            "chat": {
+                "id": 987654321,
+                "type": "private"
+            }
+        }
+    }
+}

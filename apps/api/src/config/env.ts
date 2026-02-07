@@ -80,6 +80,14 @@ const envSchema = z.object({
     SMTP_PASS: z.string().optional(),
     SMTP_FROM: z.string().email().optional(),
 
+    // Messaging Hub (ChatOps)
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
+    TELEGRAM_WEBHOOK_SECRET: z.string().optional(),
+    DISCORD_BOT_TOKEN: z.string().optional(),
+    DISCORD_PUBLIC_KEY: z.string().optional(),
+    DISCORD_WEBHOOK_SECRET: z.string().optional(),
+    CHATOPS_DEFAULT_USER_ID: z.string().uuid().optional(),
+
     // Local development helpers
     MOCK_CHAT_RESPONSES: z.string().optional()
 })
