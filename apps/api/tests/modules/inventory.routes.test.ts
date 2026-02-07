@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { inventoryRoutes } from '../../src/routes/v1/inventory.routes.js'
+import { inventoryRoutes } from '../../src/routes/v1/inventory/inventory.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { InventoryService } from '@application/core'
 import type { InventoryItemRecord, InventorySessionRecord } from '@contracts/shared'

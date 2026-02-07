@@ -18,6 +18,7 @@ export interface AssetRow {
     warranty_end: Date | null
     vendor_id: string | null
     notes: string | null
+    spec: unknown
     created_at: Date
     updated_at: Date
     model_name?: string | null
@@ -62,6 +63,7 @@ export function mapAssetRow(row: AssetRow): AssetRecord {
         warrantyEnd: row.warranty_end,
         vendorId: row.vendor_id,
         notes: row.notes,
+        spec: typeof row.spec === 'object' && row.spec !== null ? row.spec as Record<string, unknown> : null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         modelName: row.model_name ?? null,

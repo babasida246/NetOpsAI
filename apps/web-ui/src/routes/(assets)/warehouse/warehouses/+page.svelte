@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Alert, Button, Input, Modal, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Modal } from 'flowbite-svelte';
   import { Plus } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { createWarehouse, listWarehouses, updateWarehouse, type WarehouseRecord } from '$lib/api/warehouse';
+  import { createWarehouse, deleteWarehouse, listWarehouses, updateWarehouse, type WarehouseRecord } from '$lib/api/warehouse';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let warehouses = $state<WarehouseRecord[]>([]);
   let loading = $state(true);
@@ -63,6 +64,18 @@
     }
   }
 
+  async function handleEdit(warehouse: WarehouseRecord, changes: Partial<WarehouseRecord>) {
+    await updateWarehouse(warehouse.id, changes);
+    await loadWarehouses();
+  }
+
+  async function handleDelete(rows: WarehouseRecord[]) {
+    for (const row of rows) {
+      await deleteWarehouse(row.id);
+    }
+    await loadWarehouses();
+  }
+
   $effect(() => {
     void loadWarehouses();
   });
@@ -83,47 +96,28 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-        <Table>
-          <TableHead>
-            <TableHeadCell>{$isLoading ? 'Code' : $_('common.code')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Location' : $_('assets.location')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? '' : $_('common.actions')}</TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#if warehouses.length === 0}
-              <TableBodyRow>
-                <TableBodyCell colspan="4" class="text-center text-slate-500">{$isLoading ? 'No warehouses found.' : $_('warehouse.noWarehouses')}</TableBodyCell>
-              </TableBodyRow>
-            {:else}
-              {#each warehouses as warehouse}
-                <TableBodyRow>
-                  <TableBodyCell class="font-medium">{warehouse.code}</TableBodyCell>
-                  <TableBodyCell>{warehouse.name}</TableBodyCell>
-                  <TableBodyCell>{warehouse.locationId ?? '-'}</TableBodyCell>
-                  <TableBodyCell class="text-right">
-                    <Button size="xs" color="alternative" onclick={() => openEdit(warehouse)}>{$isLoading ? 'Edit' : $_('common.edit')}</Button>
-                  </TableBodyCell>
-                </TableBodyRow>
-              {/each}
-            {/if}
-          </TableBody>
-      </Table>
-    </div>
-  {/if}
+  <DataTable
+    data={warehouses}
+    columns={[
+      { key: 'code', label: $isLoading ? 'Code' : $_('common.code'), sortable: true, filterable: true, editable: true, width: 'w-32' },
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true },
+      { key: 'locationId', label: $isLoading ? 'Location' : $_('assets.location'), sortable: true, filterable: true, editable: true, render: (val) => val ?? '-' }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={loading}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 </div>
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">
-      {editing ? ($isLoading ? 'Edit Warehouse' : $_('warehouse.editWarehouse')) : ($isLoading ? 'New Warehouse' : $_('warehouse.newWarehouse'))}
-    </h3>
+  
+      <h3 class="text-lg font-semibold">
+        {editing ? ($isLoading ? 'Edit Warehouse' : $_('warehouse.editWarehouse')) : ($isLoading ? 'New Warehouse' : $_('warehouse.newWarehouse'))}
+      </h3>
+    
   </svelte:fragment>
   <div class="space-y-4">
     <div>
@@ -140,11 +134,14 @@
     </div>
   </div>
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button disabled={saving || !code || !name} onclick={saveWarehouse}>
-        {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Save' : $_('common.save'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button disabled={saving || !code || !name} onclick={saveWarehouse}>
+          {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Save' : $_('common.save'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

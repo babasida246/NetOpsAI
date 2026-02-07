@@ -12,7 +12,7 @@
   let loading = $state(true);
   let error = $state('');
 
-  const statusLabels = $derived<Array<{ key: AssetStatus; label: string }>>(() => ([
+  const statusLabels = $derived.by<Array<{ key: AssetStatus; label: string }>>(() => ([
     { key: 'in_stock', label: $_('assets.statusLabels.inStock') },
     { key: 'in_use', label: $_('assets.statusLabels.inUse') },
     { key: 'in_repair', label: $_('assets.statusLabels.inRepair') },
@@ -30,7 +30,7 @@
     try {
       loading = true;
       const catalogResp = await getAssetCatalogs();
-      catalogs = catalogResp.data;
+      catalogs = catalogResp.data ?? [];
 
       const statusCounts = await Promise.all(statusLabels.map(async status => ({
         label: status.label,

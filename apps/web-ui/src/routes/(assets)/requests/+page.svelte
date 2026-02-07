@@ -1,19 +1,24 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import {
     Alert,
     Button,
     Select,
     Spinner,
     Table,
-    TableBody,
-    TableBodyCell,
-    TableBodyRow,
     TableHead,
-    TableHeadCell
+    TableHeadCell,
+    TableBody,
+    TableBodyRow,
+    TableBodyCell
   } from 'flowbite-svelte';
   import { Plus } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
+  import { getCapabilities } from '$lib/auth/capabilities';
   import { listWorkflowRequests, type WorkflowRequest } from '$lib/api/assetMgmt';
+
+  let userRole = $state('');
+  const caps = $derived.by(() => getCapabilities(userRole));
 
   let requests = $state<WorkflowRequest[]>([]);
   let loading = $state(true);
@@ -21,6 +26,11 @@
   let status = $state('');
   let requestType = $state('');
   let meta = $state({ total: 0, page: 1, limit: 20 });
+
+  onMount(() => {
+    if (typeof window === 'undefined') return;
+    userRole = localStorage.getItem('userRole') || '';
+  });
 
   async function loadRequests(page = 1) {
     try {
@@ -31,7 +41,7 @@
         page,
         limit: meta.limit
       });
-      requests = response.data;
+      requests = response.data ?? [];
       meta = {
         total: response.meta?.total ?? response.data.length,
         page: response.meta?.page ?? page,
@@ -57,9 +67,11 @@
         {$isLoading ? `${meta.total} requests` : $_('requests.total', { values: { count: meta.total } })}
       </p>
     </div>
-    <Button href="/requests/new">
-      <Plus class="w-4 h-4 mr-2" /> {$isLoading ? 'New Request' : $_('requests.new')}
-    </Button>
+    {#if caps.canCreateRequests}
+      <Button href="/requests/new">
+        <Plus class="w-4 h-4 mr-2" /> {$isLoading ? 'New Request' : $_('requests.new')}
+      </Button>
+    {/if}
   </div>
 
   {#if error}
@@ -67,7 +79,7 @@
   {/if}
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-    <Select bind:value={status} on:change={() => loadRequests(1)}>
+    <Select bind:value={status} onchange={() => loadRequests(1)}>
       <option value="">{$isLoading ? 'All statuses' : $_('requests.filters.allStatuses')}</option>
       <option value="submitted">{$isLoading ? 'Submitted' : $_('requests.status.submitted')}</option>
       <option value="approved">{$isLoading ? 'Approved' : $_('requests.status.approved')}</option>
@@ -76,7 +88,7 @@
       <option value="done">{$isLoading ? 'Done' : $_('requests.status.done')}</option>
       <option value="canceled">{$isLoading ? 'Canceled' : $_('requests.status.canceled')}</option>
     </Select>
-    <Select bind:value={requestType} on:change={() => loadRequests(1)}>
+    <Select bind:value={requestType} onchange={() => loadRequests(1)}>
       <option value="">{$isLoading ? 'All types' : $_('requests.filters.allTypes')}</option>
       <option value="assign">{$isLoading ? 'Assign' : $_('requests.type.assign')}</option>
       <option value="return">{$isLoading ? 'Return' : $_('requests.type.return')}</option>

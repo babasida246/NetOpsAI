@@ -21,7 +21,17 @@
     "operations": "Vận hành",
     "reports": "Báo cáo",
     "assetManagement": "Quản lý tài sản",
-    "devices": "Thiết bị"
+    "devices": "Thiết bị",
+    "main": "Chính",
+    "my": "Của tôi",
+    "myAssets": "Tài sản của tôi",
+    "myRequests": "Yêu cầu của tôi",
+    "notifications": "Thông báo",
+    "inbox": "Hộp phê duyệt",
+    "support": "Hỗ trợ",
+    "help": "Trợ giúp",
+    "profile": "Hồ sơ",
+    "navigation": "Điều hướng"
   },
   "common": {
     "success": "Thành công",
@@ -50,12 +60,18 @@
     "actions": "Thao tác",
     "view": "Xem",
     "details": "Chi tiết",
+    "selected": "đã chọn",
+    "clearSelection": "Bỏ chọn tất cả",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa?",
+    "rows": "hàng",
     "apply": "Áp dụng",
     "clear": "Xóa",
     "clearText": "Xóa",
     "add": "Thêm",
     "new": "Mới",
     "all": "Tất cả",
+    "optional": "Tuỳ chọn",
+    "reset": "Đặt lại",
     "name": "Tên",
     "code": "Mã",
     "type": "Loại",
@@ -72,6 +88,10 @@
     "allWarehouses": "Tất cả kho",
     "minLevel": "Mức tối thiểu",
     "redirecting": "Đang chuyển hướng...",
+    "forbiddenTitle": "Không có quyền truy cập",
+    "forbiddenMessage": "Bạn không có quyền xem trang này.",
+    "forbiddenRoute": "Đường dẫn bị chặn",
+    "goHome": "Về trang chủ",
     "saving": "Đang lưu...",
     "notes": "Ghi chú",
     "from": "Từ",
@@ -95,7 +115,11 @@
     "id": "ID",
     "noResults": "Không có kết quả",
     "required": "Bắt buộc",
-    "submitting": "Đang gửi..."
+    "submitting": "Đang gửi...",
+    "copy": "Sao chép",
+    "show": "Hiện",
+    "hide": "Ẩn",
+    "remove": "Xóa"
   },
   "auth": {
     "login": "Đăng nhập",
@@ -243,6 +267,12 @@
     "exportFilename": "assets.csv",
     "filters": {
       "status": "Trạng thái",
+      "warranty": "Bảo hành",
+      "sort": "Sắp xếp",
+      "sortNewest": "Mới nhất",
+      "sortCodeAsc": "Mã tài sản (A-Z)",
+      "sortCodeDesc": "Mã tài sản (Z-A)",
+      "sortWarranty": "Hết hạn bảo hành",
       "category": "Danh mục",
       "vendor": "Nhà cung cấp",
       "model": "Mẫu mã",
@@ -253,7 +283,89 @@
       "inRepair": "Đang sửa chữa",
       "retired": "Ngừng sử dụng",
       "disposed": "Đã thanh lý",
-      "lost": "Mất"
+      "lost": "Mất",
+      "warranty30": "Hết hạn trong 30 ngày",
+      "warranty60": "Hết hạn trong 60 ngày",
+      "warranty90": "Hết hạn trong 90 ngày"
+    },
+    "tabs": {
+      "overview": "Tổng quan",
+      "lifecycle": "Vòng đời",
+      "maintenance": "Bảo trì",
+      "warranty": "Bảo hành",
+      "inventory": "Kiểm kê",
+      "workflow": "Workflow",
+      "attachments": "Tài liệu",
+      "compliance": "Tuân thủ"
+    },
+    "bulk": {
+      "statusPlaceholder": "Cập nhật trạng thái",
+      "locationPlaceholder": "Chuyển vị trí",
+      "updateStatus": "Áp dụng trạng thái",
+      "move": "Chuyển tài sản"
+    },
+    "health": {
+      "title": "Sức khỏe tài sản",
+      "score": "Điểm sức khỏe",
+      "maintenanceOpen": "Bảo trì đang mở",
+      "warrantyDays": "Số ngày còn bảo hành",
+      "assignments": "Bàn giao"
+    },
+    "depreciation": {
+      "title": "Khấu hao",
+      "cost": "Giá mua",
+      "years": "Số năm khấu hao",
+      "annual": "Khấu hao năm",
+      "monthly": "Khấu hao tháng"
+    },
+    "knowledge": {
+      "recommendedDrivers": "Driver đề xuất",
+      "relatedDocs": "Tài liệu liên quan",
+      "emptyDrivers": "Chưa có driver đề xuất.",
+      "emptyDocs": "Chưa có tài liệu liên quan.",
+      "loadFailed": "Tải gợi ý driver/tài liệu thất bại."
+    },
+    "inventory": {
+      "sessions": "Đợt kiểm kê",
+      "createSession": "Tạo đợt",
+      "closeSession": "Đóng đợt",
+      "sessionName": "Tên đợt",
+      "sessionNamePlaceholder": "Kỳ 2024 - Khoa A",
+      "sessionLocation": "Vị trí",
+      "sessionSelect": "Đợt hiện tại",
+      "selectSession": "Chọn đợt",
+      "selectSessionError": "Vui lòng chọn đợt kiểm kê trước.",
+      "quickScan": "Quét nhanh",
+      "items": "Danh sách kiểm kê",
+      "empty": "Chưa có dữ liệu kiểm kê.",
+      "scannedAt": "Thời điểm quét"
+    },
+    "workflow": {
+      "title": "Yêu cầu workflow",
+      "requests": "Danh sách yêu cầu",
+      "empty": "Chưa có yêu cầu workflow."
+    },
+    "compliance": {
+      "title": "Gói bằng chứng",
+      "subtitle": "Tải bằng chứng kiểm toán cho tài sản.",
+      "download": "Tải gói bằng chứng",
+      "attachments": "Tài liệu",
+      "timeline": "Dòng thời gian",
+      "maintenance": "Phiếu bảo trì"
+    },
+    "maintenanceEmpty": "Chưa có bản ghi bảo trì.",
+    "warranty": "Bảo hành",
+    "warrantyRemaining": "Số ngày còn bảo hành",
+    "runWarrantyReminders": "Chạy nhắc hạn bảo hành",
+    "remindersEmpty": "Chưa có nhắc hạn.",
+    "createdAt": "Tạo lúc",
+    "statuses": {
+      "in_stock": "Trong kho",
+      "in_use": "Đang sử dụng",
+      "in_repair": "Đang sửa",
+      "retired": "Ngừng sử dụng",
+      "disposed": "Thanh lý",
+      "lost": "Thất lạc"
     },
     "placeholders": {
       "returnNote": "Ghi chú tùy chọn",
@@ -293,7 +405,13 @@
       "loadFailed": "Tải tài sản thất bại",
       "assignFailed": "Gán tài sản thất bại",
       "returnFailed": "Trả tài sản thất bại",
-      "openMaintenanceFailed": "Tạo phiếu bảo trì thất bại"
+      "openMaintenanceFailed": "Tạo phiếu bảo trì thất bại",
+      "bulkUpdateFailed": "Cập nhật hàng loạt thất bại",
+      "bulkMoveFailed": "Di chuyển hàng loạt thất bại",
+      "reminderFailed": "Chạy nhắc hạn bảo hành thất bại",
+      "inventoryLoadFailed": "Tải đợt kiểm kê thất bại",
+      "inventoryCreateFailed": "Tạo đợt kiểm kê thất bại",
+      "inventoryCloseFailed": "Đóng đợt kiểm kê thất bại"
     },
     "address": "Địa chỉ",
     "allCategories": "Tất cả danh mục",
@@ -849,6 +967,8 @@
     "title": "Công cụ & Tiện ích",
     "subtitle": "Các trợ giúp nhanh cho sơ đồ, khắc phục sự cố mạng và truy cập SSH",
     "sections": "Phần",
+    "configGenerator": "Tạo cấu hình",
+    "mikrotikFullConfig": "MikroTik cấu hình đầy đủ",
     "mermaid": "Mermaid",
     "fieldKit": "Bộ dụng cụ trường",
     "sshTerminal": "Terminal SSH",
@@ -929,6 +1049,25 @@
   "admin": {
     "title": "Người dùng quản trị",
     "subtitle": "Quản lý tài khoản, vai trò và trạng thái truy cập",
+    "sectionLabel": "Mục",
+    "sections": {
+      "quickWins": "Quick Wins",
+      "coreAdmin": "Core Admin",
+      "stats": "Thống kê",
+      "models": "Models",
+      "security": "Bảo mật",
+      "ops": "Ops",
+      "ux": "UX"
+    },
+    "sectionDescriptions": {
+      "quickWins": "Sức khỏe, người dùng, audit",
+      "coreAdmin": "Vai trò, phiên, giả lập",
+      "stats": "Thông tin sử dụng & chi phí",
+      "models": "Nhà cung cấp, quản trị, điều phối",
+      "security": "MFA, SSO, tuân thủ",
+      "ops": "Metrics, cờ tính năng, thông báo",
+      "ux": "Tìm kiếm & hoạt động"
+    },
     "addUser": "Thêm người dùng",
     "closeForm": "Đóng",
     "email": "Email",
@@ -960,13 +1099,176 @@
     "resetPasswordPrompt": "Mật khẩu mới cho {{email}}:",
     "deleteUserConfirm": "Xóa người dùng {{email}}?"
   },
+  "adminRbac": {
+    "navLabel": "RBAC",
+    "title": "RBAC Quản trị",
+    "subtitle": "Vai trò, phân quyền và kiểm toán",
+    "tabs": {
+      "matrix": "Ma trận quyền",
+      "groups": "Gán theo nhóm",
+      "explain": "Giải thích quyền",
+      "audit": "Nhật ký"
+    },
+    "common": {
+      "danger": "Nguy hiểm"
+    },
+    "matrix": {
+      "title": "Ma Trận Vai Trò & Quyền",
+      "subtitle": "Cấu hình quyền theo vai trò và xem quyền hiệu lực.",
+      "actions": {
+        "save": "Lưu thay đổi",
+        "discard": "Hủy",
+        "export": "Xuất CSV",
+        "openAudit": "Mở nhật ký"
+      },
+      "search": "Tìm quyền",
+      "searchPlaceholder": "Tìm resource.action, tiêu đề hoặc mô tả...",
+      "dirty": "thay đổi",
+      "toggles": {
+        "differences": "Chỉ hiện khác biệt",
+        "inherited": "Hiện kế thừa",
+        "compact": "Chế độ gọn"
+      },
+      "filters": {
+        "resource": "Tài nguyên",
+        "action": "Hành động",
+        "tag": "Tag"
+      },
+      "bulk": {
+        "selected": "Đã chọn {{count}} ô",
+        "clearOverride": "Xóa override",
+        "clearSelection": "Bỏ chọn"
+      },
+      "columns": {
+        "permission": "Quyền"
+      },
+      "roleMenu": {
+        "title": "Thao tác vai trò",
+        "setVisible": "Đặt tất cả đang hiện → {{scope}}",
+        "clearVisible": "Xóa overrides (đang hiện)",
+        "inherits": "Kế thừa: {{base}}"
+      }
+    },
+    "review": {
+      "title": "Xem lại thay đổi",
+      "empty": "Không có thay đổi để xem.",
+      "subtitle": "Xem trước diff trước khi lưu. Quyền nhạy cảm yêu cầu lý do.",
+      "columns": {
+        "role": "Vai trò",
+        "permission": "Quyền",
+        "before": "Trước",
+        "after": "Sau",
+        "source": "Nguồn"
+      },
+      "dangerTitle": "Thay đổi quyền nhạy cảm",
+      "dangerHelp": "Bạn đang cấp các quyền nguy hiểm. Thao tác này sẽ được audit và cần có lý do rõ ràng.",
+      "acknowledge": "Tôi hiểu đây là quyền nhạy cảm",
+      "reason": "Lý do",
+      "reasonPlaceholder": "Giải thích vì sao cần thay đổi này...",
+      "reasonHint": "Tối thiểu 10 ký tự."
+    },
+    "groups": {
+      "title": "Gán Vai Trò Theo Nhóm",
+      "subtitle": "Gán vai trò theo nhóm và quản lý membership.",
+      "tabs": {
+        "byGroup": "Theo nhóm",
+        "byUser": "Theo người dùng"
+      },
+      "groupList": "Nhóm",
+      "searchGroups": "Tìm nhóm...",
+      "noGroupSelected": "Chọn một nhóm để xem thành viên.",
+      "actions": {
+        "addMembers": "Thêm thành viên"
+      },
+      "bulk": {
+        "role": "Vai trò cho lựa chọn",
+        "apply": "Áp dụng",
+        "selected": "{{count}} đã chọn"
+      },
+      "members": {
+        "user": "Người dùng",
+        "role": "Vai trò trong nhóm",
+        "empty": "Chưa có thành viên."
+      },
+      "add": {
+        "title": "Thêm thành viên",
+        "users": "Người dùng",
+        "usersHint": "Giữ Ctrl/Cmd để chọn nhiều người dùng.",
+        "role": "Vai trò"
+      },
+      "userPicker": "Xem theo người dùng",
+      "searchUsers": "Tìm người dùng...",
+      "noUserSelected": "Chọn một người dùng để chỉnh sửa.",
+      "user": {
+        "globalRole": "Vai trò toàn cục",
+        "memberships": "Memberships",
+        "noMemberships": "Chưa thuộc nhóm nào.",
+        "addMembership": "Thêm vào nhóm",
+        "group": "Nhóm",
+        "role": "Vai trò"
+      }
+    },
+    "explain": {
+      "title": "Giải Thích Quyền",
+      "subtitle": "Giải thích quyền hiệu lực của người dùng theo ngữ cảnh.",
+      "inputs": "Đầu vào",
+      "inputsHelp": "Chọn người dùng, quyền và ngữ cảnh (tuỳ chọn) để giải thích.",
+      "user": "Người dùng",
+      "userSearch": "Tìm người dùng...",
+      "globalRole": "Vai trò toàn cục",
+      "permission": "Quyền",
+      "permissionSearch": "Tìm quyền...",
+      "contextGroup": "Nhóm ngữ cảnh",
+      "contextDepartment": "Phòng ban",
+      "ownerUserId": "Owner user id (tuỳ chọn)",
+      "ownerPlaceholder": "Tuỳ chọn owner user id",
+      "actions": {
+        "explain": "Giải thích",
+        "openMatrix": "Mở trong ma trận"
+      },
+      "empty": "Chạy giải thích để xem trace.",
+      "result": "Kết quả hiệu lực",
+      "effective": "Scope hiệu lực",
+      "source": "Nguồn quyết định",
+      "role": "Vai trò",
+      "trace": "Các bước truy vết",
+      "inheritChain": "Chuỗi kế thừa"
+    },
+    "audit": {
+      "title": "Nhật Ký RBAC",
+      "subtitle": "Timeline read-only cho các thay đổi RBAC.",
+      "filters": {
+        "dangerousOnly": "Chỉ quyền nguy hiểm",
+        "search": "Tìm kiếm",
+        "searchPlaceholder": "Tìm theo người thực hiện, hành động, đối tượng, lý do..."
+      },
+      "count": "sự kiện",
+      "empty": "Không có mục nhật ký.",
+      "columns": {
+        "time": "Thời gian",
+        "actor": "Người thực hiện",
+        "target": "Đối tượng",
+        "action": "Hành động",
+        "reason": "Lý do"
+      },
+      "detailTitle": "Chi tiết nhật ký"
+    }
+  },
   "netops": {
     "title": "NetOps",
     "devices": "Thiết bị",
     "changes": "Thay đổi",
     "rulepacks": "Rulepacks",
     "tools": "Công cụ",
+    "fieldKit": "Field Kit",
     "configs": "Cấu hình",
+    "field": {
+      "title": "Field Kit",
+      "subtitle": "Chẩn đoán an toàn theo hướng dẫn cho kỹ thuật hiện trường.",
+      "errors": {
+        "loadDevicesFailed": "Tải danh sách thiết bị thất bại"
+      }
+    },
     "toolsPage": {
       "title": "Trình tạo cấu hình NetOps",
       "subtitle": "Tạo các đoạn CLI dành riêng cho nhà cung cấp cho các thiết bị mạng.",
@@ -1252,7 +1554,518 @@
     "parsing": "Đang phân tích...",
     "runLint": "Chạy lint",
     "running": "Đang chạy...",
-    "selectConfigVersion": "Chọn phiên bản cấu hình"
+    "selectConfigVersion": "Chọn phiên bản cấu hình",
+    "generator": {
+      "title": "Trình tạo CLI mạng",
+      "subtitle": "Sinh CLI theo vendor, an toàn mặc định cho thiết bị mạng.",
+      "deviceContext": "Bối cảnh thiết bị",
+      "device": "Thiết bị",
+      "deviceEmpty": "Không có thiết bị",
+      "deviceHelp": "Chọn thiết bị mục tiêu.",
+      "vendor": "Hãng",
+      "vendorHelp": "Renderer quyết định CLI đầu ra.",
+      "environment": "Môi trường",
+      "environmentHelp": "Prod yêu cầu phê duyệt và kiểm tra lệnh nguy hiểm.",
+      "requireDevice": "Cần chọn thiết bị và hostname trước khi generate CLI.",
+      "actions": {
+        "openSsh": "Mở SSH Terminal",
+        "generate": "Generate CLI"
+      },
+      "profile": {
+        "label": "CLI Profile",
+        "help": "Áp dụng profile để điền nhanh cấu hình.",
+        "apply": "Chọn profile...",
+        "save": "Lưu profile",
+        "active": "Profile",
+        "name": "Tên profile",
+        "includeHostname": "Bao gồm hostname trong profile",
+        "saveTitle": "Lưu CLI Profile"
+      },
+      "intent": {
+        "title": "Nhập ý định",
+        "badge": "AI hỗ trợ",
+        "placeholder": "VD: Tạo VLAN 30 cho imaging, subnet 10.30.0.0/24, gateway 10.30.0.1",
+        "apply": "Áp dụng ý định",
+        "applied": "Đã áp dụng ý định. Vui lòng kiểm tra lại trước khi generate."
+      },
+      "step": {
+        "configured": "Đã cấu hình",
+        "empty": "Trống"
+      },
+      "playbook": {
+        "toggle": "Chế độ playbook",
+        "bootstrap": "Bootstrap",
+        "hardening": "Hardening",
+        "maintenance": "Maintenance",
+        "rollback": "Rollback"
+      },
+      "base": {
+        "title": "Cấu hình cơ bản",
+        "description": "Định danh, phạm vi quản trị và bảo mật nền.",
+        "hostname": "Hostname",
+        "hostnameHelp": "Dùng làm định danh thiết bị trong CLI.",
+        "mgmtCidr": "CIDR quản trị",
+        "mgmtHelp": "Giới hạn truy cập quản trị theo dải tin cậy.",
+        "firewall": "Bật firewall baseline",
+        "snmp": "SNMP Community"
+      },
+      "services": {
+        "title": "Dịch vụ",
+        "description": "Cấu hình SSH, DNS và NTP.",
+        "sshEnabled": "Bật SSH",
+        "sshVersion": "Phiên bản SSH",
+        "allowPassword": "Cho phép mật khẩu",
+        "passwordWarning": "Đang bật xác thực mật khẩu",
+        "ntpServers": "Máy chủ NTP",
+        "dnsServers": "Máy chủ DNS"
+      },
+      "network": {
+        "title": "Mạng",
+        "description": "VLAN và gán interface.",
+        "vlans": "VLAN",
+        "interfaces": "Interface",
+        "routes": "Static Route",
+        "addVlan": "Thêm VLAN",
+        "addInterface": "Thêm Interface",
+        "addRoute": "Thêm Route",
+        "emptyVlansTitle": "Chưa có VLAN",
+        "emptyVlansDescription": "Thêm VLAN để map subnet và gateway.",
+        "emptyInterfacesTitle": "Chưa có interface",
+        "emptyInterfacesDescription": "Thêm role và IP quản trị cho interface.",
+        "emptyRoutesTitle": "Chưa có static route",
+        "emptyRoutesDescription": "Thêm default hoặc site route khi cần.",
+        "vlanId": "VLAN ID",
+        "vlanName": "Tên",
+        "vlanSubnet": "Subnet",
+        "vlanGateway": "Gateway",
+        "interfaceName": "Interface",
+        "interfaceRole": "Vai trò",
+        "interfaceIp": "IP",
+        "interfaceMask": "Subnet mask",
+        "interfaceVlan": "VLAN",
+        "interfaceDescription": "Mô tả",
+        "roleUplink": "Uplink",
+        "roleAccess": "Access",
+        "routeDestination": "Đích",
+        "routeNetmask": "Netmask",
+        "routeNextHop": "Next hop"
+      },
+      "routing": {
+        "title": "Routing",
+        "description": "Chính sách định tuyến tĩnh và động.",
+        "static": "Static Routes",
+        "ospfEnabled": "Bật OSPF",
+        "ospfRouterId": "OSPF Router ID",
+        "addOspfArea": "Thêm OSPF Area",
+        "emptyOspfTitle": "Chưa có OSPF area",
+        "emptyOspfDescription": "Thêm area và network để quảng bá.",
+        "ospfArea": "Area",
+        "ospfNetworks": "Networks",
+        "bgpEnabled": "Bật BGP",
+        "bgpLocalAs": "Local AS",
+        "addBgpNeighbor": "Thêm BGP Neighbor",
+        "emptyBgpNeighborsTitle": "Chưa có BGP neighbor",
+        "emptyBgpNeighborsDescription": "Thêm neighbor IP và remote AS.",
+        "bgpNeighbor": "Neighbor",
+        "bgpRemoteAs": "Remote AS",
+        "bgpNetworks": "BGP Networks",
+        "addBgpNetwork": "Thêm Network",
+        "emptyBgpNetworksTitle": "Chưa có network BGP",
+        "emptyBgpNetworksDescription": "Thêm network để quảng bá.",
+        "bgpNetwork": "Network",
+        "ripEnabled": "Bật RIP",
+        "ripVersion": "RIP Version",
+        "ripNetwork": "RIP Network"
+      },
+      "security": {
+        "title": "Firewall & NAT",
+        "description": "Chính sách bảo mật và NAT.",
+        "firewallRules": "Firewall Rules",
+        "natRules": "NAT Rules",
+        "addFirewallRule": "Thêm Firewall Rule",
+        "addNatRule": "Thêm NAT Rule",
+        "emptyFirewallTitle": "Chưa có firewall rule",
+        "emptyFirewallDescription": "Thêm rule input/output/forward.",
+        "emptyNatTitle": "Chưa có NAT rule",
+        "emptyNatDescription": "Thêm chính sách NAT.",
+        "chain": "Chain",
+        "protocol": "Protocol",
+        "source": "Source",
+        "destination": "Destination",
+        "port": "Port",
+        "action": "Action",
+        "natType": "Loại NAT",
+        "translate": "Translate To",
+        "interface": "Interface",
+        "comment": "Ghi chú"
+      },
+      "vpn": {
+        "title": "VPN & Tunnels",
+        "description": "Tunnel site-to-site và remote access.",
+        "ipsecTunnels": "IPsec Tunnels",
+        "wireguardTunnels": "WireGuard Tunnels",
+        "l2tpServers": "L2TP Servers",
+        "addIpsec": "Thêm IPsec Tunnel",
+        "addWireguard": "Thêm WireGuard Tunnel",
+        "addL2tp": "Thêm L2TP Server",
+        "emptyIpsecTitle": "Chưa có IPsec tunnel",
+        "emptyIpsecDescription": "Thêm tunnel IPsec cho site-to-site.",
+        "emptyWireguardTitle": "Chưa có WireGuard tunnel",
+        "emptyWireguardDescription": "Thêm WireGuard tunnel.",
+        "emptyL2tpTitle": "Chưa có L2TP server",
+        "emptyL2tpDescription": "Thêm cấu hình L2TP.",
+        "tunnelName": "Tên",
+        "local": "Local",
+        "remote": "Remote",
+        "localSubnet": "Local subnet",
+        "remoteSubnet": "Remote subnet",
+        "ikeVersion": "IKE Version",
+        "psk": "Pre-shared key",
+        "interfaceAddress": "Interface address",
+        "listenPort": "Listen port",
+        "privateKey": "Private key",
+        "peerPublicKey": "Peer public key",
+        "peerAllowedIps": "Peer allowed IPs",
+        "peerEndpoint": "Peer endpoint",
+        "peerCount": "Peers",
+        "pool": "Address pool"
+      },
+      "qos": {
+        "title": "QoS",
+        "description": "Chính sách queue và ưu tiên lưu lượng.",
+        "queues": "Queues",
+        "addQueue": "Thêm Queue",
+        "emptyTitle": "Chưa có QoS queue",
+        "emptyDescription": "Thêm queue để giới hạn hoặc ưu tiên.",
+        "name": "Tên",
+        "target": "Target",
+        "limit": "Max limit",
+        "priority": "Priority",
+        "comment": "Ghi chú"
+      },
+      "monitoring": {
+        "title": "Monitoring & Management",
+        "description": "SNMP, syslog, NetFlow, sFlow.",
+        "snmpVersion": "SNMP Version",
+        "snmpCommunity": "SNMP Community",
+        "snmpUsers": "SNMP v3 Users",
+        "addSnmpUser": "Thêm SNMP User",
+        "emptySnmpUsersTitle": "Chưa có SNMP v3 user",
+        "emptySnmpUsersDescription": "Thêm user để SNMP v3 an toàn.",
+        "snmpUser": "Username",
+        "snmpAuth": "Auth protocol",
+        "snmpAuthPass": "Auth password",
+        "snmpPriv": "Privacy protocol",
+        "snmpPrivPass": "Privacy password",
+        "syslog": "Syslog servers",
+        "netflow": "NetFlow",
+        "sflow": "sFlow",
+        "collector": "Collector",
+        "port": "Port"
+      },
+      "summary": {
+        "title": "Tóm tắt & Preview",
+        "subtitle": "Xem lại cấu hình, cảnh báo và output.",
+        "config": "Tóm tắt cấu hình",
+        "device": "Thiết bị",
+        "vendor": "Hãng",
+        "environment": "Môi trường",
+        "vlans": "VLAN",
+        "interfaces": "Interface",
+        "routes": "Routes",
+        "ospf": "OSPF Areas",
+        "bgp": "BGP Neighbors",
+        "firewallRules": "Firewall rules",
+        "natRules": "NAT rules",
+        "vpn": "VPNs",
+        "qos": "QoS queues",
+        "safety": "Kiểm tra an toàn",
+        "output": "Output",
+        "noWarnings": "Không có cảnh báo",
+        "unselected": "Chưa chọn"
+      },
+      "risk": {
+        "level": "Rủi ro",
+        "subtitle": "Dựa trên policy và môi trường.",
+        "none": "Không có rủi ro",
+        "sshPassword": "Bật xác thực mật khẩu SSH",
+        "sshPasswordDetail": "Mật khẩu tăng nguy cơ brute-force.",
+        "noNtp": "Chưa có NTP",
+        "noNtpDetail": "Sai lệch thời gian ảnh hưởng audit/log.",
+        "firewallOff": "Tắt firewall baseline",
+        "firewallOffDetail": "Cần baseline input rules để an toàn.",
+        "mgmtMissing": "Chưa có CIDR quản trị",
+        "mgmtMissingDetail": "Giới hạn truy cập theo dải tin cậy.",
+        "mgmtOpen": "CIDR quản trị mở rộng",
+        "mgmtOpenDetail": "0.0.0.0/0 mở mặt bằng quản trị.",
+        "mgmtWide": "CIDR quản trị quá rộng",
+        "mgmtWideDetail": "Nên /24 hoặc hẹp hơn.",
+        "bgpEnabled": "BGP đang bật",
+        "bgpEnabledDetail": "Cần policy lọc route và peer filtering.",
+        "ospfLarge": "Nhiều OSPF area",
+        "ospfLargeDetail": "Xác minh thiết kế area để tránh lỗi adjacency.",
+        "firewallAllowAny": "Firewall allow any-any",
+        "firewallAllowAnyDetail": "Rule allow any-any tăng bề mặt tấn công.",
+        "natOpen": "DNAT không giới hạn port",
+        "natOpenDetail": "DNAT mở có thể lộ hở các dịch vụ nội bộ.",
+        "vpnNoPsk": "VPN thiếu pre-shared key",
+        "vpnNoPskDetail": "Cần PSK mạnh cho IPsec.",
+        "qosEnabled": "QoS đang bật",
+        "qosEnabledDetail": "Đảm bảo queue phù hợp nhu cầu ưu tiên.",
+        "snmpPublic": "SNMP community = public",
+        "snmpPublicDetail": "Nên đổi community sang giá trị an toàn."
+      },
+      "preview": {
+        "title": "CLI đã generate",
+        "empty": "Generate CLI để xem output.",
+        "hiddenTitle": "Preview đang ẩn",
+        "hiddenDescription": "Bật để xem CLI đã generate."
+      },
+      "explain": {
+        "title": "Giải thích lệnh",
+        "placeholder": "Chọn lệnh cần giải thích",
+        "route": "Thêm hoặc cập nhật tuyến đường.",
+        "ospf": "Cấu hình OSPF cho các network quảng bá.",
+        "bgp": "Cấu hình BGP neighbor và prefix quảng bá.",
+        "firewall": "Áp dụng rule firewall.",
+        "nat": "Thêm rule NAT.",
+        "vpn": "Cấu hình tunnel VPN.",
+        "monitoring": "Cấu hình SNMP/syslog/flow export.",
+        "generic": "Kiểm tra lệnh kỹ trước khi áp dụng."
+      },
+      "lint": {
+        "title": "Kiểm tra compliance",
+        "run": "Chạy lint",
+        "emptyTitle": "Không có lỗi lint",
+        "emptyDescription": "Chạy lint để kiểm tra tuân thủ.",
+        "suggestion": "Gợi ý:"
+      },
+      "validation": {
+        "title": "Kiểm tra hợp lệ",
+        "run": "Validate cấu hình",
+        "emptyTitle": "Không có lỗi validation",
+        "emptyDescription": "Validate để phát hiện VLAN trùng hay overlap.",
+        "suggestion": "Gợi ý:",
+        "blocked": "Có lỗi validation. Cần sửa trước khi generate."
+      },
+      "diff": {
+        "title": "Diff",
+        "refresh": "Cập nhật diff",
+        "emptyTitle": "Không có diff",
+        "empty": "Chưa có diff."
+      },
+      "dryRun": {
+        "title": "Xác minh dry-run",
+        "verify": "Lệnh kiểm tra",
+        "empty": "Generate CLI để xem lệnh kiểm tra."
+      },
+      "push": {
+        "title": "Push & Rollback",
+        "backend": "Push qua Backend",
+        "ssh": "Push qua SSH",
+        "help": "Đảm bảo SSH session đang hoạt động trước khi push."
+      },
+      "warnings": {
+        "sshPassword": "Đang bật xác thực mật khẩu SSH",
+        "noNtp": "Chưa cấu hình NTP",
+        "noMgmt": "Chưa cấu hình CIDR quản trị",
+        "mgmtOpen": "CIDR quản trị mở rộng"
+      },
+      "checks": {
+        "mgmtLimited": "CIDR quản trị đã giới hạn",
+        "ntpConfigured": "Đã cấu hình NTP",
+        "passwordDisabled": "Tắt xác thực mật khẩu"
+      },
+      "tabs": {
+        "preview": "Preview",
+        "lint": "Lint",
+        "validate": "Validate",
+        "diff": "Diff",
+        "dryRun": "Dry-run",
+        "push": "Push"
+      },
+      "modals": {
+        "vlanTitle": "Thêm VLAN",
+        "interfaceTitle": "Thêm Interface",
+        "routeTitle": "Thêm Route",
+        "ospfTitle": "Thêm OSPF Area",
+        "bgpNeighborTitle": "Thêm BGP Neighbor",
+        "bgpNetworkTitle": "Thêm BGP Network",
+        "firewallTitle": "Thêm Firewall Rule",
+        "natTitle": "Thêm NAT Rule",
+        "ipsecTitle": "Thêm IPsec Tunnel",
+        "wireguardTitle": "Thêm WireGuard Tunnel",
+        "l2tpTitle": "Thêm L2TP Server",
+        "qosTitle": "Thêm QoS Queue",
+        "snmpUserTitle": "Thêm SNMP User"
+      },
+      "guardrails": {
+        "title": "Guardrail lệnh",
+        "detected": "Phát hiện lệnh nguy hiểm:",
+        "override": "Yêu cầu override",
+        "overridden": "Đã override",
+        "blocked": "Guardrail đang chặn thao tác.",
+        "overrideTitle": "Override Guardrails",
+        "overrideHelp": "Cung cấp lý do override. Hành động sẽ được audit.",
+        "reason": "Lý do override",
+        "reasonPlaceholder": "Mô tả vì sao cần override."
+      },
+      "approval": {
+        "title": "Phê duyệt",
+        "help": "Prod yêu cầu phê duyệt trước khi push.",
+        "request": "Yêu cầu phê duyệt",
+        "approve": "Phê duyệt",
+        "reject": "Từ chối",
+        "blocked": "Cần phê duyệt trước khi push.",
+        "reasonPlaceholder": "Lý do yêu cầu (tùy chọn).",
+        "requestedBy": "Yêu cầu bởi",
+        "decidedBy": "Quyết định bởi",
+        "status": {
+          "none": "Chưa yêu cầu",
+          "pending": "Đang chờ duyệt",
+          "approved": "Đã phê duyệt",
+          "rejected": "Đã từ chối"
+        }
+      }
+    },
+    "mikrotik": {
+      "title": "MikroTik – Cấu hình đầy đủ",
+      "subtitle": "Intent → plan → config → validate → rollback (RouterOS 7).",
+      "steps": {
+        "device": "Thiết bị",
+        "network": "Interface & VLAN",
+        "routing": "Routing & Internet",
+        "preview": "Preview"
+      },
+      "device": "Thiết bị",
+      "deviceHelp": "Chọn thiết bị MikroTik từ CMDB để tự điền mặc định.",
+      "role": "Role template",
+      "roleHelp": "Role quyết định module được bật và mặc định an toàn.",
+      "environment": "Môi trường",
+      "environmentHelp": "Prod áp dụng safeguard nghiêm ngặt và yêu cầu phê duyệt.",
+      "hostname": "Hostname",
+      "routerOsVersion": "Phiên bản RouterOS",
+      "securityPreset": "Preset bảo mật",
+      "labMode": "Lab mode",
+      "labModeWarn": "Lab mode có thể nới lỏng guardrail. Cẩn trọng khi dùng.",
+      "mgmtSubnet": "Mạng quản trị (CIDR)",
+      "mgmtHelp": "Dùng để mở quyền quản trị và bảo vệ management plane.",
+      "allowedSubnets": "Subnet được phép (mỗi dòng một subnet)",
+      "allowedHelp": "Chỉ các subnet này được truy cập dịch vụ quản trị.",
+      "interfaces": "Interfaces",
+      "interfacesEmpty": "Chưa có interface",
+      "interfacesEmptyHelp": "Thêm WAN / trunk / access / mgmt đúng theo đấu nối thực tế.",
+      "vlans": "VLANs",
+      "vlansEmpty": "Chưa có VLAN",
+      "vlansEmptyHelp": "Thêm VLAN để sinh bridge/VLAN filtering và gateway/DHCP.",
+      "staticRoutes": "Static routes",
+      "routesEmpty": "Chưa có static route",
+      "routesEmptyHelp": "Thêm route cho upstream hoặc kết nối nội bộ.",
+      "internet": "Internet / WAN",
+      "publicType": "Loại WAN",
+      "wanInterface": "WAN interface",
+      "wanAddress": "Địa chỉ WAN",
+      "wanGateway": "Gateway WAN",
+      "pppoeUser": "Tài khoản PPPoE",
+      "pppoePassword": "Mật khẩu PPPoE",
+      "dnsServers": "DNS servers",
+      "ospf": "OSPF",
+      "ospfRouterId": "Router ID",
+      "ospfArea": "Area",
+      "ospfNetworks": "Networks (mỗi dòng một CIDR)",
+      "ospfPassive": "Passive interfaces (mỗi dòng một interface)",
+      "requirements": "Cần chọn thiết bị và hostname trước khi generate.",
+      "risk": "Rủi ro",
+      "errors": "lỗi",
+      "warnings": "cảnh báo",
+      "validationErrors": "Lỗi validation",
+      "validationWarnings": "Cảnh báo validation",
+      "preview": {
+        "apply": "Script áp dụng",
+        "rollback": "Script rollback"
+      },
+      "actions": {
+        "generate": "Generate cấu hình",
+        "downloadApply": "Tải script apply",
+        "downloadRollback": "Tải script rollback",
+        "pushDryRun": "Dry-run push"
+      },
+      "diff": {
+        "title": "Diff với running config",
+        "placeholder": "Dán running config vào đây…",
+        "run": "Chạy diff",
+        "summary": "Tóm tắt diff"
+      },
+      "empty": {
+        "title": "Chưa có output",
+        "subtitle": "Generate để xem preview, validation và diff."
+      },
+      "summary": {
+        "title": "Tóm tắt",
+        "subtitle": "Thông tin và số lượng (read-only).",
+        "device": "Thiết bị",
+        "role": "Role",
+        "environment": "Môi trường",
+        "vlans": "VLANs",
+        "interfaces": "Interfaces",
+        "routes": "Routes"
+      },
+      "modals": {
+        "optional": "Tùy chọn",
+        "interfaceTitle": "Thêm interface",
+        "interfaceName": "Tên interface",
+        "interfacePurpose": "Mục đích",
+        "purpose": {
+          "wan": "WAN / uplink",
+          "trunk": "Trunk",
+          "access": "Access",
+          "mgmt": "Quản trị"
+        },
+        "interfaceAccessVlan": "VLAN access",
+        "interfaceTrunkVlans": "VLAN trunk",
+        "interfaceComment": "Ghi chú",
+        "vlanTitle": "Thêm VLAN",
+        "vlanId": "VLAN ID",
+        "vlanName": "Tên VLAN",
+        "vlanSubnet": "Subnet (CIDR)",
+        "vlanGateway": "Gateway",
+        "vlanGroup": "Nhóm",
+        "vlanDhcp": "Bật DHCP",
+        "routeTitle": "Thêm static route",
+        "routeDst": "Destination (CIDR)",
+        "routeGateway": "Next hop / gateway",
+        "routeDistance": "Distance",
+        "routeComment": "Ghi chú"
+      }
+    },
+    "ssh": {
+      "title": "SSH Terminal",
+      "subtitle": "Terminal realtime qua SSH proxy kèm audit.",
+      "searchDevices": "Tìm thiết bị",
+      "sessions": "Phiên",
+      "noSessions": "Chưa có phiên.",
+      "commandPolicy": "Chính sách lệnh",
+      "liveTerminal": "Terminal trực tiếp",
+      "sessionLabel": "Phiên:",
+      "connected": "Đang kết nối",
+      "idle": "Chưa kết nối",
+      "noOutput": "Chưa có output.",
+      "history": "Lịch sử",
+      "noCommands": "Chưa có lệnh.",
+      "reuseHint": "Nhấn để dùng lại lệnh.",
+      "policy": {
+        "allowList": "Allowlist (mỗi dòng một lệnh)",
+        "denyList": "Denylist (mỗi dòng một lệnh)",
+        "dangerList": "Lệnh nguy hiểm",
+        "enforced": "Policy được áp dụng trước khi chạy lệnh."
+      },
+      "openSession": "Mở phiên",
+      "downloadLog": "Tải log",
+      "exportJson": "Export JSON",
+      "commandPlaceholder": "show ip interface brief",
+      "send": "Gửi",
+      "notConnected": "Chưa kết nối"
+    }
   },
   "reports": {
     "assetsTitle": "Báo cáo tài sản",
@@ -1282,5 +2095,275 @@
     "previous": "Trước",
     "next": "Tiếp theo",
     "prev": "Trước"
+  },
+  "help": {
+    "title": "Trợ giúp & Tài liệu",
+    "subtitle": "Tham khảo nhanh cho vận hành và kỹ thuật hiện trường.",
+    "gettingStarted": {
+      "title": "Bắt đầu",
+      "subtitle": "Đăng nhập, điều hướng và quy trình cơ bản."
+    },
+    "tools": {
+      "title": "Công cụ",
+      "subtitle": "Trình tạo CLI, SSH terminal và Field Kit."
+    },
+    "security": {
+      "title": "Bảo mật",
+      "subtitle": "Audit, phê duyệt và vận hành an toàn mặc định."
+    },
+    "notesTitle": "Ghi chú",
+    "notes": {
+      "audit": "Mọi thao tác đặc quyền đều phải có audit trail.",
+      "approvals": "Thay đổi môi trường PROD nên đi qua phê duyệt.",
+      "fieldKit": "Dùng Field Kit để chẩn đoán theo hướng dẫn, an toàn."
+    }
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "subtitle": "Thông tin tài khoản & phiên đăng nhập",
+    "email": "Email",
+    "role": "Vai trò"
+  },
+  "me": {
+    "assets": {
+      "title": "Tài sản của tôi",
+      "subtitle": "Tìm tài sản theo mã, hostname, serial hoặc IP quản trị.",
+      "searchLabel": "Tìm kiếm",
+      "searchPlaceholder": "Mã tài sản, hostname, serial…",
+      "searchHelp": "Tìm theo thông tin bạn đã biết (mã/hostname/serial/IP).",
+      "statusLabel": "Trạng thái",
+      "allStatuses": "Tất cả trạng thái",
+      "statusHelp": "Lọc theo trạng thái vòng đời.",
+      "emptyTitle": "Bắt đầu bằng tìm kiếm",
+      "emptySubtitle": "Nhập mã tài sản hoặc hostname để tìm nhanh.",
+      "noMatches": "Không có kết quả",
+      "errors": {
+        "loadFailed": "Tải danh sách tài sản thất bại"
+      }
+    },
+    "requests": {
+      "title": "Yêu cầu của tôi",
+      "subtitle": "Theo dõi các yêu cầu workflow bạn đã gửi.",
+      "empty": "Chưa có yêu cầu",
+      "errors": {
+        "loadFailed": "Tải danh sách yêu cầu thất bại",
+        "missingUser": "Thiếu thông tin người dùng. Vui lòng đăng nhập lại."
+      }
+    }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "subtitle": "Cập nhật yêu cầu và nhắc nhở vận hành.",
+    "sections": {
+      "myRequests": "Yêu cầu của tôi",
+      "myRequestsSubtitle": "Hoạt động workflow gần đây",
+      "reminders": "Nhắc nhở",
+      "remindersSubtitle": "Nhắc bảo hành & bảo trì tài sản"
+    },
+    "remindersRestricted": "Nhắc nhở chỉ hiển thị cho quản lý tài sản.",
+    "emptyRequests": "Chưa có cập nhật yêu cầu.",
+    "emptyReminders": "Không có nhắc nhở.",
+    "errors": {
+      "loadFailed": "Tải thông báo thất bại"
+    }
+  },
+  "inbox": {
+    "title": "Hộp phê duyệt",
+    "subtitle": "Xem và phê duyệt các yêu cầu workflow đang chờ.",
+    "submitted": "Yêu cầu đã gửi",
+    "empty": "Không có yêu cầu đang chờ.",
+    "errors": {
+      "loadFailed": "Tải hộp phê duyệt thất bại",
+      "approveFailed": "Phê duyệt thất bại",
+      "rejectFailed": "Từ chối thất bại"
+    }
+  },
+  "drivers": {
+    "navLabel": "Drivers",
+    "title": "Gói Driver",
+    "subtitle": "Quản lý gói driver với phê duyệt, cảnh báo rủi ro và audit trail.",
+    "new": "Thêm driver",
+    "download": "Tải xuống",
+    "filters": {
+      "searchPlaceholder": "Tìm theo vendor, model, version, tag…"
+    },
+    "fields": {
+      "deviceType": "Loại thiết bị",
+      "component": "Thành phần",
+      "os": "Hệ điều hành",
+      "arch": "Kiến trúc",
+      "platform": "Nền tảng",
+      "version": "Phiên bản",
+      "approval": "Phê duyệt",
+      "risk": "Rủi ro",
+      "support": "Trạng thái hỗ trợ",
+      "tags": "Tag",
+      "compatibilityNotes": "Ghi chú tương thích",
+      "links": "Liên kết",
+      "installDetect": "Cài đặt & Nhận dạng",
+      "silentInstallCmd": "Lệnh cài silent",
+      "silentUninstallCmd": "Lệnh gỡ silent",
+      "updatedAt": "Cập nhật",
+      "approvalReason": "Lý do phê duyệt"
+    },
+    "columns": {
+      "vendorModel": "Vendor / Model",
+      "platform": "OS / Arch",
+      "version": "Phiên bản",
+      "status": "Hỗ trợ",
+      "approval": "Phê duyệt",
+      "risk": "Rủi ro",
+      "updated": "Cập nhật"
+    },
+    "bulk": {
+      "tag": "Tag",
+      "reason": "Lý do",
+      "reasonPlaceholder": "Nhập lý do (bắt buộc khi block/unblock/xóa).",
+      "noExtra": "Không cần thông tin bổ sung cho thao tác này."
+    },
+    "create": {
+      "title": "Tạo gói driver",
+      "subtitle": "Tạo bản nháp, upload file, sau đó submit để phê duyệt."
+    },
+    "detailTitle": "Gói driver",
+    "detailSubtitle": "Metadata, file, phê duyệt và audit.",
+    "tabs": {
+      "files": "Tệp",
+      "approval": "Phê duyệt",
+      "audit": "Audit"
+    },
+    "files": {
+      "title": "Tệp driver",
+      "subtitle": "Upload một lần. Driver đã approved không thể chỉnh sửa.",
+      "size": "Dung lượng",
+      "empty": "Chưa có tệp được upload.",
+      "upload": "Upload tệp"
+    },
+    "approval": {
+      "title": "Luồng phê duyệt",
+      "submit": "Gửi phê duyệt",
+      "approve": "Phê duyệt",
+      "reject": "Từ chối"
+    },
+    "danger": {
+      "title": "Thao tác nguy hiểm",
+      "badge": "Nguy hiểm",
+      "block": "Chặn",
+      "unblock": "Bỏ chặn",
+      "deleteApprovedReason": "Cần lý do để xoá driver đã approved:",
+      "deleteReason": "Lý do xoá (tuỳ chọn):"
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Mọi thao tác đặc quyền đều được ghi nhận.",
+      "empty": "Chưa có audit entry.",
+      "time": "Thời gian",
+      "action": "Hành động",
+      "details": "Chi tiết"
+    },
+    "actions": {
+      "title": "Xác nhận thao tác",
+      "reason": "Lý do",
+      "reasonPlaceholder": "Giải thích vì sao cần thao tác này.",
+      "reasonRequiredHighRisk": "Bắt buộc lý do khi phê duyệt driver rủi ro cao/critical.",
+      "reasonRequired": "Bắt buộc lý do.",
+      "reasonRequiredApprovedDelete": "Bắt buộc lý do khi xoá bản đã approved.",
+      "noteOptional": "Ghi chú (tuỳ chọn)",
+      "notePlaceholder": "Ghi chú thêm cho người review."
+    }
+  },
+  "docs": {
+    "navLabel": "Tài liệu",
+    "title": "Tài liệu",
+    "subtitle": "SOP, template và tài liệu vận hành với phê duyệt và audit.",
+    "new": "Thêm tài liệu",
+    "filters": {
+      "searchPlaceholder": "Tìm theo tiêu đề, tag…"
+    },
+    "fields": {
+      "title": "Tiêu đề",
+      "summary": "Tóm tắt",
+      "type": "Loại",
+      "contentType": "Loại nội dung",
+      "visibility": "Hiển thị",
+      "approval": "Phê duyệt",
+      "tags": "Tag",
+      "markdown": "Markdown",
+      "externalUrl": "URL ngoài",
+      "approvalReason": "Lý do phê duyệt"
+    },
+    "columns": {
+      "title": "Tiêu đề",
+      "type": "Loại",
+      "visibility": "Hiển thị",
+      "approval": "Phê duyệt",
+      "updated": "Cập nhật"
+    },
+    "bulk": {
+      "tag": "Tag",
+      "reason": "Lý do",
+      "reasonPlaceholderOrg": "Bắt buộc lý do khi publish org-wide.",
+      "reasonPlaceholderDelete": "Lý do (bắt buộc khi xoá bản đã approved).",
+      "noExtra": "Không cần thông tin bổ sung cho thao tác này."
+    },
+    "create": {
+      "title": "Tạo tài liệu",
+      "subtitle": "Tạo bản nháp, thêm nội dung, sau đó submit để phê duyệt."
+    },
+    "detailTitle": "Tài liệu",
+    "detailSubtitle": "Nội dung, tệp đính kèm, liên kết, phê duyệt và audit.",
+    "tabs": {
+      "content": "Nội dung",
+      "files": "Tệp",
+      "relations": "Liên quan",
+      "approval": "Phê duyệt",
+      "audit": "Audit"
+    },
+    "openLink": "Mở liên kết",
+    "files": {
+      "help": "Đính kèm file/markdown/link tuỳ theo loại nội dung.",
+      "title": "Tệp đính kèm",
+      "subtitle": "Với tài liệu dạng file, cần upload trước khi submit phê duyệt.",
+      "empty": "Chưa có tệp được upload.",
+      "filename": "Tên tệp",
+      "download": "Tải xuống"
+    },
+    "relations": {
+      "help": "Gắn tài liệu với asset/model/site/service để gợi ý theo ngữ cảnh.",
+      "assets": "Asset liên quan",
+      "models": "Model liên quan",
+      "sites": "Site liên quan",
+      "services": "Service liên quan"
+    },
+    "approval": {
+      "title": "Luồng phê duyệt",
+      "submit": "Gửi phê duyệt",
+      "approve": "Phê duyệt",
+      "reject": "Từ chối"
+    },
+    "danger": {
+      "title": "Thao tác nguy hiểm",
+      "badge": "Nguy hiểm",
+      "deleteApprovedReason": "Cần lý do để xoá tài liệu đã approved:",
+      "deleteReason": "Lý do xoá (tuỳ chọn):"
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "Mọi thao tác đặc quyền đều được ghi nhận.",
+      "empty": "Chưa có audit entry.",
+      "time": "Thời gian",
+      "action": "Hành động",
+      "details": "Chi tiết"
+    },
+    "actions": {
+      "title": "Xác nhận thao tác",
+      "reason": "Lý do",
+      "reasonPlaceholder": "Giải thích vì sao cần thao tác này.",
+      "reasonRequiredOrg": "Bắt buộc lý do khi publish org-wide.",
+      "reasonRequired": "Bắt buộc lý do.",
+      "reasonRequiredApprovedDelete": "Bắt buộc lý do khi xoá bản đã approved.",
+      "noteOptional": "Ghi chú (tuỳ chọn)",
+      "notePlaceholder": "Ghi chú thêm cho người review."
+    }
   }
 }

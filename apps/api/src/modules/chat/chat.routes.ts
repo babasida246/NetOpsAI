@@ -27,7 +27,7 @@ export async function chatRoutes(
         }
 
         const token = authHeader.substring(7)
-        request.user = authService.verifyAccessToken(token)
+        request.user = { ...authService.verifyAccessToken(token), id: authService.verifyAccessToken(token).sub }
     }
 
     // POST /chat/completions - OpenAI compatible endpoint
@@ -88,6 +88,23 @@ export async function chatRoutes(
         return reply.status(200).send({
             object: 'list',
             data: models
+        })
+    })
+
+    // GET /stats/chat/daily - Chat stats
+    fastify.get('/stats/chat/daily', {
+        preHandler: authenticate
+    }, async (request, reply) => {
+        // Return basic stats for now
+        return reply.status(200).send({
+            success: true,
+            data: {
+                totalTokens: 0,
+                totalMessages: 0,
+                totalCost: 0,
+                tokensToday: 0,
+                date: new Date().toISOString().split('T')[0]
+            }
         })
     })
 }

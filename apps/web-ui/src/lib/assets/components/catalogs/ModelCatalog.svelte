@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { Alert, Spinner } from 'flowbite-svelte';
   import {
     deleteModel,
@@ -15,14 +14,21 @@
   let {
     models = [],
     categories = [],
-    vendors = []
+    vendors = [],
+    onupdated,
+    onerror
   } = $props<{
     models?: AssetModel[];
     categories?: AssetCategory[];
     vendors?: Vendor[];
+    onupdated?: () => void;
+    onerror?: (msg: string) => void;
   }>();
 
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
+  // Ensure all props are always arrays
+  const safeModels = $derived(Array.isArray(models) ? models : []);
+  const safeCategories = $derived(Array.isArray(categories) ? categories : []);
+  const safeVendors = $derived(Array.isArray(vendors) ? vendors : []);
 
   let list = $state<AssetModel[]>([]);
   let filterActive = $state(false);
@@ -33,7 +39,7 @@
 
   $effect(() => {
     if (!filterActive) {
-      list = models;
+      list = safeModels;
     }
   });
 
@@ -51,7 +57,7 @@
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load models';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       filterLoading = false;
     }
@@ -60,7 +66,7 @@
   function clearFilters() {
     filterActive = false;
     lastFilters = null;
-    list = models;
+    list = safeModels;
     error = '';
   }
 
@@ -74,7 +80,7 @@
     if (filterActive) {
       await refreshFilters();
     }
-    dispatch('updated');
+    onupdated?.();
   }
 
   function handleEdit(model: AssetModel) {
@@ -89,7 +95,7 @@
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete model';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     }
   }
 </script>
@@ -100,19 +106,19 @@
   {/if}
 
   <ModelForm
-    categories={categories}
-    vendors={vendors}
+    categories={safeCategories}
+    vendors={safeVendors}
     selectedModel={selectedModel}
-    on:updated={handleUpdated}
-    on:cleared={() => selectedModel = null}
-    on:error={(event) => dispatch('error', event.detail)}
+    onupdated={handleUpdated}
+    oncleared={() => selectedModel = null}
+    onerror={(msg) => onerror?.(msg)}
   />
 
   <ModelFilters
-    categories={categories}
-    on:apply={(event) => runSearch(event.detail)}
-    on:clear={clearFilters}
-    on:error={(event) => dispatch('error', event.detail)}
+    categories={safeCategories}
+    onapply={(data) => runSearch(data)}
+    onclear={clearFilters}
+    onerror={(msg) => onerror?.(msg)}
   />
 
   {#if filterLoading}
@@ -123,10 +129,10 @@
 
   <ModelTable
     models={list}
-    categories={categories}
-    vendors={vendors}
+    categories={safeCategories}
+    vendors={safeVendors}
     disabled={filterLoading}
-    on:edit={(event) => handleEdit(event.detail)}
-    on:remove={(event) => remove(event.detail)}
+    onedit={(model) => handleEdit(model)}
+    onremove={(id) => remove(id)}
   />
 </div>

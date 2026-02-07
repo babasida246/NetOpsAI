@@ -1,5 +1,7 @@
 export * from './auth.schema.js'
 export * from './auth.service.js'
-export * from './auth.routes.js'
+export { registerAuthRoutes as authRoutes } from './auth.routes.js'
+export * from './auth.controller.js'
+export * from './auth.module.js'
 export * from './user.repository.js'
 export * from './session.repository.js'

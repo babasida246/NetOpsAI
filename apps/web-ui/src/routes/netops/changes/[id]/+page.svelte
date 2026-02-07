@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Button, Alert, Spinner, Tabs, TabItem, Accordion, AccordionItem } from 'flowbite-svelte';
   import { ArrowLeft, Play, CheckCircle, AlertTriangle, Rocket, X } from 'lucide-svelte';
   import { changesApi, devicesApi } from '$lib/netops/api/netopsApi';
@@ -11,7 +11,7 @@
   import JsonViewer from '$lib/netops/components/JsonViewer.svelte';
   import { formatDate } from '$lib/netops/utils/format';
   
-  let changeId = $derived($page.params.id);
+  let changeId = $derived(page.params.id);
   
   let change: (ChangeRequest & { changeSets?: ChangeSet[] }) | null = $state(null);
   let devices: Device[] = $state([]);
@@ -179,29 +179,29 @@
         
         <div class="flex flex-col gap-2">
           <div class="flex gap-2">
-            <Button size="sm" on:click={handlePlan} disabled={planning}>
+            <Button size="sm" onclick={handlePlan} disabled={planning}>
               <Play class="w-4 h-4 mr-2" />
               {planning ? 'Planning...' : 'Plan'}
             </Button>
-            <Button size="sm" color="alternative" on:click={handleGenerate} disabled={generating}>
+            <Button size="sm" color="alternative" onclick={handleGenerate} disabled={generating}>
               {generating ? 'Generating...' : 'Generate'}
             </Button>
           </div>
           <div class="flex gap-2">
-            <Button size="sm" color="alternative" on:click={handleVerify} disabled={verifying}>
+            <Button size="sm" color="alternative" onclick={handleVerify} disabled={verifying}>
               <CheckCircle class="w-4 h-4 mr-2" />
               {verifying ? 'Verifying...' : 'Verify'}
             </Button>
-            <Button size="sm" color="alternative" on:click={handleSubmitApproval} disabled={submitting}>
+            <Button size="sm" color="alternative" onclick={handleSubmitApproval} disabled={submitting}>
               {submitting ? 'Submitting...' : 'Submit Approval'}
             </Button>
           </div>
           <div class="flex gap-2">
-            <Button size="sm" color="red" on:click={handleDeploy} disabled={deploying || change.status !== 'approved'}>
+            <Button size="sm" color="red" onclick={handleDeploy} disabled={deploying || change.status !== 'approved'}>
               <Rocket class="w-4 h-4 mr-2" />
               {deploying ? 'Deploying...' : 'Deploy'}
             </Button>
-            <Button size="sm" color="alternative" on:click={handleClose} disabled={closing}>
+            <Button size="sm" color="alternative" onclick={handleClose} disabled={closing}>
               <X class="w-4 h-4 mr-2" />
               Close
             </Button>
@@ -215,14 +215,18 @@
       <!-- Intent Parameters -->
       <Accordion>
         <AccordionItem>
-          <span slot="header">{$isLoading ? 'Intent Parameters' : $_('netops.changeDetail.intentParameters')}</span>
+          <svelte:fragment slot="header">
+                            <span >{$isLoading ? 'Intent Parameters' : $_('netops.changeDetail.intentParameters')}</span>
+                          </svelte:fragment>
           <JsonViewer data={change.params} />
         </AccordionItem>
         
         <!-- Plan Results -->
         {#if planResult}
           <AccordionItem>
-            <span slot="header">{$isLoading ? 'Plan Results' : $_('netops.changeDetail.planResults')}</span>
+            <svelte:fragment slot="header">
+                                <span >{$isLoading ? 'Plan Results' : $_('netops.changeDetail.planResults')}</span>
+                              </svelte:fragment>
             <div class="space-y-4">
               {#if planResult.missing_info && planResult.missing_info.length > 0}
                 <Alert color="yellow">
@@ -248,7 +252,9 @@
         <!-- Verify Results -->
         {#if verifyResult}
           <AccordionItem>
-            <span slot="header">{$isLoading ? 'Verification Results' : $_('netops.changeDetail.verificationResults')}</span>
+            <svelte:fragment slot="header">
+                                <span >{$isLoading ? 'Verification Results' : $_('netops.changeDetail.verificationResults')}</span>
+                              </svelte:fragment>
             <JsonViewer data={verifyResult} />
           </AccordionItem>
         {/if}
@@ -256,7 +262,9 @@
         <!-- Approval Results -->
         {#if approvalResult}
           <AccordionItem>
-            <span slot="header">{$isLoading ? 'Approval Decision' : $_('netops.changeDetail.approvalDecision')}</span>
+            <svelte:fragment slot="header">
+                                <span >{$isLoading ? 'Approval Decision' : $_('netops.changeDetail.approvalDecision')}</span>
+                              </svelte:fragment>
             <div class="space-y-4">
               <div>
                 <p class="font-semibold mb-2">Decision:</p>
@@ -398,3 +406,4 @@
     </div>
   {/if}
 </div>
+

@@ -62,4 +62,62 @@ export class RelationshipTypeRepo implements IRelTypeRepo {
         )
         return result.rows[0] ? mapRow(result.rows[0]) : null
     }
+
+    async update(
+        id: string,
+        patch: Partial<{
+            code: string
+            name: string
+            reverseName: string | null
+            allowedFromTypeId: string | null
+            allowedToTypeId: string | null
+        }>
+    ): Promise<RelationshipTypeRecord | null> {
+        const updates: string[] = []
+        const params: Array<string | null> = []
+        let paramIndex = 1
+
+        if (patch.code !== undefined) {
+            updates.push(`code = $${paramIndex++}`)
+            params.push(patch.code)
+        }
+        if (patch.name !== undefined) {
+            updates.push(`name = $${paramIndex++}`)
+            params.push(patch.name)
+        }
+        if (patch.reverseName !== undefined) {
+            updates.push(`reverse_name = $${paramIndex++}`)
+            params.push(patch.reverseName)
+        }
+        if (patch.allowedFromTypeId !== undefined) {
+            updates.push(`allowed_from_type_id = $${paramIndex++}`)
+            params.push(patch.allowedFromTypeId)
+        }
+        if (patch.allowedToTypeId !== undefined) {
+            updates.push(`allowed_to_type_id = $${paramIndex++}`)
+            params.push(patch.allowedToTypeId)
+        }
+
+        if (updates.length === 0) {
+            return this.getById(id)
+        }
+
+        params.push(id)
+        const result = await this.pg.query<RelTypeRow>(
+            `UPDATE cmdb_relationship_types
+             SET ${updates.join(', ')}
+             WHERE id = $${paramIndex}
+             RETURNING id, code, name, reverse_name, allowed_from_type_id, allowed_to_type_id`,
+            params
+        )
+        return result.rows[0] ? mapRow(result.rows[0]) : null
+    }
+
+    async delete(id: string): Promise<boolean> {
+        const result = await this.pg.query(
+            `DELETE FROM cmdb_relationship_types WHERE id = $1`,
+            [id]
+        )
+        return (result.rowCount ?? 0) > 0
+    }
 }

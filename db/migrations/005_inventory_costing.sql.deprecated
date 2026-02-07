@@ -1,0 +1,648 @@
+-- 005_inventory_costing.sql
+-- FIFO/AVG costing + reporting views. Replaces posting logic with costing-aware implementation.
+-- Assumptions:
+-- 1) FIFO layers are consumed oldest-first (by layer_date, id).
+-- 2) For adjustments/stocktake positive without unit_cost, AVG cost is used as fallback (0 if missing).
+-- 3) Void operations reverse stock with best-effort costing; FIFO reversals re-layer using reversal ledger costs.
+
+BEGIN;
+
+CREATE TABLE inventory_cost_layers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+    lot_id UUID NULL REFERENCES inventory_lots(id),
+    layer_date TIMESTAMPTZ NOT NULL,
+    qty_remaining NUMERIC(14,2) NOT NULL,
+    unit_cost NUMERIC(14,2) NOT NULL,
+    source_ledger_id UUID NOT NULL REFERENCES inventory_ledger(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_inventory_cost_layers_wh_item_date
+    ON inventory_cost_layers (warehouse_id, item_id, layer_date);
+
+CREATE TABLE inventory_avg_cost (
+    warehouse_id UUID NOT NULL REFERENCES warehouses(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+    on_hand NUMERIC(14,2) NOT NULL DEFAULT 0,
+    avg_cost NUMERIC(14,2) NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (warehouse_id, item_id)
+);
+
+CREATE OR REPLACE FUNCTION fn_get_avg_cost(p_warehouse_id UUID, p_item_id UUID)
+RETURNS NUMERIC
+LANGUAGE sql
+AS $$
+    SELECT COALESCE(avg_cost, 0)
+    FROM inventory_avg_cost
+    WHERE warehouse_id = p_warehouse_id
+      AND item_id = p_item_id;
+$$;
+
+CREATE OR REPLACE FUNCTION sp_fifo_consume(
+    p_warehouse_id UUID,
+    p_item_id UUID,
+    p_qty NUMERIC,
+    p_lot_id UUID DEFAULT NULL
+)
+RETURNS TABLE(total_cost NUMERIC, unit_cost NUMERIC)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_remaining NUMERIC := p_qty;
+    v_total_cost NUMERIC := 0;
+    v_layer RECORD;
+    v_take NUMERIC;
+BEGIN
+    IF p_qty <= 0 THEN
+        RETURN QUERY SELECT 0, 0;
+        RETURN;
+    END IF;
+
+    FOR v_layer IN
+        SELECT *
+        FROM inventory_cost_layers
+        WHERE warehouse_id = p_warehouse_id
+          AND item_id = p_item_id
+          AND qty_remaining > 0
+          AND (p_lot_id IS NULL OR lot_id = p_lot_id)
+        ORDER BY layer_date, id
+        FOR UPDATE
+    LOOP
+        EXIT WHEN v_remaining <= 0;
+        v_take := LEAST(v_layer.qty_remaining, v_remaining);
+        v_total_cost := v_total_cost + (v_take * v_layer.unit_cost);
+        UPDATE inventory_cost_layers
+        SET qty_remaining = qty_remaining - v_take
+        WHERE id = v_layer.id;
+        v_remaining := v_remaining - v_take;
+    END LOOP;
+
+    IF v_remaining > 0 THEN
+        RAISE EXCEPTION 'Insufficient FIFO layers for item %', p_item_id;
+    END IF;
+
+    RETURN QUERY
+    SELECT v_total_cost, v_total_cost / p_qty;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sp_avg_apply(
+    p_warehouse_id UUID,
+    p_item_id UUID,
+    p_qty_in NUMERIC,
+    p_qty_out NUMERIC,
+    p_unit_cost NUMERIC DEFAULT NULL
+)
+RETURNS NUMERIC
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_row inventory_avg_cost%ROWTYPE;
+    v_on_hand NUMERIC;
+    v_avg_cost NUMERIC;
+    v_new_on_hand NUMERIC;
+BEGIN
+    SELECT * INTO v_row
+    FROM inventory_avg_cost
+    WHERE warehouse_id = p_warehouse_id
+      AND item_id = p_item_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        INSERT INTO inventory_avg_cost (warehouse_id, item_id, on_hand, avg_cost)
+        VALUES (p_warehouse_id, p_item_id, 0, 0)
+        RETURNING * INTO v_row;
+    END IF;
+
+    v_on_hand := v_row.on_hand;
+    v_avg_cost := v_row.avg_cost;
+
+    IF p_qty_in > 0 AND p_qty_out > 0 THEN
+        RAISE EXCEPTION 'sp_avg_apply supports either qty_in or qty_out, not both';
+    END IF;
+
+    IF p_qty_in > 0 THEN
+        IF p_unit_cost IS NULL THEN
+            RAISE EXCEPTION 'AVG receipt requires unit_cost';
+        END IF;
+        v_new_on_hand := v_on_hand + p_qty_in;
+        IF v_new_on_hand = 0 THEN
+            v_avg_cost := 0;
+        ELSE
+            v_avg_cost := ((v_on_hand * v_row.avg_cost) + (p_qty_in * p_unit_cost)) / v_new_on_hand;
+        END IF;
+        UPDATE inventory_avg_cost
+        SET on_hand = v_new_on_hand,
+            avg_cost = v_avg_cost,
+            updated_at = NOW()
+        WHERE warehouse_id = p_warehouse_id AND item_id = p_item_id;
+        RETURN p_unit_cost;
+    ELSIF p_qty_out > 0 THEN
+        IF v_on_hand < p_qty_out THEN
+            RAISE EXCEPTION 'Insufficient AVG stock for item %', p_item_id;
+        END IF;
+        v_new_on_hand := v_on_hand - p_qty_out;
+        UPDATE inventory_avg_cost
+        SET on_hand = v_new_on_hand,
+            avg_cost = v_avg_cost,
+            updated_at = NOW()
+        WHERE warehouse_id = p_warehouse_id AND item_id = p_item_id;
+        RETURN v_avg_cost;
+    END IF;
+
+    RETURN v_avg_cost;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sp_post_inventory_document(p_document_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_doc RECORD;
+    v_line RECORD;
+    v_item RECORD;
+    v_on_hand NUMERIC;
+    v_required_out NUMERIC;
+    v_expiry DATE;
+    v_serial_count INT;
+    v_diff NUMERIC;
+    v_qty_in NUMERIC;
+    v_qty_out NUMERIC;
+    v_unit_cost NUMERIC;
+    v_total_cost NUMERIC;
+    v_ledger_id UUID;
+    v_cost_method TEXT;
+BEGIN
+    SELECT * INTO v_doc
+    FROM inventory_documents
+    WHERE id = p_document_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Document not found: %', p_document_id;
+    END IF;
+
+    IF v_doc.status <> 'draft' THEN
+        RAISE EXCEPTION 'Document is not draft: %', v_doc.doc_no;
+    END IF;
+
+    -- Warehouse validation
+    IF v_doc.doc_type = 'RECEIPT' AND v_doc.target_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'RECEIPT requires target_warehouse_id';
+    ELSIF v_doc.doc_type = 'ISSUE' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'ISSUE requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'ADJUST' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'ADJUST requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'STOCKTAKE' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'STOCKTAKE requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'TRANSFER' AND (v_doc.source_warehouse_id IS NULL OR v_doc.target_warehouse_id IS NULL OR v_doc.source_warehouse_id = v_doc.target_warehouse_id) THEN
+        RAISE EXCEPTION 'TRANSFER requires distinct source and target warehouses';
+    END IF;
+
+    -- Validate lines
+    FOR v_line IN
+        SELECT * FROM inventory_document_lines WHERE document_id = p_document_id ORDER BY line_no
+    LOOP
+        SELECT * INTO v_item
+        FROM inventory_items
+        WHERE id = v_line.item_id AND deleted_at IS NULL;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Item not found or deleted: %', v_line.item_id;
+        END IF;
+
+        IF v_doc.doc_type = 'RECEIPT' AND v_line.unit_cost IS NULL THEN
+            RAISE EXCEPTION 'RECEIPT requires unit_cost on lines';
+        END IF;
+
+        IF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction IS NULL THEN
+            RAISE EXCEPTION 'ADJUST requires adjust_direction on lines';
+        END IF;
+
+        IF v_item.track_lot AND v_line.lot_id IS NULL THEN
+            RAISE EXCEPTION 'Item % requires lot_id', v_item.sku;
+        END IF;
+
+        IF v_item.track_expiry THEN
+            SELECT expiry_date INTO v_expiry FROM inventory_lots WHERE id = v_line.lot_id;
+            IF v_line.expiry_date IS NULL AND v_expiry IS NULL THEN
+                RAISE EXCEPTION 'Item % requires expiry date', v_item.sku;
+            END IF;
+        END IF;
+
+        IF v_item.track_serial THEN
+            IF v_line.quantity <> FLOOR(v_line.quantity) THEN
+                RAISE EXCEPTION 'Serial-tracked item % requires integer quantity', v_item.sku;
+            END IF;
+            SELECT COUNT(*) INTO v_serial_count
+            FROM inventory_line_serials
+            WHERE document_line_id = v_line.id;
+            IF v_serial_count <> v_line.quantity THEN
+                RAISE EXCEPTION 'Serial count mismatch for item %', v_item.sku;
+            END IF;
+        END IF;
+
+        IF v_doc.doc_type IN ('ISSUE','TRANSFER','ADJUST','STOCKTAKE') THEN
+            IF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction = 'plus' THEN
+                CONTINUE;
+            END IF;
+
+            v_on_hand := fn_get_on_hand(v_doc.source_warehouse_id, v_line.item_id, v_line.source_location_id, v_line.lot_id);
+            IF v_doc.doc_type = 'STOCKTAKE' THEN
+                v_required_out := GREATEST(v_on_hand - v_line.quantity, 0);
+            ELSE
+                v_required_out := v_line.quantity;
+            END IF;
+
+            IF v_required_out > 0 AND v_on_hand < v_required_out THEN
+                RAISE EXCEPTION 'Insufficient stock for item %', v_item.sku;
+            END IF;
+        END IF;
+    END LOOP;
+
+    -- Post lines with costing
+    FOR v_line IN
+        SELECT * FROM inventory_document_lines WHERE document_id = p_document_id ORDER BY line_no
+    LOOP
+        SELECT * INTO v_item
+        FROM inventory_items
+        WHERE id = v_line.item_id AND deleted_at IS NULL;
+
+        v_cost_method := v_item.cost_method;
+
+        IF v_doc.doc_type = 'RECEIPT' THEN
+            v_unit_cost := v_line.unit_cost;
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.target_warehouse_id, v_line.target_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_line.quantity, 0, v_unit_cost
+            ) RETURNING id INTO v_ledger_id;
+
+            IF v_cost_method = 'FIFO' THEN
+                INSERT INTO inventory_cost_layers (
+                    warehouse_id, item_id, lot_id, layer_date, qty_remaining, unit_cost, source_ledger_id
+                ) VALUES (
+                    v_doc.target_warehouse_id, v_line.item_id, v_line.lot_id, NOW(), v_line.quantity, v_unit_cost, v_ledger_id
+                );
+            ELSE
+                PERFORM sp_avg_apply(v_doc.target_warehouse_id, v_line.item_id, v_line.quantity, 0, v_unit_cost);
+            END IF;
+        ELSIF v_doc.doc_type = 'ISSUE' THEN
+            IF v_cost_method = 'FIFO' THEN
+                SELECT total_cost, unit_cost INTO v_total_cost, v_unit_cost
+                FROM sp_fifo_consume(v_doc.source_warehouse_id, v_line.item_id, v_line.quantity, v_line.lot_id);
+            ELSE
+                v_unit_cost := sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, 0, v_line.quantity, NULL);
+            END IF;
+
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, 0, v_line.quantity, v_unit_cost
+            );
+        ELSIF v_doc.doc_type = 'TRANSFER' THEN
+            IF v_cost_method = 'FIFO' THEN
+                SELECT total_cost, unit_cost INTO v_total_cost, v_unit_cost
+                FROM sp_fifo_consume(v_doc.source_warehouse_id, v_line.item_id, v_line.quantity, v_line.lot_id);
+            ELSE
+                v_unit_cost := sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, 0, v_line.quantity, NULL);
+            END IF;
+
+            -- Out from source
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, 0, v_line.quantity, v_unit_cost
+            );
+
+            -- In to target
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.target_warehouse_id, v_line.target_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_line.quantity, 0, v_unit_cost
+            ) RETURNING id INTO v_ledger_id;
+
+            IF v_cost_method = 'FIFO' THEN
+                INSERT INTO inventory_cost_layers (
+                    warehouse_id, item_id, lot_id, layer_date, qty_remaining, unit_cost, source_ledger_id
+                ) VALUES (
+                    v_doc.target_warehouse_id, v_line.item_id, v_line.lot_id, NOW(), v_line.quantity, v_unit_cost, v_ledger_id
+                );
+            ELSE
+                PERFORM sp_avg_apply(v_doc.target_warehouse_id, v_line.item_id, v_line.quantity, 0, v_unit_cost);
+            END IF;
+        ELSIF v_doc.doc_type = 'ADJUST' THEN
+            IF v_line.adjust_direction = 'plus' THEN
+                v_unit_cost := COALESCE(v_line.unit_cost, fn_get_avg_cost(v_doc.source_warehouse_id, v_line.item_id), 0);
+                INSERT INTO inventory_ledger (
+                    document_id, document_line_id, org_id, warehouse_id, location_id,
+                    counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+                ) VALUES (
+                    v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                    v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_line.quantity, 0, v_unit_cost
+                ) RETURNING id INTO v_ledger_id;
+
+                IF v_cost_method = 'FIFO' THEN
+                    INSERT INTO inventory_cost_layers (
+                        warehouse_id, item_id, lot_id, layer_date, qty_remaining, unit_cost, source_ledger_id
+                    ) VALUES (
+                        v_doc.source_warehouse_id, v_line.item_id, v_line.lot_id, NOW(), v_line.quantity, v_unit_cost, v_ledger_id
+                    );
+                ELSE
+                    PERFORM sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, v_line.quantity, 0, v_unit_cost);
+                END IF;
+            ELSE
+                IF v_cost_method = 'FIFO' THEN
+                    SELECT total_cost, unit_cost INTO v_total_cost, v_unit_cost
+                    FROM sp_fifo_consume(v_doc.source_warehouse_id, v_line.item_id, v_line.quantity, v_line.lot_id);
+                ELSE
+                    v_unit_cost := sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, 0, v_line.quantity, NULL);
+                END IF;
+                INSERT INTO inventory_ledger (
+                    document_id, document_line_id, org_id, warehouse_id, location_id,
+                    counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+                ) VALUES (
+                    v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                    v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, 0, v_line.quantity, v_unit_cost
+                );
+            END IF;
+        ELSIF v_doc.doc_type = 'STOCKTAKE' THEN
+            v_on_hand := fn_get_on_hand(v_doc.source_warehouse_id, v_line.item_id, v_line.source_location_id, v_line.lot_id);
+            v_diff := v_line.quantity - v_on_hand;
+            IF v_diff > 0 THEN
+                v_unit_cost := COALESCE(v_line.unit_cost, fn_get_avg_cost(v_doc.source_warehouse_id, v_line.item_id), 0);
+                INSERT INTO inventory_ledger (
+                    document_id, document_line_id, org_id, warehouse_id, location_id,
+                    counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+                ) VALUES (
+                    v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                    v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_diff, 0, v_unit_cost
+                ) RETURNING id INTO v_ledger_id;
+
+                IF v_cost_method = 'FIFO' THEN
+                    INSERT INTO inventory_cost_layers (
+                        warehouse_id, item_id, lot_id, layer_date, qty_remaining, unit_cost, source_ledger_id
+                    ) VALUES (
+                        v_doc.source_warehouse_id, v_line.item_id, v_line.lot_id, NOW(), v_diff, v_unit_cost, v_ledger_id
+                    );
+                ELSE
+                    PERFORM sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, v_diff, 0, v_unit_cost);
+                END IF;
+            ELSIF v_diff < 0 THEN
+                v_diff := ABS(v_diff);
+                IF v_cost_method = 'FIFO' THEN
+                    SELECT total_cost, unit_cost INTO v_total_cost, v_unit_cost
+                    FROM sp_fifo_consume(v_doc.source_warehouse_id, v_line.item_id, v_diff, v_line.lot_id);
+                ELSE
+                    v_unit_cost := sp_avg_apply(v_doc.source_warehouse_id, v_line.item_id, 0, v_diff, NULL);
+                END IF;
+                INSERT INTO inventory_ledger (
+                    document_id, document_line_id, org_id, warehouse_id, location_id,
+                    counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+                ) VALUES (
+                    v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                    v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, 0, v_diff, v_unit_cost
+                );
+            END IF;
+        END IF;
+
+        -- Update serial statuses best-effort
+        IF v_item.track_serial THEN
+            IF v_doc.doc_type = 'ISSUE' THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSIF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction = 'minus' THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSIF v_doc.doc_type = 'STOCKTAKE' AND v_diff < 0 THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSE
+                UPDATE inventory_serials
+                SET status = 'in_stock'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            END IF;
+        END IF;
+    END LOOP;
+
+    UPDATE inventory_documents
+    SET status = 'posted',
+        posted_at = NOW(),
+        updated_at = NOW()
+    WHERE id = p_document_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sp_void_inventory_document(p_document_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_doc RECORD;
+    v_entry RECORD;
+    v_item RECORD;
+    v_ledger_id UUID;
+BEGIN
+    SELECT * INTO v_doc
+    FROM inventory_documents
+    WHERE id = p_document_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Document not found: %', p_document_id;
+    END IF;
+
+    IF v_doc.status = 'void' THEN
+        RAISE EXCEPTION 'Document already void: %', v_doc.doc_no;
+    END IF;
+
+    IF v_doc.status = 'draft' THEN
+        UPDATE inventory_documents
+        SET status = 'void',
+            updated_at = NOW()
+        WHERE id = p_document_id;
+        RETURN;
+    END IF;
+
+    IF v_doc.status <> 'posted' THEN
+        RAISE EXCEPTION 'Only posted documents can be voided';
+    END IF;
+
+    FOR v_entry IN
+        SELECT * FROM inventory_ledger WHERE document_id = p_document_id
+    LOOP
+        SELECT * INTO v_item
+        FROM inventory_items
+        WHERE id = v_entry.item_id AND deleted_at IS NULL;
+
+        INSERT INTO inventory_ledger (
+            document_id, document_line_id, org_id, warehouse_id, location_id,
+            counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+        ) VALUES (
+            v_entry.document_id, v_entry.document_line_id, v_entry.org_id, v_entry.warehouse_id, v_entry.location_id,
+            v_entry.counterparty_id, v_entry.item_id, v_entry.lot_id, v_entry.serial_id, v_entry.qty_out, v_entry.qty_in, v_entry.unit_cost
+        ) RETURNING id INTO v_ledger_id;
+
+        IF v_item.cost_method = 'FIFO' THEN
+            IF v_entry.qty_in > 0 THEN
+                -- Reverse a receipt by consuming layers.
+                PERFORM sp_fifo_consume(v_entry.warehouse_id, v_entry.item_id, v_entry.qty_in, v_entry.lot_id);
+            ELSE
+                -- Reverse an issue by adding a new layer.
+                INSERT INTO inventory_cost_layers (
+                    warehouse_id, item_id, lot_id, layer_date, qty_remaining, unit_cost, source_ledger_id
+                ) VALUES (
+                    v_entry.warehouse_id, v_entry.item_id, v_entry.lot_id, NOW(), v_entry.qty_out, COALESCE(v_entry.unit_cost, 0), v_ledger_id
+                );
+            END IF;
+        ELSE
+            IF v_entry.qty_in > 0 THEN
+                PERFORM sp_avg_apply(v_entry.warehouse_id, v_entry.item_id, 0, v_entry.qty_in, NULL);
+            ELSE
+                PERFORM sp_avg_apply(v_entry.warehouse_id, v_entry.item_id, v_entry.qty_out, 0, v_entry.unit_cost);
+            END IF;
+        END IF;
+
+        IF v_entry.serial_id IS NOT NULL THEN
+            IF v_entry.qty_out > 0 THEN
+                UPDATE inventory_serials SET status = 'in_stock' WHERE id = v_entry.serial_id;
+            ELSE
+                UPDATE inventory_serials SET status = 'issued' WHERE id = v_entry.serial_id;
+            END IF;
+        END IF;
+    END LOOP;
+
+    UPDATE inventory_documents
+    SET status = 'void',
+        updated_at = NOW()
+    WHERE id = p_document_id;
+END;
+$$;
+
+CREATE OR REPLACE VIEW vw_stock_on_hand AS
+SELECT
+    w.id AS warehouse_id,
+    w.code AS warehouse_code,
+    wl.id AS location_id,
+    wl.code AS location_code,
+    i.id AS item_id,
+    i.sku,
+    i.name AS item_name,
+    l.id AS lot_id,
+    l.lot_code,
+    SUM(il.qty_in - il.qty_out) AS on_hand,
+    MIN(l.expiry_date) AS nearest_expiry
+FROM inventory_ledger il
+JOIN warehouses w ON w.id = il.warehouse_id
+LEFT JOIN warehouse_locations wl ON wl.id = il.location_id
+JOIN inventory_items i ON i.id = il.item_id
+LEFT JOIN inventory_lots l ON l.id = il.lot_id
+GROUP BY w.id, w.code, wl.id, wl.code, i.id, i.sku, i.name, l.id, l.lot_code
+HAVING SUM(il.qty_in - il.qty_out) <> 0;
+
+CREATE OR REPLACE VIEW vw_stock_on_hand_item AS
+WITH on_hand AS (
+    SELECT warehouse_id, item_id, SUM(qty_in - qty_out) AS on_hand
+    FROM inventory_ledger
+    GROUP BY warehouse_id, item_id
+)
+SELECT
+    w.id AS warehouse_id,
+    w.code AS warehouse_code,
+    i.id AS item_id,
+    i.sku,
+    i.name AS item_name,
+    i.cost_method,
+    oh.on_hand,
+    CASE
+        WHEN i.cost_method = 'FIFO' THEN COALESCE((
+            SELECT SUM(qty_remaining * unit_cost)
+            FROM inventory_cost_layers cl
+            WHERE cl.warehouse_id = oh.warehouse_id
+              AND cl.item_id = oh.item_id
+        ), 0)
+        ELSE COALESCE(ac.avg_cost, 0) * oh.on_hand
+    END AS valuation_cost
+FROM on_hand oh
+JOIN warehouses w ON w.id = oh.warehouse_id
+JOIN inventory_items i ON i.id = oh.item_id
+LEFT JOIN inventory_avg_cost ac
+    ON ac.warehouse_id = oh.warehouse_id AND ac.item_id = oh.item_id;
+
+CREATE OR REPLACE VIEW vw_reorder_alerts AS
+SELECT
+    i.id AS item_id,
+    i.sku,
+    i.name AS item_name,
+    i.min_stock,
+    i.reorder_point,
+    i.safety_stock,
+    w.warehouse_id,
+    w.warehouse_code,
+    w.on_hand,
+    CASE
+        WHEN w.on_hand < i.reorder_point THEN 'reorder'
+        WHEN w.on_hand < i.safety_stock THEN 'below_safety'
+        ELSE 'ok'
+    END AS status
+FROM vw_stock_on_hand_item w
+JOIN inventory_items i ON i.id = w.item_id
+WHERE w.on_hand < i.reorder_point
+   OR w.on_hand < i.safety_stock;
+
+CREATE OR REPLACE VIEW vw_item_movement AS
+SELECT
+    il.posted_at,
+    d.doc_no,
+    d.doc_type,
+    d.status,
+    il.warehouse_id,
+    w.code AS warehouse_code,
+    il.location_id,
+    wl.code AS location_code,
+    il.item_id,
+    i.sku,
+    i.name AS item_name,
+    il.qty_in,
+    il.qty_out,
+    il.unit_cost,
+    d.reference,
+    d.note
+FROM inventory_ledger il
+JOIN inventory_documents d ON d.id = il.document_id
+JOIN warehouses w ON w.id = il.warehouse_id
+LEFT JOIN warehouse_locations wl ON wl.id = il.location_id
+JOIN inventory_items i ON i.id = il.item_id;
+
+CREATE OR REPLACE VIEW vw_fefo_lots AS
+SELECT
+    w.code AS warehouse_code,
+    i.sku,
+    i.name AS item_name,
+    l.id AS lot_id,
+    l.lot_code,
+    l.expiry_date,
+    SUM(il.qty_in - il.qty_out) AS on_hand
+FROM inventory_ledger il
+JOIN warehouses w ON w.id = il.warehouse_id
+JOIN inventory_items i ON i.id = il.item_id
+JOIN inventory_lots l ON l.id = il.lot_id
+GROUP BY w.code, i.sku, i.name, l.id, l.lot_code, l.expiry_date
+HAVING SUM(il.qty_in - il.qty_out) <> 0
+ORDER BY l.expiry_date ASC NULLS LAST, l.lot_code;
+
+COMMIT;

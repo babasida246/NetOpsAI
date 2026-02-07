@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { onMount } from 'svelte';
+  import { page } from '$app/state';
   import { Alert, Button, Card, Input, Label, Spinner } from 'flowbite-svelte';
   import { ArrowLeft } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
+  import { getCapabilities } from '$lib/auth/capabilities';
   import {
     approveWorkflowRequest,
     executeWorkflowRequest,
@@ -10,6 +12,10 @@
     rejectWorkflowRequest,
     type WorkflowRequest
   } from '$lib/api/assetMgmt';
+
+  let userRole = $state('');
+  const caps = $derived.by(() => getCapabilities(userRole));
+  const backHref = $derived.by(() => (caps.canManageAssets ? '/requests' : '/me/requests'));
 
   let request = $state<WorkflowRequest | null>(null);
   let loading = $state(true);
@@ -20,14 +26,19 @@
   let executing = $state(false);
   let rejectReason = $state('');
 
-  const requestId = $derived($page.params.id);
+  const requestId = $derived(page.params.id);
+
+  onMount(() => {
+    if (typeof window === 'undefined') return;
+    userRole = localStorage.getItem('userRole') || '';
+  });
 
   async function loadDetail() {
     if (!requestId) return;
     try {
       loading = true;
       const response = await getWorkflowRequest(requestId);
-      request = response.data;
+      request = response.data ?? null;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('requests.errors.loadDetailFailed');
     } finally {
@@ -85,7 +96,7 @@
 
 <div class="page-shell page-content py-6 lg:py-8">
   <div class="mb-4 flex items-center gap-3">
-    <Button color="alternative" href="/requests">
+    <Button color="alternative" href={backHref}>
       <ArrowLeft class="w-4 h-4 mr-2" /> {$isLoading ? 'Back' : $_('common.back')}
     </Button>
     <div>
@@ -128,25 +139,27 @@
       <Alert color="red" class="mb-4">{actionError}</Alert>
     {/if}
 
-    <div class="flex flex-wrap gap-2">
-      {#if request.status === 'submitted'}
-        <Button size="xs" on:click={handleApprove} disabled={approving}>
-          {approving ? ($isLoading ? 'Approving...' : $_('requests.approving')) : ($isLoading ? 'Approve' : $_('requests.approve'))}
-        </Button>
-        <div class="flex items-end gap-2">
-          <div>
-            <Label class="mb-2">{$isLoading ? 'Reject Reason' : $_('requests.rejectReason')}</Label>
-            <Input bind:value={rejectReason} placeholder={$isLoading ? 'Optional reason' : $_('requests.placeholders.rejectReason')} />
-          </div>
-          <Button size="xs" color="alternative" on:click={handleReject} disabled={rejecting}>
-            {rejecting ? ($isLoading ? 'Rejecting...' : $_('requests.rejecting')) : ($isLoading ? 'Reject' : $_('requests.reject'))}
+    {#if caps.canApproveRequests}
+      <div class="flex flex-wrap gap-2">
+        {#if request.status === 'submitted'}
+          <Button size="xs" onclick={handleApprove} disabled={approving}>
+            {approving ? ($isLoading ? 'Approving...' : $_('requests.approving')) : ($isLoading ? 'Approve' : $_('requests.approve'))}
           </Button>
-        </div>
-      {:else if request.status === 'approved'}
-        <Button size="xs" on:click={handleExecute} disabled={executing}>
-          {executing ? ($isLoading ? 'Executing...' : $_('requests.executing')) : ($isLoading ? 'Execute' : $_('requests.execute'))}
-        </Button>
-      {/if}
-    </div>
+          <div class="flex items-end gap-2">
+            <div>
+              <Label class="mb-2">{$isLoading ? 'Reject Reason' : $_('requests.rejectReason')}</Label>
+              <Input bind:value={rejectReason} placeholder={$isLoading ? 'Optional reason' : $_('requests.placeholders.rejectReason')} />
+            </div>
+            <Button size="xs" color="alternative" onclick={handleReject} disabled={rejecting}>
+              {rejecting ? ($isLoading ? 'Rejecting...' : $_('requests.rejecting')) : ($isLoading ? 'Reject' : $_('requests.reject'))}
+            </Button>
+          </div>
+        {:else if request.status === 'approved'}
+          <Button size="xs" onclick={handleExecute} disabled={executing}>
+            {executing ? ($isLoading ? 'Executing...' : $_('requests.executing')) : ($isLoading ? 'Execute' : $_('requests.execute'))}
+          </Button>
+        {/if}
+      </div>
+    {/if}
   {/if}
 </div>

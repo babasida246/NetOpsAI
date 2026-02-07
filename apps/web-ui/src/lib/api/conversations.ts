@@ -1,8 +1,13 @@
-import { API_BASE, apiJson, requireAccessToken } from './httpClient'
+import { API_BASE, apiJson, apiJsonData, requireAccessToken } from './httpClient'
 
 const authJson = <T>(input: string, init?: RequestInit) => {
     requireAccessToken()
     return apiJson<T>(input, init)
+}
+
+const authJsonData = <T>(input: string, init?: RequestInit) => {
+    requireAccessToken()
+    return apiJsonData<T>(input, init)
 }
 
 export interface Conversation {
@@ -47,11 +52,11 @@ export interface ListMessagesResponse {
 }
 
 export async function listConversations(page = 1, limit = 20): Promise<ListConversationsResponse> {
-    return authJson(`${API_BASE}/conversations?page=${page}&limit=${limit}`)
+    return authJson(`${API_BASE}/v1/conversations?page=${page}&limit=${limit}`)
 }
 
 export async function createConversation(data: CreateConversationRequest): Promise<Conversation> {
-    return authJson(`${API_BASE}/conversations`, {
+    return authJsonData(`${API_BASE}/v1/conversations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -59,19 +64,19 @@ export async function createConversation(data: CreateConversationRequest): Promi
 }
 
 export async function getConversation(id: string): Promise<Conversation> {
-    return authJson(`${API_BASE}/conversations/${id}`)
+    return authJsonData(`${API_BASE}/v1/conversations/${id}`)
 }
 
 export async function deleteConversation(id: string): Promise<void> {
-    await authJson(`${API_BASE}/conversations/${id}`, { method: 'DELETE' })
+    await authJson(`${API_BASE}/v1/conversations/${id}`, { method: 'DELETE' })
 }
 
 export async function listMessages(conversationId: string, limit = 100): Promise<ListMessagesResponse> {
-    return authJson(`${API_BASE}/conversations/${conversationId}/messages?limit=${limit}`)
+    return authJson(`${API_BASE}/v1/conversations/${conversationId}/messages?limit=${limit}`)
 }
 
 export async function sendMessage(conversationId: string, data: CreateMessageRequest): Promise<Message> {
-    return authJson(`${API_BASE}/conversations/${conversationId}/messages`, {
+    return authJsonData(`${API_BASE}/v1/conversations/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

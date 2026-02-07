@@ -9,7 +9,7 @@
   let loading = $state(true);
   let error = $state('');
 
-  const statusColors = {
+  const statusColors: Record<string, 'dark' | 'blue' | 'green' | 'red'> = {
     draft: 'dark',
     in_progress: 'blue',
     closed: 'green',
@@ -60,10 +60,10 @@
       </p>
     </div>
     <div class="flex gap-2">
-      <Button on:click={createSession}>
+      <Button onclick={createSession}>
         <Plus class="w-4 h-4 mr-2" /> {$isLoading ? 'New Session' : $_('inventory.newSession')}
       </Button>
-      <Button color="alternative" on:click={loadSessions}>
+      <Button color="alternative" onclick={loadSessions}>
         <RefreshCw class="w-4 h-4" />
       </Button>
     </div>
@@ -80,7 +80,7 @@
   {:else if sessions.length === 0}
     <Card class="text-center py-12">
       <p class="text-gray-500 mb-4">{$isLoading ? 'No inventory sessions yet' : $_('inventory.noSessions')}</p>
-      <Button on:click={createSession}>{$isLoading ? 'Create First Session' : $_('inventory.createFirstSession')}</Button>
+      <Button onclick={createSession}>{$isLoading ? 'Create First Session' : $_('inventory.createFirstSession')}</Button>
     </Card>
   {:else}
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

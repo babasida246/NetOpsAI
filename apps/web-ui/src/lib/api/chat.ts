@@ -1,4 +1,4 @@
-import { API_BASE, apiJson, requireAccessToken } from './httpClient'
+import { API_BASE, apiJson, apiJsonCached, apiJsonData, apiJsonDataCached, requireAccessToken } from './httpClient'
 
 const ensureAuth = (): void => {
     requireAccessToken()
@@ -11,6 +11,33 @@ const authJson = <T>(input: string, init: RequestInit = {}) => {
         headers.set('Content-Type', 'application/json')
     }
     return apiJson<T>(input, { ...init, headers })
+}
+
+const authJsonCached = <T>(input: string, init: RequestInit = {}, ttlMs = 5000) => {
+    ensureAuth()
+    const headers = new Headers(init.headers || {})
+    if (init.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+    return apiJsonCached<T>(input, { ...init, headers }, { ttlMs, errorTtlMs: 2000 })
+}
+
+const authJsonData = <T>(input: string, init: RequestInit = {}) => {
+    ensureAuth()
+    const headers = new Headers(init.headers || {})
+    if (init.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+    return apiJsonData<T>(input, { ...init, headers })
+}
+
+const authJsonDataCached = <T>(input: string, init: RequestInit = {}, ttlMs = 5000) => {
+    ensureAuth()
+    const headers = new Headers(init.headers || {})
+    if (init.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json')
+    }
+    return apiJsonDataCached<T>(input, { ...init, headers }, { ttlMs, errorTtlMs: 2000 })
 }
 
 // ============================================================================
@@ -179,7 +206,7 @@ export interface RemoteOpenRouterModel {
 // ============================================================================
 
 export async function sendChatMessage(data: ChatSendRequest): Promise<ChatSendResponse> {
-    return authJson(`${API_BASE}/chat/messages`, {
+    return authJsonData(`${API_BASE}/v1/chat/messages`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
@@ -194,7 +221,7 @@ export async function chatCompletion(
         conversationId?: string
     }
 ): Promise<any> {
-    return authJson(`${API_BASE}/completions`, {
+    return authJsonData(`${API_BASE}/v1/chat/completions`, {
         method: 'POST',
         body: JSON.stringify({
             messages,
@@ -211,7 +238,7 @@ export async function chatCompletion(
 // ============================================================================
 
 export async function getConversationStats(conversationId: string): Promise<{ data: TokenUsageStats[] }> {
-    return authJson(`${API_BASE}/stats/chat/conversations/${conversationId}`)
+    return authJson(`${API_BASE}/v1/stats/chat/conversations/${conversationId}`)
 }
 
 export async function getUserStats(filters?: {
@@ -223,11 +250,11 @@ export async function getUserStats(filters?: {
     if (filters?.endDate) params.append('endDate', filters.endDate)
 
     const query = params.toString()
-    return authJson(`${API_BASE}/stats/chat/user${query ? '?' + query : ''}`)
+    return authJson(`${API_BASE}/v1/stats/chat/user${query ? '?' + query : ''}`)
 }
 
 export async function getDailySummary(): Promise<DailySummary> {
-    return authJson(`${API_BASE}/stats/chat/daily`)
+    return authJsonDataCached(`${API_BASE}/v1/stats/chat/daily`, {}, 5000)
 }
 
 // ============================================================================
@@ -245,18 +272,18 @@ export async function listModels(filters?: {
     if (filters?.enabled !== undefined) params.append('enabled', filters.enabled.toString())
 
     const query = params.toString()
-    return authJson(`${API_BASE}/models${query ? '?' + query : ''}`)
+    return authJsonCached(`${API_BASE}/v1/models${query ? '?' + query : ''}`, {}, 5000)
 }
 
 export async function getModel(modelId: string): Promise<ModelConfig> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}`)
+    return authJsonData(`${API_BASE}/v1/models/${id}`)
 }
 
 export async function createModel(
     data: Omit<ModelConfig, 'createdAt'> & { provider: string }
 ): Promise<ModelConfig> {
-    return authJson(`${API_BASE}/models`, {
+    return authJsonData(`${API_BASE}/v1/models`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
@@ -264,12 +291,12 @@ export async function createModel(
 
 export async function deleteModel(modelId: string): Promise<{ message: string }> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}`, { method: 'DELETE' })
+    return authJsonData(`${API_BASE}/v1/models/${id}`, { method: 'DELETE' })
 }
 
 export async function updateModelPriority(modelId: string, priority: number): Promise<{ message: string }> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}/priority`, {
+    return authJsonData(`${API_BASE}/v1/models/${id}/priority`, {
         method: 'PATCH',
         body: JSON.stringify({ priority })
     })
@@ -280,7 +307,7 @@ export async function updateModelConfig(
     data: Partial<Omit<ModelConfig, 'id' | 'createdAt' | 'provider'>>
 ): Promise<{ message: string }> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}`, {
+    return authJsonData(`${API_BASE}/v1/models/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data)
     })
@@ -288,12 +315,12 @@ export async function updateModelConfig(
 
 export async function getModelPerformance(modelId: string, days = 7): Promise<{ data: ModelPerformance[] }> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}/performance?days=${days}`)
+    return authJson(`${API_BASE}/v1/models/${id}/performance?days=${days}`)
 }
 
 export async function getModelHistory(modelId: string, days = 30): Promise<{ data: UsageHistoryEntry[] }> {
     const id = encodeURIComponent(modelId)
-    return authJson(`${API_BASE}/models/${id}/history?days=${days}`)
+    return authJson(`${API_BASE}/v1/models/${id}/history?days=${days}`)
 }
 
 // ============================================================================
@@ -301,42 +328,42 @@ export async function getModelHistory(modelId: string, days = 30): Promise<{ dat
 // ============================================================================
 
 export async function listProviders(): Promise<{ data: AIProvider[] }> {
-    return authJson(`${API_BASE}/providers`)
+    return authJsonCached(`${API_BASE}/v1/providers`, {}, 5000)
 }
 
 export async function createProvider(
     data: Pick<AIProvider, 'id' | 'name'> & Partial<Omit<AIProvider, 'id' | 'name' | 'createdAt' | 'updatedAt'>>
 ): Promise<AIProvider> {
-    return authJson(`${API_BASE}/providers`, {
+    return authJsonData(`${API_BASE}/v1/providers`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
 }
 
 export async function deleteProvider(providerId: string): Promise<{ message: string }> {
-    return authJson(`${API_BASE}/providers/${providerId}`, { method: 'DELETE' })
+    return authJsonData(`${API_BASE}/v1/providers/${providerId}`, { method: 'DELETE' })
 }
 
 export async function updateProvider(
     providerId: string,
     data: Partial<Omit<AIProvider, 'id' | 'createdAt' | 'updatedAt' | 'metadata'>> & { metadata?: Record<string, any> }
 ): Promise<{ message: string }> {
-    return authJson(`${API_BASE}/providers/${providerId}`, {
+    return authJsonData(`${API_BASE}/v1/providers/${providerId}`, {
         method: 'PATCH',
         body: JSON.stringify(data)
     })
 }
 
 export async function getProviderHistory(providerId: string, days = 30): Promise<{ data: UsageHistoryEntry[] }> {
-    return authJson(`${API_BASE}/providers/${providerId}/history?days=${days}`)
+    return authJson(`${API_BASE}/v1/providers/${providerId}/history?days=${days}`)
 }
 
 export async function listUsageLogs(limit = 100): Promise<{ data: UsageLogEntry[] }> {
-    return authJson(`${API_BASE}/usage/logs?limit=${limit}`)
+    return authJson(`${API_BASE}/v1/usage/logs?limit=${limit}`)
 }
 
 export async function checkProviderHealth(providerId: string): Promise<ProviderHealth> {
-    return authJson(`${API_BASE}/providers/${providerId}/health`)
+    return authJsonData(`${API_BASE}/v1/providers/${providerId}/health`)
 }
 
 export async function listOpenRouterRemoteModels(search?: string, page?: number, limit?: number): Promise<{ data: RemoteOpenRouterModel[]; meta?: any }> {
@@ -345,22 +372,22 @@ export async function listOpenRouterRemoteModels(search?: string, page?: number,
     if (page) params.set('page', page.toString())
     if (limit) params.set('limit', limit.toString())
     const query = params.toString()
-    return authJson(`${API_BASE}/providers/openrouter/remote-models${query ? `?${query}` : ''}`)
+    return authJson(`${API_BASE}/v1/providers/openrouter/remote-models${query ? `?${query}` : ''}`)
 }
 
 export async function importOpenRouterModel(modelId: string, priority?: number): Promise<ModelConfig> {
-    return authJson(`${API_BASE}/providers/openrouter/models/import`, {
+    return authJsonData(`${API_BASE}/v1/providers/openrouter/models/import`, {
         method: 'POST',
         body: JSON.stringify({ modelId, priority })
     })
 }
 
 export async function getOpenRouterAccountActivity(): Promise<any> {
-    return authJson(`${API_BASE}/providers/openrouter/account`)
+    return authJsonData(`${API_BASE}/v1/providers/openrouter/account`)
 }
 
 export async function getOpenRouterCredits(): Promise<any> {
-    return authJson(`${API_BASE}/providers/openrouter/credits`)
+    return authJsonData(`${API_BASE}/v1/providers/openrouter/credits`)
 }
 
 // ============================================================================
@@ -368,7 +395,7 @@ export async function getOpenRouterCredits(): Promise<any> {
 // ============================================================================
 
 export async function listOrchestrationRules(enabledOnly = false): Promise<{ data: OrchestrationRule[] }> {
-    return authJson(`${API_BASE}/orchestration/rules?enabledOnly=${enabledOnly}`)
+    return authJson(`${API_BASE}/v1/orchestration/rules?enabledOnly=${enabledOnly}`)
 }
 
 export async function createOrchestrationRule(data: {
@@ -380,7 +407,7 @@ export async function createOrchestrationRule(data: {
     enabled?: boolean
     priority?: number
 }): Promise<OrchestrationRule> {
-    return authJson(`${API_BASE}/orchestration/rules`, {
+    return authJsonData(`${API_BASE}/v1/orchestration/rules`, {
         method: 'POST',
         body: JSON.stringify(data)
     })
@@ -390,14 +417,14 @@ export async function updateOrchestrationRule(
     ruleId: string,
     data: Partial<Omit<OrchestrationRule, 'id' | 'createdAt' | 'updatedAt'>>
 ): Promise<{ message: string }> {
-    return authJson(`${API_BASE}/orchestration/rules/${ruleId}`, {
+    return authJsonData(`${API_BASE}/v1/orchestration/rules/${ruleId}`, {
         method: 'PATCH',
         body: JSON.stringify(data)
     })
 }
 
 export async function deleteOrchestrationRule(ruleId: string): Promise<{ message: string }> {
-    return authJson(`${API_BASE}/orchestration/rules/${ruleId}`, {
+    return authJsonData(`${API_BASE}/v1/orchestration/rules/${ruleId}`, {
         method: 'DELETE'
     })
 }

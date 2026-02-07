@@ -6,6 +6,12 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { zodToJsonSchema } from 'zod-to-json-schema'
 import { NetOpsService, type AuditContext } from './netops.service.js'
 import type { AuthService } from '../auth/index.js'
+import { AdminRepository } from '../admin/admin.repository.js'
+import { registerFieldRoutes } from './field.routes.js'
+import { registerSshRoutes } from './ssh.routes.js'
+import { registerToolsRoutes } from './tools.routes.js'
+import { registerConfigRoutes } from './config.routes.js'
+import { registerGovernanceRoutes } from './governance.routes.js'
 import {
     createDeviceSchema,
     updateDeviceSchema,
@@ -65,6 +71,7 @@ const errorResponseSchema = z.object({
 
 export async function netopsRoutes(app: FastifyInstance, db: Pool, authService: AuthService): Promise<void> {
     const service = new NetOpsService(db)
+    const adminRepo = new AdminRepository(db)
 
     // ====================
     // DEVICES
@@ -959,6 +966,16 @@ export async function netopsRoutes(app: FastifyInstance, db: Pool, authService: 
         }
         return reply.send(contextPack)
     })
+
+    // ====================
+    // FIELD KIT & GOVERNANCE
+    // ====================
+
+    await registerFieldRoutes(app, authService, adminRepo)
+    await registerSshRoutes(app, authService, adminRepo)
+    await registerToolsRoutes(app, authService, adminRepo)
+    await registerConfigRoutes(app, authService, adminRepo)
+    await registerGovernanceRoutes(app, authService, adminRepo)
 }
 
 

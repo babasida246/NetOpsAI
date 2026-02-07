@@ -5,7 +5,7 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts --clean",
+        "build": "tsc --project tsconfig.json",
         "dev": "tsup src/index.ts --format esm --dts --watch",
         "test": "echo 'No tests for network-change yet'"
     },

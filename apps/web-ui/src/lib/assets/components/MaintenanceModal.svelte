@@ -1,12 +1,12 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Modal, Select } from 'flowbite-svelte';
   import type { MaintenanceSeverity } from '$lib/api/assets';
 
-  let { open = $bindable(false), assetCode = '' } = $props<{
+  let { open = $bindable(false), assetCode = '', onsubmit } = $props<{
     open?: boolean;
     assetCode?: string;
+    onsubmit?: (data: { title: string; severity: MaintenanceSeverity; diagnosis?: string; resolution?: string }) => void;
   }>();
 
   let title = $state('');
@@ -14,12 +14,8 @@
   let diagnosis = $state('');
   let resolution = $state('');
 
-  const dispatch = createEventDispatcher<{
-    submit: { title: string; severity: MaintenanceSeverity; diagnosis?: string; resolution?: string }
-  }>();
-
   function submit() {
-    dispatch('submit', {
+    onsubmit?.({
       title,
       severity,
       diagnosis: diagnosis || undefined,
@@ -35,9 +31,11 @@
   }
 </script>
 
-<Modal bind:open on:close={reset}>
+<Modal bind:open onclose={reset}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">{$isLoading ? 'Open Maintenance' : $_('maintenance.openMaintenance')} {assetCode ? `(${assetCode})` : ''}</h3>
+  
+      <h3 class="text-lg font-semibold">{$isLoading ? 'Open Maintenance' : $_('maintenance.openMaintenance')} {assetCode ? `(${assetCode})` : ''}</h3>
+    
   </svelte:fragment>
 
   <div class="space-y-4">
@@ -65,9 +63,12 @@
   </div>
 
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => { open = false; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={submit} disabled={!title}>{$isLoading ? 'Create' : $_('common.create')}</Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => { open = false; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={submit} disabled={!title}>{$isLoading ? 'Create' : $_('common.create')}</Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

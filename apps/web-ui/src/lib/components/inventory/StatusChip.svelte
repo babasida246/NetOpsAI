@@ -1,10 +1,12 @@
 <script lang="ts">
 	import type { InventoryDocument, InventoryReservation } from '$lib/types/inventory';
 
-	let { status, size = 'md' } = $props<{
+	type SizeOption = 'sm' | 'md' | 'lg';
+
+	let { status, size = 'md' }: {
 		status: InventoryDocument['status'] | InventoryReservation['status'];
-		size?: 'sm' | 'md' | 'lg';
-	}>();
+		size?: SizeOption;
+	} = $props();
 
 	const colorMap: Record<string, string> = {
 		draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
@@ -16,14 +18,14 @@
 		void: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
 	};
 
-	const sizeMap = {
+	const sizeMap: Record<SizeOption, string> = {
 		sm: 'text-xs px-2 py-0.5',
 		md: 'text-sm px-2.5 py-0.5',
 		lg: 'text-base px-3 py-1'
 	};
 
 	const colorClass = $derived(colorMap[status] || 'bg-gray-100 text-gray-800');
-	const sizeClass = $derived(sizeMap[size]);
+	const sizeClass = $derived(sizeMap[size ?? 'md']);
 </script>
 
 <span class="inline-flex items-center font-medium rounded {colorClass} {sizeClass}">

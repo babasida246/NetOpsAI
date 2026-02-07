@@ -1,0 +1,69 @@
+config firewall address
+    edit "MGMT_NET"
+        set subnet 10.0.0.0 255.255.255.0
+    next
+    edit "STAFF_NET"
+        set subnet 10.10.10.0 255.255.255.0
+    next
+    edit "SERVERS_NET"
+        set subnet 10.10.20.0 255.255.255.0
+    next
+end
+
+config firewall addrgrp
+    edit "STAFF"
+        set member "STAFF_NET"
+    next
+    edit "SERVERS"
+        set member "SERVERS_NET"
+    next
+end
+
+config firewall service custom
+    edit "SSH"
+        set tcp-portrange 22
+    next
+    edit "HTTPS"
+        set tcp-portrange 443
+    next
+end
+
+config firewall service group
+    edit "MGMT_SVC"
+        set member "SSH" "HTTPS"
+    next
+end
+
+config firewall policy
+    edit 1
+        set name "allow-mgmt-ssh"
+        set srcintf "port1"
+        set dstintf "port2"
+        set srcaddr "MGMT_NET"
+        set dstaddr "all"
+        set service "SSH"
+        set schedule "always"
+        set action accept
+        set logtraffic all
+    next
+    edit 10
+        set name "staff-to-servers-https"
+        set srcintf "port2"
+        set dstintf "port3"
+        set srcaddr "STAFF"
+        set dstaddr "SERVERS"
+        set service "HTTPS"
+        set action accept
+        set nat enable
+    next
+    edit 100
+        set name "deny-all"
+        set srcintf "any"
+        set dstintf "any"
+        set srcaddr "all"
+        set dstaddr "all"
+        set service "ALL"
+        set action deny
+    next
+end
+

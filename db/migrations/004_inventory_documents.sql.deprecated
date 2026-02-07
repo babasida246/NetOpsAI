@@ -1,0 +1,445 @@
+-- 004_inventory_documents.sql
+-- Document-based inventory operations (documents, lines, ledger, posting/voiding).
+-- Assumptions:
+-- 1) STOCKTAKE line.quantity is the counted quantity; posting computes diff vs on-hand.
+-- 2) ADJUST uses adjust_direction = 'plus' or 'minus' per line.
+-- 3) Serial tracking is validated by line serial count; ledger stores one row per line (serial_id optional).
+
+BEGIN;
+
+CREATE TABLE inventory_documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NULL REFERENCES organizations(id) ON DELETE SET NULL,
+    doc_no TEXT NOT NULL,
+    doc_type TEXT NOT NULL CHECK (doc_type IN ('RECEIPT','ISSUE','TRANSFER','ADJUST','STOCKTAKE')),
+    doc_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    status TEXT NOT NULL CHECK (status IN ('draft','posted','void')),
+    source_warehouse_id UUID NULL REFERENCES warehouses(id),
+    target_warehouse_id UUID NULL REFERENCES warehouses(id),
+    counterparty_id UUID NULL REFERENCES parties(id),
+    reference TEXT NULL,
+    note TEXT NULL,
+    posted_at TIMESTAMPTZ NULL,
+    created_by TEXT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (
+        (doc_type = 'RECEIPT' AND target_warehouse_id IS NOT NULL)
+        OR (doc_type = 'ISSUE' AND source_warehouse_id IS NOT NULL)
+        OR (doc_type = 'ADJUST' AND source_warehouse_id IS NOT NULL)
+        OR (doc_type = 'STOCKTAKE' AND source_warehouse_id IS NOT NULL)
+        OR (doc_type = 'TRANSFER' AND source_warehouse_id IS NOT NULL AND target_warehouse_id IS NOT NULL AND source_warehouse_id <> target_warehouse_id)
+    )
+);
+
+CREATE UNIQUE INDEX ux_inventory_documents_doc_no
+    ON inventory_documents (LOWER(doc_no));
+
+CREATE INDEX idx_inventory_documents_status_date
+    ON inventory_documents (status, doc_date DESC);
+
+CREATE INDEX idx_inventory_documents_org
+    ON inventory_documents (org_id);
+
+CREATE TRIGGER trg_inventory_documents_updated_at
+    BEFORE UPDATE ON inventory_documents
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at_timestamp();
+
+CREATE TABLE inventory_document_lines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID NOT NULL REFERENCES inventory_documents(id) ON DELETE CASCADE,
+    line_no INT NOT NULL,
+    item_id UUID NOT NULL REFERENCES inventory_items(id),
+    quantity NUMERIC(14,2) NOT NULL CHECK (quantity > 0),
+    uom TEXT NOT NULL DEFAULT 'pcs',
+    unit_cost NUMERIC(14,2) NULL CHECK (unit_cost IS NULL OR unit_cost >= 0),
+    source_location_id UUID NULL REFERENCES warehouse_locations(id),
+    target_location_id UUID NULL REFERENCES warehouse_locations(id),
+    lot_id UUID NULL REFERENCES inventory_lots(id),
+    expiry_date DATE NULL,
+    adjust_direction TEXT NULL CHECK (adjust_direction IN ('plus','minus')),
+    note TEXT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (document_id, line_no)
+);
+
+CREATE INDEX idx_inventory_document_lines_document
+    ON inventory_document_lines(document_id);
+
+CREATE INDEX idx_inventory_document_lines_item
+    ON inventory_document_lines(item_id);
+
+CREATE TRIGGER trg_inventory_document_lines_updated_at
+    BEFORE UPDATE ON inventory_document_lines
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at_timestamp();
+
+CREATE TABLE inventory_line_serials (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_line_id UUID NOT NULL REFERENCES inventory_document_lines(id) ON DELETE CASCADE,
+    serial_id UUID NOT NULL REFERENCES inventory_serials(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (document_line_id, serial_id)
+);
+
+CREATE INDEX idx_inventory_line_serials_line
+    ON inventory_line_serials(document_line_id);
+
+CREATE TRIGGER trg_inventory_line_serials_updated_at
+    BEFORE UPDATE ON inventory_line_serials
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at_timestamp();
+
+CREATE TABLE inventory_ledger (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    posted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    document_id UUID NOT NULL REFERENCES inventory_documents(id) ON DELETE RESTRICT,
+    document_line_id UUID NOT NULL REFERENCES inventory_document_lines(id) ON DELETE RESTRICT,
+    org_id UUID NULL,
+    warehouse_id UUID NOT NULL REFERENCES warehouses(id),
+    location_id UUID NULL REFERENCES warehouse_locations(id),
+    counterparty_id UUID NULL REFERENCES parties(id),
+    item_id UUID NOT NULL REFERENCES inventory_items(id),
+    lot_id UUID NULL REFERENCES inventory_lots(id),
+    serial_id UUID NULL REFERENCES inventory_serials(id),
+    qty_in NUMERIC(14,2) NOT NULL DEFAULT 0,
+    qty_out NUMERIC(14,2) NOT NULL DEFAULT 0,
+    unit_cost NUMERIC(14,2) NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CHECK (
+        (qty_in = 0 AND qty_out > 0)
+        OR (qty_out = 0 AND qty_in > 0)
+    )
+);
+
+CREATE INDEX idx_inventory_ledger_wh_item_posted
+    ON inventory_ledger (warehouse_id, item_id, posted_at);
+
+CREATE INDEX idx_inventory_ledger_item_posted
+    ON inventory_ledger (item_id, posted_at);
+
+CREATE INDEX idx_inventory_ledger_lot
+    ON inventory_ledger (lot_id);
+
+CREATE INDEX idx_inventory_ledger_serial
+    ON inventory_ledger (serial_id);
+
+CREATE INDEX idx_inventory_ledger_document
+    ON inventory_ledger (document_id);
+
+CREATE TRIGGER trg_inventory_ledger_updated_at
+    BEFORE UPDATE ON inventory_ledger
+    FOR EACH ROW
+    EXECUTE FUNCTION set_updated_at_timestamp();
+
+CREATE OR REPLACE FUNCTION fn_get_on_hand(
+    p_warehouse_id UUID,
+    p_item_id UUID,
+    p_location_id UUID DEFAULT NULL,
+    p_lot_id UUID DEFAULT NULL
+)
+RETURNS NUMERIC
+LANGUAGE sql
+AS $$
+    SELECT COALESCE(SUM(qty_in - qty_out), 0)
+    FROM inventory_ledger
+    WHERE warehouse_id = p_warehouse_id
+      AND item_id = p_item_id
+      AND (p_location_id IS NULL OR location_id = p_location_id)
+      AND (p_lot_id IS NULL OR lot_id = p_lot_id);
+$$;
+
+CREATE OR REPLACE FUNCTION sp_post_inventory_document(p_document_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_doc RECORD;
+    v_line RECORD;
+    v_item RECORD;
+    v_on_hand NUMERIC;
+    v_required_out NUMERIC;
+    v_expiry DATE;
+    v_serial_count INT;
+    v_diff NUMERIC;
+    v_qty_in NUMERIC;
+    v_qty_out NUMERIC;
+    v_warehouse_id UUID;
+    v_location_id UUID;
+    v_unit_cost NUMERIC;
+BEGIN
+    SELECT * INTO v_doc
+    FROM inventory_documents
+    WHERE id = p_document_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Document not found: %', p_document_id;
+    END IF;
+
+    IF v_doc.status <> 'draft' THEN
+        RAISE EXCEPTION 'Document is not draft: %', v_doc.doc_no;
+    END IF;
+
+    -- Validate warehouse requirements
+    IF v_doc.doc_type = 'RECEIPT' AND v_doc.target_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'RECEIPT requires target_warehouse_id';
+    ELSIF v_doc.doc_type = 'ISSUE' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'ISSUE requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'ADJUST' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'ADJUST requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'STOCKTAKE' AND v_doc.source_warehouse_id IS NULL THEN
+        RAISE EXCEPTION 'STOCKTAKE requires source_warehouse_id';
+    ELSIF v_doc.doc_type = 'TRANSFER' AND (v_doc.source_warehouse_id IS NULL OR v_doc.target_warehouse_id IS NULL OR v_doc.source_warehouse_id = v_doc.target_warehouse_id) THEN
+        RAISE EXCEPTION 'TRANSFER requires distinct source and target warehouses';
+    END IF;
+
+    -- Validate lines
+    FOR v_line IN
+        SELECT * FROM inventory_document_lines WHERE document_id = p_document_id ORDER BY line_no
+    LOOP
+        SELECT * INTO v_item
+        FROM inventory_items
+        WHERE id = v_line.item_id AND deleted_at IS NULL;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Item not found or deleted: %', v_line.item_id;
+        END IF;
+
+        IF v_doc.doc_type = 'RECEIPT' AND v_line.unit_cost IS NULL THEN
+            RAISE EXCEPTION 'RECEIPT requires unit_cost on lines';
+        END IF;
+
+        IF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction IS NULL THEN
+            RAISE EXCEPTION 'ADJUST requires adjust_direction on lines';
+        END IF;
+
+        IF v_item.track_lot AND v_line.lot_id IS NULL THEN
+            RAISE EXCEPTION 'Item % requires lot_id', v_item.sku;
+        END IF;
+
+        IF v_item.track_expiry THEN
+            SELECT expiry_date INTO v_expiry FROM inventory_lots WHERE id = v_line.lot_id;
+            IF v_line.expiry_date IS NULL AND v_expiry IS NULL THEN
+                RAISE EXCEPTION 'Item % requires expiry date', v_item.sku;
+            END IF;
+        END IF;
+
+        IF v_item.track_serial THEN
+            IF v_line.quantity <> FLOOR(v_line.quantity) THEN
+                RAISE EXCEPTION 'Serial-tracked item % requires integer quantity', v_item.sku;
+            END IF;
+            SELECT COUNT(*) INTO v_serial_count
+            FROM inventory_line_serials
+            WHERE document_line_id = v_line.id;
+            IF v_serial_count <> v_line.quantity THEN
+                RAISE EXCEPTION 'Serial count mismatch for item %', v_item.sku;
+            END IF;
+        END IF;
+
+        IF v_doc.doc_type IN ('ISSUE','TRANSFER','ADJUST','STOCKTAKE') THEN
+            IF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction = 'plus' THEN
+                CONTINUE;
+            END IF;
+
+            v_on_hand := fn_get_on_hand(v_doc.source_warehouse_id, v_line.item_id, v_line.source_location_id, v_line.lot_id);
+            IF v_doc.doc_type = 'STOCKTAKE' THEN
+                v_required_out := GREATEST(v_on_hand - v_line.quantity, 0);
+            ELSE
+                v_required_out := v_line.quantity;
+            END IF;
+
+            IF v_required_out > 0 AND v_on_hand < v_required_out THEN
+                RAISE EXCEPTION 'Insufficient stock for item %', v_item.sku;
+            END IF;
+        END IF;
+    END LOOP;
+
+    -- Insert ledger entries
+    FOR v_line IN
+        SELECT * FROM inventory_document_lines WHERE document_id = p_document_id ORDER BY line_no
+    LOOP
+        SELECT * INTO v_item
+        FROM inventory_items
+        WHERE id = v_line.item_id AND deleted_at IS NULL;
+
+        v_unit_cost := v_line.unit_cost;
+
+        IF v_doc.doc_type = 'RECEIPT' THEN
+            v_qty_in := v_line.quantity;
+            v_qty_out := 0;
+            v_warehouse_id := v_doc.target_warehouse_id;
+            v_location_id := v_line.target_location_id;
+
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_warehouse_id, v_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_qty_in, v_qty_out, v_unit_cost
+            );
+        ELSIF v_doc.doc_type = 'ISSUE' THEN
+            v_qty_in := 0;
+            v_qty_out := v_line.quantity;
+            v_warehouse_id := v_doc.source_warehouse_id;
+            v_location_id := v_line.source_location_id;
+
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_warehouse_id, v_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_qty_in, v_qty_out, v_unit_cost
+            );
+        ELSIF v_doc.doc_type = 'TRANSFER' THEN
+            -- Out
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, 0, v_line.quantity, v_unit_cost
+            );
+            -- In
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.target_warehouse_id, v_line.target_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_line.quantity, 0, v_unit_cost
+            );
+        ELSIF v_doc.doc_type = 'ADJUST' THEN
+            IF v_line.adjust_direction = 'plus' THEN
+                v_qty_in := v_line.quantity;
+                v_qty_out := 0;
+            ELSE
+                v_qty_in := 0;
+                v_qty_out := v_line.quantity;
+            END IF;
+            v_warehouse_id := v_doc.source_warehouse_id;
+            v_location_id := v_line.source_location_id;
+
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_warehouse_id, v_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_qty_in, v_qty_out, v_unit_cost
+            );
+        ELSIF v_doc.doc_type = 'STOCKTAKE' THEN
+            v_on_hand := fn_get_on_hand(v_doc.source_warehouse_id, v_line.item_id, v_line.source_location_id, v_line.lot_id);
+            v_diff := v_line.quantity - v_on_hand;
+            IF v_diff > 0 THEN
+                v_qty_in := v_diff;
+                v_qty_out := 0;
+            ELSIF v_diff < 0 THEN
+                v_qty_in := 0;
+                v_qty_out := ABS(v_diff);
+            ELSE
+                CONTINUE;
+            END IF;
+
+            INSERT INTO inventory_ledger (
+                document_id, document_line_id, org_id, warehouse_id, location_id,
+                counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+            ) VALUES (
+                v_doc.id, v_line.id, v_doc.org_id, v_doc.source_warehouse_id, v_line.source_location_id,
+                v_doc.counterparty_id, v_line.item_id, v_line.lot_id, NULL, v_qty_in, v_qty_out, v_unit_cost
+            );
+        END IF;
+
+        -- Update serial statuses best-effort
+        IF v_item.track_serial THEN
+            IF v_doc.doc_type IN ('ISSUE') THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSIF v_doc.doc_type = 'ADJUST' AND v_line.adjust_direction = 'minus' THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSIF v_doc.doc_type = 'STOCKTAKE' AND v_diff < 0 THEN
+                UPDATE inventory_serials
+                SET status = 'issued'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            ELSE
+                UPDATE inventory_serials
+                SET status = 'in_stock'
+                WHERE id IN (SELECT serial_id FROM inventory_line_serials WHERE document_line_id = v_line.id);
+            END IF;
+        END IF;
+    END LOOP;
+
+    UPDATE inventory_documents
+    SET status = 'posted',
+        posted_at = NOW(),
+        updated_at = NOW()
+    WHERE id = p_document_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sp_void_inventory_document(p_document_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_doc RECORD;
+    v_entry RECORD;
+BEGIN
+    SELECT * INTO v_doc
+    FROM inventory_documents
+    WHERE id = p_document_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Document not found: %', p_document_id;
+    END IF;
+
+    IF v_doc.status = 'void' THEN
+        RAISE EXCEPTION 'Document already void: %', v_doc.doc_no;
+    END IF;
+
+    IF v_doc.status = 'draft' THEN
+        UPDATE inventory_documents
+        SET status = 'void',
+            updated_at = NOW()
+        WHERE id = p_document_id;
+        RETURN;
+    END IF;
+
+    IF v_doc.status <> 'posted' THEN
+        RAISE EXCEPTION 'Only posted documents can be voided';
+    END IF;
+
+    FOR v_entry IN
+        SELECT * FROM inventory_ledger WHERE document_id = p_document_id
+    LOOP
+        INSERT INTO inventory_ledger (
+            document_id, document_line_id, org_id, warehouse_id, location_id,
+            counterparty_id, item_id, lot_id, serial_id, qty_in, qty_out, unit_cost
+        ) VALUES (
+            v_entry.document_id, v_entry.document_line_id, v_entry.org_id, v_entry.warehouse_id, v_entry.location_id,
+            v_entry.counterparty_id, v_entry.item_id, v_entry.lot_id, v_entry.serial_id, v_entry.qty_out, v_entry.qty_in, v_entry.unit_cost
+        );
+
+        IF v_entry.serial_id IS NOT NULL THEN
+            IF v_entry.qty_out > 0 THEN
+                UPDATE inventory_serials SET status = 'in_stock' WHERE id = v_entry.serial_id;
+            ELSE
+                UPDATE inventory_serials SET status = 'issued' WHERE id = v_entry.serial_id;
+            END IF;
+        END IF;
+    END LOOP;
+
+    UPDATE inventory_documents
+    SET status = 'void',
+        updated_at = NOW()
+    WHERE id = p_document_id;
+END;
+$$;
+
+COMMIT;

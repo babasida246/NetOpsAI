@@ -1,15 +1,17 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Select, Spinner, Textarea } from 'flowbite-svelte';
   import { getCategorySpecDefs, type AssetCategory, type CategorySpecDef } from '$lib/api/assetCatalogs';
 
-  let { categories = [] } = $props<{ categories?: AssetCategory[] }>();
-  const dispatch = createEventDispatcher<{
-    apply: { categoryId: string; specFilters: Record<string, unknown> };
-    clear: void;
-    error: string;
+  let { categories = [], onapply, onclear, onerror } = $props<{
+    categories?: AssetCategory[];
+    onapply?: (data: { categoryId: string; specFilters: Record<string, unknown> }) => void;
+    onclear?: () => void;
+    onerror?: (msg: string) => void;
   }>();
+
+  // Ensure categories is always an array
+  const safeCategories = $derived(Array.isArray(categories) ? categories : []);
 
   let categoryId = $state('');
   let specDefs = $state<CategorySpecDef[]>([]);
@@ -39,7 +41,7 @@
       specDefs = [];
       const message = err instanceof Error ? err.message : 'Failed to load filters';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       loading = false;
     }
@@ -124,7 +126,7 @@
   function applyFilters() {
     const specFilters = buildSpecFilters();
     if (!specFilters) return;
-    dispatch('apply', { categoryId, specFilters });
+    onapply?.({ categoryId, specFilters });
   }
 
   function clearFilters() {
@@ -133,7 +135,7 @@
     filterValues = {};
     jsonError = '';
     error = '';
-    dispatch('clear');
+    onclear?.();
   }
 </script>
 
@@ -143,17 +145,17 @@
         <Label class="mb-2">{$isLoading ? 'Category Filter' : $_('assets.categoryFilter')}</Label>
       <Select
         bind:value={categoryId}
-        on:change={(event) => loadSpecDefs((event.currentTarget as HTMLSelectElement).value)}
+        onchange={(event) => loadSpecDefs((event.currentTarget as HTMLSelectElement).value)}
       >
         <option value="">{$isLoading ? 'All categories' : $_('assets.allCategories')}</option>
-        {#each categories as category}
+        {#each safeCategories as category}
           <option value={category.id}>{category.name}</option>
         {/each}
       </Select>
     </div>
     <div class="flex gap-2">
-        <Button color="alternative" on:click={clearFilters}>{$isLoading ? 'Clear' : $_('common.clear')}</Button>
-        <Button on:click={applyFilters}>{$isLoading ? 'Apply' : $_('common.apply')}</Button>
+        <Button color="alternative" onclick={clearFilters}>{$isLoading ? 'Clear' : $_('common.clear')}</Button>
+        <Button onclick={applyFilters}>{$isLoading ? 'Apply' : $_('common.apply')}</Button>
     </div>
   </div>
 
@@ -167,7 +169,7 @@
         <div class="space-y-1">
           <Label class="mb-1">{def.label}</Label>
           {#if def.fieldType === 'enum'}
-            <Select value={getStringValue(def.key)} on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
+            <Select value={getStringValue(def.key)} onchange={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
               <option value="">{$isLoading ? 'Any' : $_('assets.any')}</option>
               {#each def.enumValues ?? [] as option}
                 <option value={option}>{option}</option>
@@ -188,7 +190,7 @@
               {/each}
             </div>
           {:else if def.fieldType === 'boolean'}
-            <Select value={getBooleanValue(def.key)} on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
+            <Select value={getBooleanValue(def.key)} onchange={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}>
               <option value="">{$isLoading ? 'Any' : $_('assets.any')}</option>
             <option value="true">{$isLoading ? 'Yes' : $_('common.yes')}</option>
             <option value="false">{$isLoading ? 'No' : $_('common.no')}</option>
@@ -197,25 +199,25 @@
             <Input
               type="number"
               value={getNumberValue(def.key)}
-              on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+              oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
             />
           {:else if def.fieldType === 'date'}
             <Input
               type="date"
               value={getStringValue(def.key)}
-              on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+              oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
             />
           {:else if def.fieldType === 'json'}
             <Textarea
               rows={3}
               value={getStringValue(def.key)}
               placeholder={'{ "key": "value" }'}
-              on:input={(event) => setValue(def.key, (event.currentTarget as HTMLTextAreaElement).value)}
+              oninput={(event) => setValue(def.key, (event.currentTarget as HTMLTextAreaElement).value)}
             />
           {:else}
             <Input
               value={getStringValue(def.key)}
-              on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+              oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
             />
           {/if}
         </div>

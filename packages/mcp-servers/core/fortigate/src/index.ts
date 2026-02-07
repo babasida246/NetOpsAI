@@ -81,6 +81,7 @@ export class FortiGateClient {
                 'Content-Type': 'application/json',
             },
             ...(config.verifySsl === false && {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 httpsAgent: new (require('https').Agent)({
                     rejectUnauthorized: false,
                 }),

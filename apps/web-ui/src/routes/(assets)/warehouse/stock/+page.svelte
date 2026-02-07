@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Alert, Button, Input, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Select } from 'flowbite-svelte';
   import { RefreshCw, Search } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
   import { listStockView, listWarehouses, type StockViewRecord, type WarehouseRecord } from '$lib/api/warehouse';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let warehouses = $state<WarehouseRecord[]>([]);
   let items = $state<StockViewRecord[]>([]);
@@ -101,45 +102,22 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'On hand' : $_('inventory.onHand')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Reserved' : $_('inventory.reserved')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Available' : $_('inventory.available')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Min level' : $_('common.minLevel')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if items.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="6" class="text-center text-slate-500">{$isLoading ? 'No stock records' : $_('warehouse.noStockRecords')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each items as item}
-              <TableBodyRow>
-                <TableBodyCell>{item.warehouseName}</TableBodyCell>
-                <TableBodyCell>
-                  <div class="font-medium">{item.partName}</div>
-                  <div class="text-xs text-slate-500">{item.partCode}</div>
-                </TableBodyCell>
-                <TableBodyCell class="text-right">{item.onHand}</TableBodyCell>
-                <TableBodyCell class="text-right">{item.reserved}</TableBodyCell>
-                <TableBodyCell class="text-right">{item.available}</TableBodyCell>
-                <TableBodyCell class="text-right">{item.minLevel}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
+  <DataTable
+    data={items}
+    columns={[
+      { key: 'warehouseName', label: $isLoading ? 'Warehouse' : $_('warehouse.warehouse'), sortable: true, filterable: true, editable: false, width: 'w-40' },
+      { key: 'partName', label: $isLoading ? 'Part' : $_('warehouse.part'), sortable: true, filterable: true, editable: false, render: (val, row) => `<div class="font-medium">${val}</div><div class="text-xs text-slate-500">${row.partCode}</div>` },
+      { key: 'onHand', label: $isLoading ? 'On hand' : $_('inventory.onHand'), sortable: true, filterable: false, editable: false, width: 'w-24' },
+      { key: 'reserved', label: $isLoading ? 'Reserved' : $_('inventory.reserved'), sortable: true, filterable: false, editable: false, width: 'w-24' },
+      { key: 'available', label: $isLoading ? 'Available' : $_('inventory.available'), sortable: true, filterable: false, editable: false, width: 'w-24' },
+      { key: 'minLevel', label: $isLoading ? 'Min level' : $_('common.minLevel'), sortable: true, filterable: false, editable: false, width: 'w-24' }
+    ]}
+    selectable={false}
+    rowKey="partId"
+    loading={loading}
+  />
 
+  {#if !loading && items.length > 0}
     <div class="flex items-center justify-between text-sm text-slate-500">
       <span>{$isLoading ? 'Page' : $_('table.page')} {meta.page}</span>
       <div class="flex gap-2">

@@ -1,4 +1,4 @@
-import { API_BASE, apiJson } from './httpClient'
+import { API_BASE, apiJson, apiJsonData } from './httpClient'
 import { buildQuery, getAssetHeaders } from './assets'
 
 export type WarehouseRecord = {
@@ -192,6 +192,13 @@ export async function updateWarehouse(id: string, patch: { code?: string; name?:
     })
 }
 
+export async function deleteWarehouse(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/warehouses/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
+    })
+}
+
 export async function listSpareParts(params: { q?: string; page?: number; limit?: number } = {}): Promise<ApiResponse<SparePartRecord[]>> {
     const query = buildQuery(params)
     return apiJson<ApiResponse<SparePartRecord[]>>(`${API_BASE}/v1/spare-parts${query}`, {
@@ -230,6 +237,13 @@ export async function updateSparePart(id: string, patch: Partial<{
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
         body: JSON.stringify(patch)
+    })
+}
+
+export async function deleteSparePart(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/spare-parts/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
     })
 }
 
@@ -298,33 +312,33 @@ export async function listStockMovements(params: { partId?: string; warehouseId?
 
 export async function reportStockOnHand(params: { warehouseId?: string; itemId?: string; limit?: number } = {}): Promise<StockOnHandRow[]> {
     const query = buildQuery(params)
-    return apiJson<StockOnHandRow[]>(`${API_BASE}/v1/reports/stock-on-hand${query}`, {
+    return apiJsonData<StockOnHandRow[]>(`${API_BASE}/v1/reports/stock-on-hand${query}`, {
         headers: getAssetHeaders()
     })
 }
 
 export async function reportStockAvailable(params: { warehouseId?: string; itemId?: string; limit?: number } = {}): Promise<StockAvailableRow[]> {
     const query = buildQuery(params)
-    return apiJson<StockAvailableRow[]>(`${API_BASE}/v1/reports/stock-available${query}`, {
+    return apiJsonData<StockAvailableRow[]>(`${API_BASE}/v1/reports/stock-available${query}`, {
         headers: getAssetHeaders()
     })
 }
 
 export async function reportReorderAlerts(params: { warehouseId?: string; itemId?: string; limit?: number } = {}): Promise<ReorderAlertRow[]> {
     const query = buildQuery(params)
-    return apiJson<ReorderAlertRow[]>(`${API_BASE}/v1/reports/reorder-alerts${query}`, {
+    return apiJsonData<ReorderAlertRow[]>(`${API_BASE}/v1/reports/reorder-alerts${query}`, {
         headers: getAssetHeaders()
     })
 }
 
 export async function reportFefoLots(params: { warehouseId?: string; daysThreshold?: number; limit?: number } = {}): Promise<FefoLotRow[]> {
     const query = buildQuery(params)
-    return apiJson<FefoLotRow[]>(`${API_BASE}/v1/reports/fefo-lots${query}`, {
+    return apiJsonData<FefoLotRow[]>(`${API_BASE}/v1/reports/fefo-lots${query}`, {
         headers: getAssetHeaders()
     })
 }
 
 export async function reportValuation(params: { warehouseId?: string; currencyId?: string; limit?: number } = {}): Promise<ValuationResult> {
     const query = buildQuery(params)
-    return apiJson<ValuationResult>(`${API_BASE}/v1/reports/valuation${query}`, { headers: getAssetHeaders() })
+    return apiJsonData<ValuationResult>(`${API_BASE}/v1/reports/valuation${query}`, { headers: getAssetHeaders() })
 }

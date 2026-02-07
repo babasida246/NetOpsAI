@@ -14,7 +14,7 @@ import { CategorySpecVersionRepo } from './CategorySpecVersionRepo.js'
 
 type SpecRow = {
     id: string
-    version_id: string
+    spec_version_id: string
     key: string
     label: string
     field_type: CategorySpecDefRecord['fieldType']
@@ -55,7 +55,7 @@ function buildUpdates(patch: Record<string, unknown>, fields: Array<[string, str
 
 const mapSpec = (row: SpecRow): CategorySpecDefRecord => ({
     id: row.id,
-    versionId: row.version_id,
+    versionId: row.spec_version_id,
     key: row.key,
     label: row.label,
     fieldType: row.field_type,
@@ -94,12 +94,12 @@ export class CategorySpecRepo implements ICategorySpecRepo {
 
     async listByCategory(categoryId: string): Promise<CategorySpecDefRecord[]> {
         const result = await this.pg.query<SpecRow>(
-            `SELECT defs.id, defs.version_id, defs.key, defs.label, defs.field_type, defs.unit, defs.required, defs.enum_values,
+            `SELECT defs.id, defs.spec_version_id, defs.key, defs.label, defs.field_type, defs.unit, defs.required, defs.enum_values,
                 defs.pattern, defs.min_len, defs.max_len, defs.min_value, defs.max_value, defs.step_value, defs.precision,
                 defs.scale, defs.normalize, defs.default_value, defs.help_text, defs.sort_order, defs.is_active,
                 defs.is_readonly, defs.computed_expr, defs.is_searchable, defs.is_filterable, defs.created_at, defs.updated_at
-             FROM asset_category_spec_defs defs
-             JOIN asset_category_spec_versions versions ON defs.version_id = versions.id
+             FROM asset_category_spec_definitions defs
+             JOIN asset_category_spec_versions versions ON defs.spec_version_id = versions.id
              WHERE versions.category_id = $1 AND versions.status = 'active' AND defs.is_active = true
              ORDER BY defs.sort_order ASC, defs.key ASC`,
             [categoryId]
@@ -109,11 +109,11 @@ export class CategorySpecRepo implements ICategorySpecRepo {
 
     async listByVersion(versionId: string): Promise<CategorySpecDefRecord[]> {
         const result = await this.pg.query<SpecRow>(
-            `SELECT id, version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
+            `SELECT id, spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
                 min_value, max_value, step_value, precision, scale, normalize, default_value, help_text, sort_order,
                 is_active, is_readonly, computed_expr, is_searchable, is_filterable, created_at, updated_at
-             FROM asset_category_spec_defs
-             WHERE version_id = $1 AND is_active = true
+             FROM asset_category_spec_definitions
+             WHERE spec_version_id = $1 AND is_active = true
              ORDER BY sort_order ASC, key ASC`,
             [versionId]
         )
@@ -123,7 +123,7 @@ export class CategorySpecRepo implements ICategorySpecRepo {
     async bulkInsert(versionId: string, defs: CategorySpecDefInput[]): Promise<CategorySpecDefRecord[]> {
         if (defs.length === 0) return []
         const columns = [
-            'version_id',
+            'spec_version_id',
             'key',
             'label',
             'field_type',
@@ -182,9 +182,9 @@ export class CategorySpecRepo implements ICategorySpecRepo {
         })
 
         const result = await this.pg.query<SpecRow>(
-            `INSERT INTO asset_category_spec_defs (${columns.join(', ')})
+            `INSERT INTO asset_category_spec_definitions (${columns.join(', ')})
              VALUES ${placeholders.join(', ')}
-             RETURNING id, version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
+             RETURNING id, spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
                 min_value, max_value, step_value, precision, scale, normalize, default_value, help_text, sort_order,
                 is_active, is_readonly, computed_expr, is_searchable, is_filterable, created_at, updated_at`,
             values
@@ -194,12 +194,12 @@ export class CategorySpecRepo implements ICategorySpecRepo {
 
     async create(input: CategorySpecDefCreateInput): Promise<CategorySpecDefRecord> {
         const result = await this.pg.query<SpecRow>(
-            `INSERT INTO asset_category_spec_defs
-                (version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len, min_value, max_value,
+            `INSERT INTO asset_category_spec_definitions
+                (spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len, min_value, max_value,
                  step_value, precision, scale, normalize, default_value, help_text, sort_order, is_active, is_readonly,
                  computed_expr, is_searchable, is_filterable)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
-             RETURNING id, version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len, min_value,
+             RETURNING id, spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len, min_value,
                 max_value, step_value, precision, scale, normalize, default_value, help_text, sort_order, is_active, is_readonly,
                 computed_expr, is_searchable, is_filterable, created_at, updated_at`,
             [
@@ -260,10 +260,10 @@ export class CategorySpecRepo implements ICategorySpecRepo {
         ])
         if (updates.length === 0) {
             const existing = await this.pg.query<SpecRow>(
-                `SELECT id, version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
+                `SELECT id, spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
                     min_value, max_value, step_value, precision, scale, normalize, default_value, help_text, sort_order,
                     is_active, is_readonly, computed_expr, is_searchable, is_filterable, created_at, updated_at
-                 FROM asset_category_spec_defs WHERE id = $1`,
+                 FROM asset_category_spec_definitions WHERE id = $1`,
                 [id]
             )
             return existing.rows[0] ? mapSpec(existing.rows[0]) : null
@@ -272,9 +272,9 @@ export class CategorySpecRepo implements ICategorySpecRepo {
         const params = updates.map(update => update.value)
         params.push(id)
         const result = await this.pg.query<SpecRow>(
-            `UPDATE asset_category_spec_defs SET ${setClause}, updated_at = NOW()
+            `UPDATE asset_category_spec_definitions SET ${setClause}, updated_at = NOW()
              WHERE id = $${params.length}
-             RETURNING id, version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
+             RETURNING id, spec_version_id, key, label, field_type, unit, required, enum_values, pattern, min_len, max_len,
                 min_value, max_value, step_value, precision, scale, normalize, default_value, help_text, sort_order,
                 is_active, is_readonly, computed_expr, is_searchable, is_filterable, created_at, updated_at`,
             params
@@ -284,7 +284,7 @@ export class CategorySpecRepo implements ICategorySpecRepo {
 
     async softDelete(id: string): Promise<boolean> {
         const result = await this.pg.query(
-            'UPDATE asset_category_spec_defs SET is_active = false, updated_at = NOW() WHERE id = $1',
+            'UPDATE asset_category_spec_definitions SET is_active = false, updated_at = NOW() WHERE id = $1',
             [id]
         )
         return (result.rowCount ?? 0) > 0

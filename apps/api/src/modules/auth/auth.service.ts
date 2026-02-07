@@ -35,18 +35,36 @@ export class AuthService {
     ) { }
 
     async login(data: LoginRequest, metadata?: { userAgent?: string; ip?: string }): Promise<LoginResponse> {
+        console.log('AuthService.login called with:', { email: data.email, password: data.password ? '***' : 'no password' })
+
         const user = await this.userRepo.findByEmail(data.email)
+        console.log('User found:', !!user)
+        console.log('User data:', user ? {
+            id: user.id,
+            email: user.email,
+            is_active: user.is_active,
+            password_hash_length: user.password_hash?.length
+        } : null)
 
         if (!user) {
+            console.log('No user found for email:', data.email)
             throw new UnauthorizedError('Invalid email or password')
         }
 
         if (!user.is_active) {
+            console.log('User account is deactivated')
             throw new UnauthorizedError('Account is deactivated')
         }
 
+        console.log('Comparing password...')
+        console.log('Input password:', data.password)
+        console.log('Stored hash:', user.password_hash)
+
         const isValidPassword = await bcrypt.compare(data.password, user.password_hash)
+        console.log('Password comparison result:', isValidPassword)
+
         if (!isValidPassword) {
+            console.log('Password comparison failed')
             throw new UnauthorizedError('Invalid email or password')
         }
 
@@ -73,7 +91,12 @@ export class AuthService {
         }
     }
 
-    async register(data: RegisterRequest): Promise<RegisterResponse> {
+    async register(data: RegisterRequest, metadata?: { userAgent?: string; ip?: string }): Promise<RegisterResponse> {
+        // Validate password confirmation
+        if (data.password !== data.confirmPassword) {
+            throw new BadRequestError('Password confirmation does not match')
+        }
+
         // Check if email exists
         const exists = await this.userRepo.existsByEmail(data.email)
         if (exists) {
@@ -91,10 +114,12 @@ export class AuthService {
         })
 
         return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role
+            },
             createdAt: user.created_at.toISOString()
         }
     }

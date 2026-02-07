@@ -8,8 +8,8 @@ describe('CiAttrValueRepo', () => {
             rows: [{
                 id: 'attr-1',
                 ci_id: 'ci-1',
-                version_id: 'v1',
-                key: 'ipAddress',
+                ci_type_version_id: 'v1',
+                attribute_key: 'ipAddress',
                 value: '10.0.0.1',
                 updated_at: new Date()
             }]
@@ -19,6 +19,6 @@ describe('CiAttrValueRepo', () => {
 
         const result = await repo.upsertMany('ci-1', 'v1', [{ key: 'ipAddress', value: '10.0.0.1' }])
         expect(result).toHaveLength(1)
-        expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO cmdb_ci_attr_values'), expect.any(Array))
+        expect(query).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO cmdb_ci_attribute_values'), expect.any(Array))
     })
 })

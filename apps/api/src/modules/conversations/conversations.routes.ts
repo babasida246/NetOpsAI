@@ -32,7 +32,7 @@ export async function conversationRoutes(
         }
 
         const token = authHeader.substring(7)
-        request.user = authService.verifyAccessToken(token)
+        request.user = { ...authService.verifyAccessToken(token), id: authService.verifyAccessToken(token).sub }
     }
 
     // GET /conversations - List conversations
@@ -40,7 +40,12 @@ export async function conversationRoutes(
         preHandler: authenticate
     }, async (request, reply) => {
         const query = listConversationsQuerySchema.parse(request.query)
-        const { data, total } = await conversationRepo.findAll(request.user!.sub, query)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const { data, total } = await conversationRepo.findAll(userSub, query)
         const meta = calculatePagination(query.page, query.limit, total)
 
         return reply.status(200).send({ data, meta })
@@ -51,7 +56,12 @@ export async function conversationRoutes(
         preHandler: authenticate
     }, async (request, reply) => {
         const data = createConversationSchema.parse(request.body)
-        const conversation = await conversationRepo.create(request.user!.sub, data)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const conversation = await conversationRepo.create(userSub, data)
 
         return reply.status(201).send(conversation)
     })
@@ -79,7 +89,12 @@ export async function conversationRoutes(
         preHandler: authenticate
     }, async (request, reply) => {
         const { id } = request.params as { id: string }
-        const conversation = await conversationRepo.findById(id, request.user!.sub)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const conversation = await conversationRepo.findById(id, userSub)
 
         if (!conversation) {
             throw new NotFoundError('Conversation not found')
@@ -113,7 +128,12 @@ export async function conversationRoutes(
     }, async (request, reply) => {
         const { id } = request.params as { id: string }
         const data = updateConversationSchema.parse(request.body)
-        const conversation = await conversationRepo.update(id, request.user!.sub, data)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const conversation = await conversationRepo.update(id, userSub, data)
 
         if (!conversation) {
             throw new NotFoundError('Conversation not found')
@@ -127,7 +147,12 @@ export async function conversationRoutes(
         preHandler: authenticate
     }, async (request, reply) => {
         const { id } = request.params as { id: string }
-        const deleted = await conversationRepo.delete(id, request.user!.sub)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const deleted = await conversationRepo.delete(id, userSub)
 
         if (!deleted) {
             throw new NotFoundError('Conversation not found')
@@ -144,12 +169,17 @@ export async function conversationRoutes(
         const query = listMessagesQuerySchema.parse(request.query)
 
         // Verify conversation exists
-        const conv = await conversationRepo.findById(id, request.user!.sub)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const conv = await conversationRepo.findById(id, userSub)
         if (!conv) {
             throw new NotFoundError('Conversation not found')
         }
 
-        const messages = await conversationRepo.findMessages(id, request.user!.sub, query)
+        const messages = await conversationRepo.findMessages(id, userSub, query)
 
         return reply.status(200).send({ data: messages })
     })
@@ -160,7 +190,12 @@ export async function conversationRoutes(
     }, async (request, reply) => {
         const { id } = request.params as { id: string }
         const data = createMessageSchema.parse(request.body)
-        const message = await conversationRepo.createMessage(id, request.user!.sub, data)
+        const userSub = request.user?.sub
+        if (!userSub) {
+            return reply.status(401).send({ error: 'User not authenticated' })
+        }
+
+        const message = await conversationRepo.createMessage(id, userSub, data)
 
         if (!message) {
             throw new NotFoundError('Conversation not found')

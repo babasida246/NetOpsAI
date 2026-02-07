@@ -21,7 +21,17 @@
     "operations": "Operations",
     "reports": "Reports",
     "assetManagement": "Asset Management",
-    "devices": "devices"
+    "devices": "devices",
+    "main": "Main",
+    "my": "My",
+    "myAssets": "My assets",
+    "myRequests": "My requests",
+    "notifications": "Notifications",
+    "inbox": "Inbox",
+    "support": "Support",
+    "help": "Help",
+    "profile": "Profile",
+    "navigation": "Navigation"
   },
   "common": {
     "success": "Success",
@@ -50,12 +60,18 @@
     "actions": "Actions",
     "view": "View",
     "details": "Details",
+    "selected": "selected",
+    "clearSelection": "Clear Selection",
+    "confirmDelete": "Are you sure you want to delete?",
+    "rows": "rows",
     "apply": "Apply",
     "clear": "Clear",
     "clearText": "Clear",
     "add": "Add",
     "new": "New",
     "all": "All",
+    "optional": "Optional",
+    "reset": "Reset",
     "name": "Name",
     "code": "Code",
     "type": "Type",
@@ -72,6 +88,10 @@
     "allWarehouses": "All warehouses",
     "minLevel": "Min level",
     "redirecting": "Redirecting...",
+    "forbiddenTitle": "Access denied",
+    "forbiddenMessage": "You do not have permission to view this page.",
+    "forbiddenRoute": "Blocked route",
+    "goHome": "Go home",
     "saving": "Saving...",
     "notes": "Notes",
     "from": "From",
@@ -95,7 +115,11 @@
     "id": "id",
     "noResults": "no Results",
     "required": "required",
-    "submitting": "submitting"
+    "submitting": "submitting",
+    "copy": "Copy",
+    "show": "Show",
+    "hide": "Hide",
+    "remove": "Remove"
   },
   "auth": {
     "login": "Login",
@@ -296,6 +320,12 @@
     "exportFilename": "assets.csv",
     "filters": {
       "status": "Status",
+      "warranty": "Warranty",
+      "sort": "Sort",
+      "sortNewest": "Newest",
+      "sortCodeAsc": "Asset code (A-Z)",
+      "sortCodeDesc": "Asset code (Z-A)",
+      "sortWarranty": "Warranty end",
       "category": "Category",
       "vendor": "Vendor",
       "model": "Model",
@@ -304,6 +334,88 @@
       "inStock": "In stock",
       "inUse": "In use",
       "inRepair": "In repair",
+      "retired": "Retired",
+      "disposed": "Disposed",
+      "lost": "Lost",
+      "warranty30": "Expiring in 30 days",
+      "warranty60": "Expiring in 60 days",
+      "warranty90": "Expiring in 90 days"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "lifecycle": "Lifecycle",
+      "maintenance": "Maintenance",
+      "warranty": "Warranty",
+      "inventory": "Inventory",
+      "workflow": "Workflow",
+      "attachments": "Attachments",
+      "compliance": "Compliance"
+    },
+    "bulk": {
+      "statusPlaceholder": "Update status",
+      "locationPlaceholder": "Move to location",
+      "updateStatus": "Apply status",
+      "move": "Move assets"
+    },
+    "health": {
+      "title": "Asset health",
+      "score": "Health score",
+      "maintenanceOpen": "Open maintenance",
+      "warrantyDays": "Warranty days left",
+      "assignments": "Assignments"
+    },
+    "depreciation": {
+      "title": "Depreciation",
+      "cost": "Purchase cost",
+      "years": "Useful life (years)",
+      "annual": "Annual depreciation",
+      "monthly": "Monthly depreciation"
+    },
+    "knowledge": {
+      "recommendedDrivers": "Recommended drivers",
+      "relatedDocs": "Related documents",
+      "emptyDrivers": "No driver recommendations available.",
+      "emptyDocs": "No related documents.",
+      "loadFailed": "Failed to load driver/doc recommendations."
+    },
+    "inventory": {
+      "sessions": "Inventory sessions",
+      "createSession": "Create session",
+      "closeSession": "Close session",
+      "sessionName": "Session name",
+      "sessionNamePlaceholder": "FY24 Ward A",
+      "sessionLocation": "Location",
+      "sessionSelect": "Active session",
+      "selectSession": "Select session",
+      "selectSessionError": "Select an inventory session first.",
+      "quickScan": "Quick scan",
+      "items": "Inventory items",
+      "empty": "No inventory items yet.",
+      "scannedAt": "Scanned at"
+    },
+    "workflow": {
+      "title": "Workflow request",
+      "requests": "Requests",
+      "empty": "No workflow requests yet."
+    },
+    "compliance": {
+      "title": "Evidence pack",
+      "subtitle": "Download audit evidence for this asset.",
+      "download": "Download evidence pack",
+      "attachments": "Attachments",
+      "timeline": "Timeline events",
+      "maintenance": "Maintenance tickets"
+    },
+    "maintenanceEmpty": "No maintenance records yet.",
+    "warranty": "Warranty",
+    "warrantyRemaining": "Warranty days left",
+    "runWarrantyReminders": "Run warranty reminders",
+    "remindersEmpty": "No reminders yet.",
+    "createdAt": "Created at",
+    "statuses": {
+      "in_stock": "In stock",
+      "in_use": "In use",
+      "in_repair": "In repair",
       "retired": "Retired",
       "disposed": "Disposed",
       "lost": "Lost"
@@ -346,7 +458,13 @@
       "loadFailed": "Failed to load asset",
       "assignFailed": "Failed to assign asset",
       "returnFailed": "Failed to return asset",
-      "openMaintenanceFailed": "Failed to open maintenance ticket"
+      "openMaintenanceFailed": "Failed to open maintenance ticket",
+      "bulkUpdateFailed": "Bulk update failed",
+      "bulkMoveFailed": "Bulk move failed",
+      "reminderFailed": "Failed to run warranty reminders",
+      "inventoryLoadFailed": "Failed to load inventory session",
+      "inventoryCreateFailed": "Failed to create inventory session",
+      "inventoryCloseFailed": "Failed to close inventory session"
     },
     "normalizeOptions": {
       "none": "None",
@@ -849,6 +967,8 @@
     "title": "Tools & Utils",
     "subtitle": "Quick helpers for diagrams, network troubleshooting, and SSH access",
     "sections": "Sections",
+    "configGenerator": "Config generator",
+    "mikrotikFullConfig": "MikroTik full config",
     "mermaid": "Mermaid",
     "fieldKit": "Field kit",
     "sshTerminal": "SSH terminal",
@@ -929,6 +1049,25 @@
   "admin": {
     "title": "Admin Users",
     "subtitle": "Manage accounts, roles, and access status",
+    "sectionLabel": "Section",
+    "sections": {
+      "quickWins": "Quick Wins",
+      "coreAdmin": "Core Admin",
+      "stats": "Stats",
+      "models": "Models",
+      "security": "Security",
+      "ops": "Ops",
+      "ux": "UX"
+    },
+    "sectionDescriptions": {
+      "quickWins": "Health, users, audit",
+      "coreAdmin": "Roles, sessions, impersonation",
+      "stats": "Usage & cost insights",
+      "models": "Providers, governance, routing",
+      "security": "MFA, SSO, compliance",
+      "ops": "Metrics, flags, notifications",
+      "ux": "Search & activity"
+    },
     "addUser": "Add user",
     "closeForm": "Close",
     "email": "Email",
@@ -960,6 +1099,161 @@
     "resetPasswordPrompt": "New password for {{email}}:",
     "deleteUserConfirm": "Delete user {{email}}?"
   },
+  "adminRbac": {
+    "navLabel": "RBAC",
+    "title": "Admin RBAC",
+    "subtitle": "Roles, permissions, and auditability",
+    "tabs": {
+      "matrix": "Role Matrix",
+      "groups": "Group Assignment",
+      "explain": "Explain Access",
+      "audit": "Audit Log"
+    },
+    "common": {
+      "danger": "Danger"
+    },
+    "matrix": {
+      "title": "Role & Permission Matrix",
+      "subtitle": "Configure permissions by role and preview effective access.",
+      "actions": {
+        "save": "Save changes",
+        "discard": "Discard",
+        "export": "Export CSV",
+        "openAudit": "Open Audit"
+      },
+      "search": "Search permissions",
+      "searchPlaceholder": "Search resource.action, title, or description...",
+      "dirty": "changes",
+      "toggles": {
+        "differences": "Show only differences",
+        "inherited": "Show inherited",
+        "compact": "Compact mode"
+      },
+      "filters": {
+        "resource": "Resource",
+        "action": "Action",
+        "tag": "Tag"
+      },
+      "bulk": {
+        "selected": "Selected {{count}} cells",
+        "clearOverride": "Clear override",
+        "clearSelection": "Clear selection"
+      },
+      "columns": {
+        "permission": "Permission"
+      },
+      "roleMenu": {
+        "title": "Role actions",
+        "setVisible": "Set all visible → {{scope}}",
+        "clearVisible": "Clear overrides (visible)",
+        "inherits": "Inherits: {{base}}"
+      }
+    },
+    "review": {
+      "title": "Review changes",
+      "empty": "No changes to review.",
+      "subtitle": "Preview the diff before saving. Sensitive permissions require a reason.",
+      "columns": {
+        "role": "Role",
+        "permission": "Permission",
+        "before": "Before",
+        "after": "After",
+        "source": "Source"
+      },
+      "dangerTitle": "Sensitive permission changes",
+      "dangerHelp": "You are granting dangerous permissions. This action will be audited and should be justified.",
+      "acknowledge": "I understand this is sensitive",
+      "reason": "Reason",
+      "reasonPlaceholder": "Explain why this change is required...",
+      "reasonHint": "Minimum 10 characters."
+    },
+    "groups": {
+      "title": "Group Assignment",
+      "subtitle": "Assign roles per group and manage memberships.",
+      "tabs": {
+        "byGroup": "By group",
+        "byUser": "By user"
+      },
+      "groupList": "Groups",
+      "searchGroups": "Search groups...",
+      "noGroupSelected": "Select a group to view members.",
+      "actions": {
+        "addMembers": "Add members"
+      },
+      "bulk": {
+        "role": "Role for selection",
+        "apply": "Apply",
+        "selected": "{{count}} selected"
+      },
+      "members": {
+        "user": "User",
+        "role": "Role in group",
+        "empty": "No members."
+      },
+      "add": {
+        "title": "Add members",
+        "users": "Users",
+        "usersHint": "Hold Ctrl/Cmd to select multiple users.",
+        "role": "Role"
+      },
+      "userPicker": "User view",
+      "searchUsers": "Search users...",
+      "noUserSelected": "Select a user to edit roles.",
+      "user": {
+        "globalRole": "Global role",
+        "memberships": "Memberships",
+        "noMemberships": "No memberships yet.",
+        "addMembership": "Add membership",
+        "group": "Group",
+        "role": "Role"
+      }
+    },
+    "explain": {
+      "title": "Explain Access",
+      "subtitle": "Explain effective access for a user in a given context.",
+      "inputs": "Inputs",
+      "inputsHelp": "Select a user, permission, and optional context to explain.",
+      "user": "User",
+      "userSearch": "Search users...",
+      "globalRole": "Global role",
+      "permission": "Permission",
+      "permissionSearch": "Search permissions...",
+      "contextGroup": "Context group",
+      "contextDepartment": "Department",
+      "ownerUserId": "Owner user id (optional)",
+      "ownerPlaceholder": "Optional owner user id",
+      "actions": {
+        "explain": "Explain",
+        "openMatrix": "Open in Matrix"
+      },
+      "empty": "Run an explanation to see the trace.",
+      "result": "Effective result",
+      "effective": "Effective scope",
+      "source": "Decision source",
+      "role": "Role",
+      "trace": "Trace steps",
+      "inheritChain": "Inheritance chain"
+    },
+    "audit": {
+      "title": "RBAC Audit Log",
+      "subtitle": "Read-only timeline of RBAC changes.",
+      "filters": {
+        "dangerousOnly": "Dangerous only",
+        "search": "Search",
+        "searchPlaceholder": "Search actor, action, target, reason..."
+      },
+      "count": "events",
+      "empty": "No audit entries found.",
+      "columns": {
+        "time": "Time",
+        "actor": "Actor",
+        "target": "Target",
+        "action": "Action",
+        "reason": "Reason"
+      },
+      "detailTitle": "Audit detail"
+    }
+  },
   "netops": {
     "title": "NetOps",
     "netopsCopilot": "NetOps Copilot",
@@ -967,7 +1261,15 @@
     "changes": "Changes",
     "rulepacks": "Rulepacks",
     "tools": "Tools",
+    "fieldKit": "Field Kit",
     "configs": "Configs",
+    "field": {
+      "title": "Field Kit",
+      "subtitle": "Guided, safe troubleshooting for field engineers.",
+      "errors": {
+        "loadDevicesFailed": "Failed to load devices"
+      }
+    },
     "toolsPage": {
       "title": "NetOps Config Generator",
       "subtitle": "Generate vendor-specific CLI snippets for network devices.",
@@ -1252,7 +1554,518 @@
     "parsing": "parsing",
     "runLint": "run Lint",
     "running": "running",
-    "selectConfigVersion": "select Config Version"
+    "selectConfigVersion": "select Config Version",
+    "generator": {
+      "title": "Network CLI Generator",
+      "subtitle": "Vendor-aware, safe-by-default CLI generation for network devices.",
+      "deviceContext": "Device Context",
+      "device": "Device",
+      "deviceEmpty": "No devices",
+      "deviceHelp": "Select the target device profile.",
+      "vendor": "Vendor",
+      "vendorHelp": "Renderer determines CLI output.",
+      "environment": "Environment",
+      "environmentHelp": "Prod enforces approval and dangerous command checks.",
+      "requireDevice": "Device and hostname are required to generate CLI.",
+      "actions": {
+        "openSsh": "Open SSH Terminal",
+        "generate": "Generate CLI"
+      },
+      "profile": {
+        "label": "CLI Profile",
+        "help": "Apply a saved baseline to pre-fill settings.",
+        "apply": "Apply profile...",
+        "save": "Save as profile",
+        "active": "Profile",
+        "name": "Profile name",
+        "includeHostname": "Include hostname in profile",
+        "saveTitle": "Save CLI Profile"
+      },
+      "intent": {
+        "title": "Intent Input",
+        "badge": "AI assist",
+        "placeholder": "e.g. Create VLAN 30 for imaging, subnet 10.30.0.0/24, gateway 10.30.0.1",
+        "apply": "Apply intent",
+        "applied": "Intent applied. Review summary before generating."
+      },
+      "step": {
+        "configured": "Configured",
+        "empty": "Empty"
+      },
+      "playbook": {
+        "toggle": "Playbook mode",
+        "bootstrap": "Bootstrap",
+        "hardening": "Hardening",
+        "maintenance": "Maintenance",
+        "rollback": "Rollback"
+      },
+      "base": {
+        "title": "Base Configuration",
+        "description": "Identity, management scope, and baseline security.",
+        "hostname": "Hostname",
+        "hostnameHelp": "Used as device identity in generated CLI.",
+        "mgmtCidr": "Management allowlist (CIDR)",
+        "mgmtHelp": "Limit admin access to trusted ranges.",
+        "firewall": "Enable baseline firewall",
+        "snmp": "SNMP Community"
+      },
+      "services": {
+        "title": "Services",
+        "description": "SSH, DNS, and NTP configuration.",
+        "sshEnabled": "SSH enabled",
+        "sshVersion": "SSH version",
+        "allowPassword": "Allow password auth",
+        "passwordWarning": "Password auth enabled",
+        "ntpServers": "NTP servers",
+        "dnsServers": "DNS servers"
+      },
+      "network": {
+        "title": "Network",
+        "description": "VLANs and interface assignments.",
+        "vlans": "VLANs",
+        "interfaces": "Interfaces",
+        "routes": "Static Routes",
+        "addVlan": "Add VLAN",
+        "addInterface": "Add Interface",
+        "addRoute": "Add Route",
+        "emptyVlansTitle": "No VLANs configured",
+        "emptyVlansDescription": "Add VLANs to map subnets and gateways.",
+        "emptyInterfacesTitle": "No interfaces configured",
+        "emptyInterfacesDescription": "Add interface roles and management IPs.",
+        "emptyRoutesTitle": "No static routes configured",
+        "emptyRoutesDescription": "Add default or site routes as needed.",
+        "vlanId": "VLAN ID",
+        "vlanName": "Name",
+        "vlanSubnet": "Subnet",
+        "vlanGateway": "Gateway",
+        "interfaceName": "Interface",
+        "interfaceRole": "Role",
+        "interfaceIp": "IP Address",
+        "interfaceMask": "Subnet Mask",
+        "interfaceVlan": "VLAN",
+        "interfaceDescription": "Description",
+        "roleUplink": "Uplink",
+        "roleAccess": "Access",
+        "routeDestination": "Destination",
+        "routeNetmask": "Netmask",
+        "routeNextHop": "Next Hop"
+      },
+      "routing": {
+        "title": "Routing",
+        "description": "Static and dynamic routing policies.",
+        "static": "Static Routes",
+        "ospfEnabled": "Enable OSPF",
+        "ospfRouterId": "OSPF Router ID",
+        "addOspfArea": "Add OSPF Area",
+        "emptyOspfTitle": "No OSPF areas defined",
+        "emptyOspfDescription": "Add areas and networks to advertise.",
+        "ospfArea": "Area",
+        "ospfNetworks": "Networks",
+        "bgpEnabled": "Enable BGP",
+        "bgpLocalAs": "Local AS",
+        "addBgpNeighbor": "Add BGP Neighbor",
+        "emptyBgpNeighborsTitle": "No BGP neighbors",
+        "emptyBgpNeighborsDescription": "Add neighbor IPs and remote AS values.",
+        "bgpNeighbor": "Neighbor",
+        "bgpRemoteAs": "Remote AS",
+        "bgpNetworks": "Advertised Networks",
+        "addBgpNetwork": "Add Network",
+        "emptyBgpNetworksTitle": "No BGP networks",
+        "emptyBgpNetworksDescription": "Add networks to advertise via BGP.",
+        "bgpNetwork": "Network",
+        "ripEnabled": "Enable RIP",
+        "ripVersion": "RIP Version",
+        "ripNetwork": "RIP Network"
+      },
+      "security": {
+        "title": "Firewall & NAT",
+        "description": "Policy rules and address translation.",
+        "firewallRules": "Firewall Rules",
+        "natRules": "NAT Rules",
+        "addFirewallRule": "Add Firewall Rule",
+        "addNatRule": "Add NAT Rule",
+        "emptyFirewallTitle": "No firewall rules",
+        "emptyFirewallDescription": "Add input/output/forward rules.",
+        "emptyNatTitle": "No NAT rules",
+        "emptyNatDescription": "Add source/destination NAT policies.",
+        "chain": "Chain",
+        "protocol": "Protocol",
+        "source": "Source",
+        "destination": "Destination",
+        "port": "Port",
+        "action": "Action",
+        "natType": "NAT Type",
+        "translate": "Translate To",
+        "interface": "Interface",
+        "comment": "Comment"
+      },
+      "vpn": {
+        "title": "VPN & Tunnels",
+        "description": "Site-to-site and remote access tunnels.",
+        "ipsecTunnels": "IPsec Tunnels",
+        "wireguardTunnels": "WireGuard Tunnels",
+        "l2tpServers": "L2TP Servers",
+        "addIpsec": "Add IPsec Tunnel",
+        "addWireguard": "Add WireGuard Tunnel",
+        "addL2tp": "Add L2TP Server",
+        "emptyIpsecTitle": "No IPsec tunnels",
+        "emptyIpsecDescription": "Add IPsec tunnels for site-to-site VPN.",
+        "emptyWireguardTitle": "No WireGuard tunnels",
+        "emptyWireguardDescription": "Add WireGuard tunnels for modern VPN.",
+        "emptyL2tpTitle": "No L2TP servers",
+        "emptyL2tpDescription": "Add L2TP server profiles.",
+        "tunnelName": "Name",
+        "local": "Local",
+        "remote": "Remote",
+        "localSubnet": "Local subnet",
+        "remoteSubnet": "Remote subnet",
+        "ikeVersion": "IKE Version",
+        "psk": "Pre-shared key",
+        "interfaceAddress": "Interface address",
+        "listenPort": "Listen port",
+        "privateKey": "Private key",
+        "peerPublicKey": "Peer public key",
+        "peerAllowedIps": "Peer allowed IPs",
+        "peerEndpoint": "Peer endpoint",
+        "peerCount": "Peers",
+        "pool": "Address pool"
+      },
+      "qos": {
+        "title": "QoS",
+        "description": "Queue and traffic shaping policies.",
+        "queues": "Queues",
+        "addQueue": "Add Queue",
+        "emptyTitle": "No QoS queues",
+        "emptyDescription": "Add queues to shape or prioritize traffic.",
+        "name": "Name",
+        "target": "Target",
+        "limit": "Max limit",
+        "priority": "Priority",
+        "comment": "Comment"
+      },
+      "monitoring": {
+        "title": "Monitoring & Management",
+        "description": "SNMP, syslog, NetFlow, and sFlow.",
+        "snmpVersion": "SNMP Version",
+        "snmpCommunity": "SNMP Community",
+        "snmpUsers": "SNMP v3 Users",
+        "addSnmpUser": "Add SNMP User",
+        "emptySnmpUsersTitle": "No SNMP v3 users",
+        "emptySnmpUsersDescription": "Add v3 users for secure SNMP.",
+        "snmpUser": "Username",
+        "snmpAuth": "Auth protocol",
+        "snmpAuthPass": "Auth password",
+        "snmpPriv": "Privacy protocol",
+        "snmpPrivPass": "Privacy password",
+        "syslog": "Syslog servers",
+        "netflow": "NetFlow",
+        "sflow": "sFlow",
+        "collector": "Collector",
+        "port": "Port"
+      },
+      "summary": {
+        "title": "Summary & Preview",
+        "subtitle": "Review configuration, warnings, and output.",
+        "config": "Config Summary",
+        "device": "Device",
+        "vendor": "Vendor",
+        "environment": "Environment",
+        "vlans": "VLANs",
+        "interfaces": "Interfaces",
+        "routes": "Routes",
+        "ospf": "OSPF Areas",
+        "bgp": "BGP Neighbors",
+        "firewallRules": "Firewall rules",
+        "natRules": "NAT rules",
+        "vpn": "VPNs",
+        "qos": "QoS queues",
+        "safety": "Safety Checks",
+        "output": "Output",
+        "noWarnings": "No warnings detected",
+        "unselected": "Unselected"
+      },
+      "risk": {
+        "level": "Risk",
+        "subtitle": "Based on policy and environment safeguards.",
+        "none": "No risks detected",
+        "sshPassword": "SSH password auth enabled",
+        "sshPasswordDetail": "Password auth increases brute-force exposure.",
+        "noNtp": "No NTP configured",
+        "noNtpDetail": "Clock drift affects audit and log accuracy.",
+        "firewallOff": "Baseline firewall disabled",
+        "firewallOffDetail": "Baseline input rules are required for safety.",
+        "mgmtMissing": "Management CIDR missing",
+        "mgmtMissingDetail": "Limit admin access to trusted ranges.",
+        "mgmtOpen": "Management CIDR wide open",
+        "mgmtOpenDetail": "0.0.0.0/0 exposes management plane.",
+        "mgmtWide": "Management CIDR too broad",
+        "mgmtWideDetail": "Prefer /24 or narrower for admin ranges.",
+        "bgpEnabled": "BGP enabled",
+        "bgpEnabledDetail": "Ensure peer filtering and route policies are defined.",
+        "ospfLarge": "Multiple OSPF areas",
+        "ospfLargeDetail": "Validate area design to avoid adjacency issues.",
+        "firewallAllowAny": "Firewall allow any-any",
+        "firewallAllowAnyDetail": "Allow any-any rules increase attack surface.",
+        "natOpen": "DNAT rule without port restriction",
+        "natOpenDetail": "Open DNAT rules can expose internal services.",
+        "vpnNoPsk": "VPN missing pre-shared key",
+        "vpnNoPskDetail": "Provide a strong PSK for IPsec tunnels.",
+        "qosEnabled": "QoS enabled",
+        "qosEnabledDetail": "Ensure queues align with business priorities.",
+        "snmpPublic": "SNMP community is public",
+        "snmpPublicDetail": "Change SNMP community to a secure value."
+      },
+      "preview": {
+        "title": "Generated CLI Preview",
+        "empty": "Generate CLI to preview output.",
+        "hiddenTitle": "Preview hidden",
+        "hiddenDescription": "Toggle to view generated CLI."
+      },
+      "explain": {
+        "title": "Explain command",
+        "placeholder": "Select a command to explain",
+        "route": "Adds or updates routing entries.",
+        "ospf": "Configures OSPF routing for advertised networks.",
+        "bgp": "Configures BGP neighbors and advertised prefixes.",
+        "firewall": "Applies firewall filter rules.",
+        "nat": "Adds NAT translation rules.",
+        "vpn": "Configures VPN tunnel settings.",
+        "monitoring": "Configures SNMP/syslog/flow export.",
+        "generic": "Review the command before applying in production."
+      },
+      "lint": {
+        "title": "Compliance Lint",
+        "run": "Run lint",
+        "emptyTitle": "No lint findings",
+        "emptyDescription": "Run lint to validate policy compliance.",
+        "suggestion": "Suggestion:"
+      },
+      "validation": {
+        "title": "Validation Checks",
+        "run": "Validate config",
+        "emptyTitle": "No validation issues",
+        "emptyDescription": "Validate to catch duplicate VLANs and overlaps.",
+        "suggestion": "Suggestion:",
+        "blocked": "Validation errors detected. Fix before generating."
+      },
+      "diff": {
+        "title": "Diff",
+        "refresh": "Refresh diff",
+        "emptyTitle": "No diff available",
+        "empty": "No diff yet."
+      },
+      "dryRun": {
+        "title": "Dry-run Verification",
+        "verify": "Verify Commands",
+        "empty": "Generate CLI to view verify commands."
+      },
+      "push": {
+        "title": "Push & Rollback",
+        "backend": "Push via Backend",
+        "ssh": "Push via SSH",
+        "help": "Ensure SSH session is active before pushing."
+      },
+      "warnings": {
+        "sshPassword": "SSH password auth enabled",
+        "noNtp": "No NTP servers configured",
+        "noMgmt": "Management CIDR missing",
+        "mgmtOpen": "Management CIDR is wide open"
+      },
+      "checks": {
+        "mgmtLimited": "Management CIDR limited",
+        "ntpConfigured": "NTP configured",
+        "passwordDisabled": "Password auth disabled"
+      },
+      "tabs": {
+        "preview": "Preview",
+        "lint": "Lint",
+        "validate": "Validate",
+        "diff": "Diff",
+        "dryRun": "Dry-run",
+        "push": "Push"
+      },
+      "modals": {
+        "vlanTitle": "Add VLAN",
+        "interfaceTitle": "Add Interface",
+        "routeTitle": "Add Route",
+        "ospfTitle": "Add OSPF Area",
+        "bgpNeighborTitle": "Add BGP Neighbor",
+        "bgpNetworkTitle": "Add BGP Network",
+        "firewallTitle": "Add Firewall Rule",
+        "natTitle": "Add NAT Rule",
+        "ipsecTitle": "Add IPsec Tunnel",
+        "wireguardTitle": "Add WireGuard Tunnel",
+        "l2tpTitle": "Add L2TP Server",
+        "qosTitle": "Add QoS Queue",
+        "snmpUserTitle": "Add SNMP User"
+      },
+      "guardrails": {
+        "title": "Command Guardrails",
+        "detected": "Guardrail trigger:",
+        "override": "Request override",
+        "overridden": "Override active",
+        "blocked": "Guardrails blocked this operation.",
+        "overrideTitle": "Override Guardrails",
+        "overrideHelp": "Provide a reason to override blocked commands. This action will be audited.",
+        "reason": "Override reason",
+        "reasonPlaceholder": "Describe why this override is necessary."
+      },
+      "approval": {
+        "title": "Approval Workflow",
+        "help": "Prod requires approval before push.",
+        "request": "Request approval",
+        "approve": "Approve",
+        "reject": "Reject",
+        "blocked": "Approval required before push.",
+        "reasonPlaceholder": "Reason for approval request (optional).",
+        "requestedBy": "Requested by",
+        "decidedBy": "Decided by",
+        "status": {
+          "none": "Not requested",
+          "pending": "Pending",
+          "approved": "Approved",
+          "rejected": "Rejected"
+        }
+      }
+    },
+    "mikrotik": {
+      "title": "MikroTik Full Config",
+      "subtitle": "Intent → plan → config → validate → rollback (RouterOS 7).",
+      "steps": {
+        "device": "Device",
+        "network": "Interfaces & VLAN",
+        "routing": "Routing & Internet",
+        "preview": "Preview"
+      },
+      "device": "Device",
+      "deviceHelp": "Select a MikroTik device from CMDB to prefill defaults.",
+      "role": "Role template",
+      "roleHelp": "Role controls which modules are enabled and safe defaults.",
+      "environment": "Environment",
+      "environmentHelp": "Prod enforces stricter safeguards and requires approvals.",
+      "hostname": "Hostname",
+      "routerOsVersion": "RouterOS version",
+      "securityPreset": "Security preset",
+      "labMode": "Lab mode",
+      "labModeWarn": "Lab mode may relax security guardrails. Use with caution.",
+      "mgmtSubnet": "Management subnet (CIDR)",
+      "mgmtHelp": "Used to allow admin access and protect the management plane.",
+      "allowedSubnets": "Allowed subnets (one per line)",
+      "allowedHelp": "Only these subnets can access management services.",
+      "interfaces": "Interfaces",
+      "interfacesEmpty": "No interfaces defined",
+      "interfacesEmptyHelp": "Add WAN / trunk / access / mgmt interfaces to match wiring.",
+      "vlans": "VLANs",
+      "vlansEmpty": "No VLANs defined",
+      "vlansEmptyHelp": "Add VLANs to generate bridge/VLAN filtering and VLAN gateways.",
+      "staticRoutes": "Static routes",
+      "routesEmpty": "No static routes defined",
+      "routesEmptyHelp": "Add routes for upstream or internal reachability.",
+      "internet": "Internet / WAN",
+      "publicType": "WAN type",
+      "wanInterface": "WAN interface",
+      "wanAddress": "WAN address",
+      "wanGateway": "WAN gateway",
+      "pppoeUser": "PPPoE username",
+      "pppoePassword": "PPPoE password",
+      "dnsServers": "DNS servers",
+      "ospf": "OSPF",
+      "ospfRouterId": "Router ID",
+      "ospfArea": "Area",
+      "ospfNetworks": "Networks (one per line)",
+      "ospfPassive": "Passive interfaces (one per line)",
+      "requirements": "Select a device and hostname before generating.",
+      "risk": "Risk",
+      "errors": "errors",
+      "warnings": "warnings",
+      "validationErrors": "Validation errors",
+      "validationWarnings": "Validation warnings",
+      "preview": {
+        "apply": "Apply script",
+        "rollback": "Rollback script"
+      },
+      "actions": {
+        "generate": "Generate config",
+        "downloadApply": "Download apply",
+        "downloadRollback": "Download rollback",
+        "pushDryRun": "Dry-run push"
+      },
+      "diff": {
+        "title": "Diff vs running config",
+        "placeholder": "Paste running config here…",
+        "run": "Run diff",
+        "summary": "Diff summary"
+      },
+      "empty": {
+        "title": "No output yet",
+        "subtitle": "Generate config to view preview, validation, and diff."
+      },
+      "summary": {
+        "title": "Summary",
+        "subtitle": "Read-only context and counts.",
+        "device": "Device",
+        "role": "Role",
+        "environment": "Environment",
+        "vlans": "VLANs",
+        "interfaces": "Interfaces",
+        "routes": "Routes"
+      },
+      "modals": {
+        "optional": "Optional",
+        "interfaceTitle": "Add interface",
+        "interfaceName": "Interface name",
+        "interfacePurpose": "Purpose",
+        "purpose": {
+          "wan": "WAN / uplink",
+          "trunk": "Trunk",
+          "access": "Access",
+          "mgmt": "Management"
+        },
+        "interfaceAccessVlan": "Access VLAN ID",
+        "interfaceTrunkVlans": "Trunk VLAN IDs",
+        "interfaceComment": "Comment",
+        "vlanTitle": "Add VLAN",
+        "vlanId": "VLAN ID",
+        "vlanName": "VLAN name",
+        "vlanSubnet": "Subnet (CIDR)",
+        "vlanGateway": "Gateway",
+        "vlanGroup": "Group",
+        "vlanDhcp": "Enable DHCP",
+        "routeTitle": "Add static route",
+        "routeDst": "Destination (CIDR)",
+        "routeGateway": "Next hop / gateway",
+        "routeDistance": "Distance",
+        "routeComment": "Comment"
+      }
+    },
+    "ssh": {
+      "title": "SSH Terminal",
+      "subtitle": "Realtime terminal via SSH proxy with audit trails.",
+      "searchDevices": "Search devices",
+      "sessions": "Sessions",
+      "noSessions": "No sessions.",
+      "commandPolicy": "Command policy",
+      "liveTerminal": "Live Terminal",
+      "sessionLabel": "Session:",
+      "connected": "Connected",
+      "idle": "Idle",
+      "noOutput": "No session output yet.",
+      "history": "History",
+      "noCommands": "No commands yet.",
+      "reuseHint": "Click a command to reuse.",
+      "policy": {
+        "allowList": "Allowlist (one per line)",
+        "denyList": "Denylist (one per line)",
+        "dangerList": "Dangerous commands",
+        "enforced": "Policy enforced before command execution."
+      },
+      "openSession": "Open Session",
+      "downloadLog": "Download log",
+      "exportJson": "Export JSON",
+      "commandPlaceholder": "show ip interface brief",
+      "send": "Send",
+      "notConnected": "Not connected"
+    }
   },
   "reports": {
     "assetsTitle": "Asset Reports",
@@ -1282,5 +2095,275 @@
     "previous": "Previous",
     "next": "Next",
     "prev": "Prev"
+  },
+  "help": {
+    "title": "Help & Docs",
+    "subtitle": "Quick references for operators and field engineers.",
+    "gettingStarted": {
+      "title": "Getting started",
+      "subtitle": "Login, navigation, and basic workflows."
+    },
+    "tools": {
+      "title": "Tools",
+      "subtitle": "CLI generator, SSH terminal, and Field Kit."
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "Audit, approvals, and safe-by-default operations."
+    },
+    "notesTitle": "Notes",
+    "notes": {
+      "audit": "All privileged actions require audit trails.",
+      "approvals": "Production changes should use approvals.",
+      "fieldKit": "Use the Field Kit for guided, safe troubleshooting."
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Account & session information",
+    "email": "Email",
+    "role": "Role"
+  },
+  "me": {
+    "assets": {
+      "title": "My Assets",
+      "subtitle": "Search assets by code, hostname, serial, or management IP.",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Asset code, hostname, serial…",
+      "searchHelp": "Search is restricted to what you already know (code/hostname/etc).",
+      "statusLabel": "Status",
+      "allStatuses": "All statuses",
+      "statusHelp": "Filter by lifecycle status.",
+      "emptyTitle": "Start with a search",
+      "emptySubtitle": "Enter an asset code or hostname to find what you need.",
+      "noMatches": "No matches",
+      "errors": {
+        "loadFailed": "Failed to load assets"
+      }
+    },
+    "requests": {
+      "title": "My Requests",
+      "subtitle": "Track your submitted workflow requests.",
+      "empty": "No requests yet",
+      "errors": {
+        "loadFailed": "Failed to load requests",
+        "missingUser": "Missing user identity. Please login again."
+      }
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Updates for requests and operational reminders.",
+    "sections": {
+      "myRequests": "My requests",
+      "myRequestsSubtitle": "Latest workflow activity",
+      "reminders": "Reminders",
+      "remindersSubtitle": "Asset warranty & maintenance reminders"
+    },
+    "remindersRestricted": "Reminders are visible to asset managers.",
+    "emptyRequests": "No request updates yet.",
+    "emptyReminders": "No reminders.",
+    "errors": {
+      "loadFailed": "Failed to load notifications"
+    }
+  },
+  "inbox": {
+    "title": "Inbox",
+    "subtitle": "Review and approve pending workflow requests.",
+    "submitted": "Submitted requests",
+    "empty": "No pending requests.",
+    "errors": {
+      "loadFailed": "Failed to load inbox",
+      "approveFailed": "Failed to approve request",
+      "rejectFailed": "Failed to reject request"
+    }
+  },
+  "drivers": {
+    "navLabel": "Drivers",
+    "title": "Driver Packages",
+    "subtitle": "Manage driver artifacts with approvals, risk flags, and audit trails.",
+    "new": "Add driver",
+    "download": "Download",
+    "filters": {
+      "searchPlaceholder": "Search vendor, model, version, tags…"
+    },
+    "fields": {
+      "deviceType": "Device type",
+      "component": "Component",
+      "os": "OS",
+      "arch": "Arch",
+      "platform": "Platform",
+      "version": "Version",
+      "approval": "Approval",
+      "risk": "Risk",
+      "support": "Support status",
+      "tags": "Tags",
+      "compatibilityNotes": "Compatibility notes",
+      "links": "Links",
+      "installDetect": "Install & Detect",
+      "silentInstallCmd": "Silent install command",
+      "silentUninstallCmd": "Silent uninstall command",
+      "updatedAt": "Updated",
+      "approvalReason": "Approval reason"
+    },
+    "columns": {
+      "vendorModel": "Vendor / Model",
+      "platform": "OS / Arch",
+      "version": "Version",
+      "status": "Support",
+      "approval": "Approval",
+      "risk": "Risk",
+      "updated": "Updated"
+    },
+    "bulk": {
+      "tag": "Tag",
+      "reason": "Reason",
+      "reasonPlaceholder": "Provide a reason (required for block/unblock/delete).",
+      "noExtra": "No extra input required for this action."
+    },
+    "create": {
+      "title": "New driver package",
+      "subtitle": "Create a draft package, upload the file, then submit for approval."
+    },
+    "detailTitle": "Driver package",
+    "detailSubtitle": "Metadata, file, approval, and audit.",
+    "tabs": {
+      "files": "Files",
+      "approval": "Approval",
+      "audit": "Audit"
+    },
+    "files": {
+      "title": "Driver file",
+      "subtitle": "Upload once. Approved artifacts are immutable.",
+      "size": "Size",
+      "empty": "No file uploaded yet.",
+      "upload": "Upload file"
+    },
+    "approval": {
+      "title": "Approval workflow",
+      "submit": "Submit for approval",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "danger": {
+      "title": "Dangerous actions",
+      "badge": "Danger",
+      "block": "Block",
+      "unblock": "Unblock",
+      "deleteApprovedReason": "Reason required to delete an approved driver:",
+      "deleteReason": "Delete reason (optional):"
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "All privileged actions are logged.",
+      "empty": "No audit entries yet.",
+      "time": "Time",
+      "action": "Action",
+      "details": "Details"
+    },
+    "actions": {
+      "title": "Confirm action",
+      "reason": "Reason",
+      "reasonPlaceholder": "Explain why this is necessary.",
+      "reasonRequiredHighRisk": "Reason required for high/critical risk approvals.",
+      "reasonRequired": "Reason required.",
+      "reasonRequiredApprovedDelete": "Reason required when deleting approved artifacts.",
+      "noteOptional": "Note (optional)",
+      "notePlaceholder": "Optional note for reviewers."
+    }
+  },
+  "docs": {
+    "navLabel": "Documents",
+    "title": "Documents",
+    "subtitle": "SOPs, templates, and operational docs with approvals and audit.",
+    "new": "Add document",
+    "filters": {
+      "searchPlaceholder": "Search title, tags…"
+    },
+    "fields": {
+      "title": "Title",
+      "summary": "Summary",
+      "type": "Type",
+      "contentType": "Content type",
+      "visibility": "Visibility",
+      "approval": "Approval",
+      "tags": "Tags",
+      "markdown": "Markdown",
+      "externalUrl": "External URL",
+      "approvalReason": "Approval reason"
+    },
+    "columns": {
+      "title": "Title",
+      "type": "Type",
+      "visibility": "Visibility",
+      "approval": "Approval",
+      "updated": "Updated"
+    },
+    "bulk": {
+      "tag": "Tag",
+      "reason": "Reason",
+      "reasonPlaceholderOrg": "Reason required for org-wide visibility.",
+      "reasonPlaceholderDelete": "Reason (required if deleting approved docs).",
+      "noExtra": "No extra input required for this action."
+    },
+    "create": {
+      "title": "New document",
+      "subtitle": "Create a draft document, then upload content and submit for approval."
+    },
+    "detailTitle": "Document",
+    "detailSubtitle": "Content, attachments, relations, approval, and audit.",
+    "tabs": {
+      "content": "Content",
+      "files": "Files",
+      "relations": "Relations",
+      "approval": "Approval",
+      "audit": "Audit"
+    },
+    "openLink": "Open link",
+    "files": {
+      "help": "Attach files, markdown, or a link depending on content type.",
+      "title": "Attachments",
+      "subtitle": "Files are required before approval for file-type documents.",
+      "empty": "No files uploaded yet.",
+      "filename": "Filename",
+      "download": "Download"
+    },
+    "relations": {
+      "help": "Attach documents to assets/models/sites/services for contextual recommendations.",
+      "assets": "Related assets",
+      "models": "Related models",
+      "sites": "Related sites",
+      "services": "Related services"
+    },
+    "approval": {
+      "title": "Approval workflow",
+      "submit": "Submit for approval",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "danger": {
+      "title": "Dangerous actions",
+      "badge": "Danger",
+      "deleteApprovedReason": "Reason required to delete an approved document:",
+      "deleteReason": "Delete reason (optional):"
+    },
+    "audit": {
+      "title": "Audit log",
+      "subtitle": "All privileged actions are logged.",
+      "empty": "No audit entries yet.",
+      "time": "Time",
+      "action": "Action",
+      "details": "Details"
+    },
+    "actions": {
+      "title": "Confirm action",
+      "reason": "Reason",
+      "reasonPlaceholder": "Explain why this is necessary.",
+      "reasonRequiredOrg": "Reason required for org-wide publish.",
+      "reasonRequired": "Reason required.",
+      "reasonRequiredApprovedDelete": "Reason required when deleting approved docs.",
+      "noteOptional": "Note (optional)",
+      "notePlaceholder": "Optional note for reviewers."
+    }
   }
 }

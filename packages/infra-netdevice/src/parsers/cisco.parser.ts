@@ -195,7 +195,7 @@ export class CiscoParser extends BaseParser {
                 }
 
                 // Static routes
-                const routeMatch = line.match(/^ip\s+route\s+([\d.]+)\s+([\d.]+)\s+([\d.]+|[\w\/]+)/i)
+                const routeMatch = line.match(/^ip\s+route\s+([\d.]+)\s+([\d.]+)\s+([\d.]+|[\w/]+)/i)
                 if (routeMatch) {
                     const parsed = this.parseIpWithMask(routeMatch[1], routeMatch[2])
                     if (parsed) {

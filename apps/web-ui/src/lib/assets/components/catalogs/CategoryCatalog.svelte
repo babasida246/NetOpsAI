@@ -1,13 +1,15 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { Button, Input, Label, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+<script lang="ts">
+  import { Button, Input, Label } from 'flowbite-svelte';
+  import { Settings } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { Pencil, Trash2 } from 'lucide-svelte';
   import { createCategory, deleteCategory, updateCategory } from '$lib/api/assetCatalogs';
   import CategorySpecPanel from './CategorySpecPanel.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
 
-  let { categories = [] } = $props<{ categories?: Array<{ id: string; name: string }> }>();
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
+  let { categories = [], onupdated, onerror } = $props<{ categories?: Array<{ id: string; name: string }>; onupdated?: () => void; onerror?: (msg: string) => void }>();
+
+  // Ensure categories is always an array
+  const safeCategories = $derived(Array.isArray(categories) ? categories : []);
 
   let name = $state('');
   let editingId = $state<string | null>(null);
@@ -30,9 +32,9 @@
         await createCategory({ name: name.trim() });
       }
       reset();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to save category');
+      onerror?.(err instanceof Error ? err.message : 'Failed to save category');
     } finally {
       saving = false;
     }
@@ -43,17 +45,27 @@
     name = value;
   }
 
-  async function remove(id: string) {
-    if (!confirm('Delete this category?')) return;
+  async function handleEdit(category: { id: string; name: string }, changes: Partial<{ name: string }>) {
     try {
-      await deleteCategory(id);
-      if (selectedCategory?.id === id) {
-        showSpecPanel = false;
-        selectedCategory = null;
-      }
-      dispatch('updated');
+      await updateCategory(category.id, { name: changes.name || category.name });
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to delete category');
+      onerror?.(err instanceof Error ? err.message : 'Failed to update category');
+    }
+  }
+
+  async function handleDelete(rows: Array<{ id: string; name: string }>) {
+    try {
+      for (const row of rows) {
+        await deleteCategory(row.id);
+        if (selectedCategory?.id === row.id) {
+          showSpecPanel = false;
+          selectedCategory = null;
+        }
+      }
+      onupdated?.();
+    } catch (err) {
+      onerror?.(err instanceof Error ? err.message : 'Failed to delete category');
     }
   }
 
@@ -71,48 +83,39 @@
         <Input bind:value={name} placeholder={$isLoading ? 'Laptop' : $_('assets.placeholders.categoryName')} />
       </div>
       <div class="flex gap-2">
-        <Button on:click={save} disabled={saving || !name.trim()}>
+        <Button onclick={save} disabled={saving || !name.trim()}>
           {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
         </Button>
         {#if editingId}
-          <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+          <Button color="alternative" onclick={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
         {/if}
       </div>
     </div>
   </div>
 
-  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-    <Table>
-      <TableHead>
-        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
-      </TableHead>
-      <TableBody>
-        {#each categories as category}
-          <TableBodyRow>
-            <TableBodyCell>{category.name}</TableBodyCell>
-            <TableBodyCell>
-              <div class="flex gap-2">
-                <Button size="xs" color="alternative" on:click={() => edit(category.id, category.name)}>
-                  <Pencil class="w-3 h-3" />
-                </Button>
-                <Button size="xs" color="alternative" on:click={() => openSpecs(category)}>
-                  Specs
-                </Button>
-                <Button size="xs" color="alternative" on:click={() => remove(category.id)}>
-                  <Trash2 class="w-3 h-3" />
-                </Button>
-              </div>
-            </TableBodyCell>
-          </TableBodyRow>
-        {/each}
-      </TableBody>
-    </Table>
-  </div>
+  <DataTable
+    data={safeCategories}
+    columns={[
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={false}
+    customActions={[
+      { 
+        label: 'Specs', 
+        icon: Settings, 
+        color: 'purple', 
+        onClick: (category) => openSpecs(category) 
+      }
+    ]}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 </div>
 
 <CategorySpecPanel
   bind:open={showSpecPanel}
   category={selectedCategory}
-  on:error={(event) => dispatch('error', event.detail)}
+  onerror={onerror}
 />

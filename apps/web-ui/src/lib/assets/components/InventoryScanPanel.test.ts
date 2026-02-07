@@ -4,7 +4,10 @@ import InventoryScanPanel from './InventoryScanPanel.svelte';
 
 describe('InventoryScanPanel', () => {
   it('renders scan button', () => {
-    const { getByText } = render(InventoryScanPanel, { props: { sessionId: 's1' } });
-    expect(getByText('Scan')).toBeTruthy();
+    const { getByRole } = render(InventoryScanPanel, { props: { sessionId: 's1' } });
+    // Button may show i18n text or fallback 'Scan'
+    const button = getByRole('button');
+    expect(button).toBeTruthy();
+    expect(button.textContent).toMatch(/Scan|Quét/i);
   });
 });

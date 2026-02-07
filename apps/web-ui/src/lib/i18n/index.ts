@@ -7,11 +7,16 @@ import { register, init, getLocaleFromNavigator, locale, isLoading } from 'svelt
 register('en', () => import('./locales/en.json'))
 register('vi', () => import('./locales/vi.json'))
 
-// Initialize i18n immediately with await to ensure it completes
+const defaultLocale = 'en'
+const initialLocale =
+    typeof window !== 'undefined' ? getLocaleFromNavigator() || defaultLocale : defaultLocale
+
 init({
-    fallbackLocale: 'en',
-    initialLocale: getLocaleFromNavigator() || 'en'
+    fallbackLocale: defaultLocale,
+    initialLocale
 })
+
+locale.set(initialLocale)
 
 // Export locale store and loading state for components to use
 // Note: In components, use these as $_ and $isLoading (with $ prefix for auto-subscription)

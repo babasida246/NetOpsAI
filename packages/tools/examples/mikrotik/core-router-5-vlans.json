@@ -1,0 +1,36 @@
+{
+  "device": {
+    "model": "CCR1009-7G-1C-1S+",
+    "routerOsMajor": 7,
+    "routerOsVersion": "7.12.1"
+  },
+  "role": "core-router",
+  "hostname": "CORE-RT-01",
+  "environment": "staging",
+  "interfaces": [
+    { "name": "ether1", "purpose": "trunk", "comment": "To distribution", "trunkVlanIds": [10, 20, 30, 40, 50] },
+    { "name": "ether2", "purpose": "trunk", "comment": "To access", "trunkVlanIds": [10, 20, 30, 40, 50] },
+    { "name": "ether3", "purpose": "mgmt", "comment": "OOB mgmt", "accessVlanId": 10 }
+  ],
+  "vlans": [
+    { "id": 10, "name": "mgmt", "subnet": "10.10.0.0/24", "gateway": "10.10.0.1", "group": "MGMT" },
+    { "id": 20, "name": "staff", "subnet": "10.20.0.0/24", "gateway": "10.20.0.1", "group": "STAFF" },
+    { "id": 30, "name": "guest", "subnet": "10.30.0.0/24", "gateway": "10.30.0.1", "group": "GUEST" },
+    { "id": 40, "name": "server", "subnet": "10.40.0.0/24", "gateway": "10.40.0.1", "group": "SERVER" },
+    { "id": 50, "name": "iot", "subnet": "10.50.0.0/24", "gateway": "10.50.0.1", "group": "IOT" }
+  ],
+  "routing": {
+    "staticRoutes": [
+      { "dst": "0.0.0.0/0", "gateway": "10.10.0.254", "distance": 1, "comment": "Upstream default" }
+    ]
+  },
+  "securityProfile": { "preset": "hospital-secure" },
+  "management": {
+    "mgmtSubnet": "10.10.0.0/24",
+    "allowedSubnets": ["10.10.0.0/24"],
+    "ssh": { "allowPassword": false },
+    "timezone": "Asia/Ho_Chi_Minh",
+    "ntpServers": ["162.159.200.1", "162.159.200.123"]
+  },
+  "notes": "example: core-router 5 VLANs"
+}

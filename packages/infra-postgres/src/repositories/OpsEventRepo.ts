@@ -56,4 +56,14 @@ export class OpsEventRepo implements IOpsEventRepo {
         )
         return result.rows.map(mapOps)
     }
+
+    async list(): Promise<OpsEventRecord[]> {
+        const result = await this.pg.query<OpsRow>(
+            `SELECT id, entity_type, entity_id, event_type, payload, actor_user_id, correlation_id, created_at
+             FROM ops_events
+             ORDER BY created_at DESC
+             LIMIT 1000`
+        )
+        return result.rows.map(mapOps)
+    }
 }

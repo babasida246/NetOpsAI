@@ -1,14 +1,17 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { Button, Input, Label, Select, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+<script lang="ts">
+  import { Button, Input, Label, Select } from 'flowbite-svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { Pencil, Trash2 } from 'lucide-svelte';
   import { createLocation, deleteLocation, updateLocation } from '$lib/api/assetCatalogs';
+  import DataTable from '$lib/components/DataTable.svelte';
 
-  let { locations = [] } = $props<{
+  let { locations = [], onupdated, onerror } = $props<{
     locations?: Array<{ id: string; name: string; parentId?: string | null; path: string }>;
+    onupdated?: () => void;
+    onerror?: (msg: string) => void;
   }>();
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
+
+  // Ensure locations is always an array
+  const safeLocations = $derived(Array.isArray(locations) ? locations : []);
 
   let form = $state({ name: '', parentId: '' });
   let editingId = $state<string | null>(null);
@@ -30,9 +33,9 @@
         await createLocation(payload);
       }
       reset();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to save location');
+      onerror?.(err instanceof Error ? err.message : 'Failed to save location');
     } finally {
       saving = false;
     }
@@ -43,13 +46,26 @@
     editingId = location.id;
   }
 
-  async function remove(id: string) {
-    if (!confirm('Delete this location?')) return;
+  async function handleEdit(location: any, changes: Partial<any>) {
     try {
-      await deleteLocation(id);
-      dispatch('updated');
+      await updateLocation(location.id, {
+        name: changes.name || location.name,
+        parentId: changes.parentId !== undefined ? changes.parentId : location.parentId
+      });
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to delete location');
+      onerror?.(err instanceof Error ? err.message : 'Failed to update location');
+    }
+  }
+
+  async function handleDelete(rows: any[]) {
+    try {
+      for (const row of rows) {
+        await deleteLocation(row.id);
+      }
+      onupdated?.();
+    } catch (err) {
+      onerror?.(err instanceof Error ? err.message : 'Failed to delete location');
     }
   }
 </script>
@@ -65,49 +81,33 @@
         <Label class="mb-2">{$isLoading ? 'Parent location' : $_('assets.parentLocation')}</Label>
         <Select bind:value={form.parentId}>
           <option value="">{$isLoading ? 'No parent' : $_('assets.noParent')}</option>
-          {#each locations as location}
+          {#each safeLocations as location}
             <option value={location.id}>{location.name}</option>
           {/each}
         </Select>
       </div>
     </div>
     <div class="flex gap-2">
-      <Button on:click={save} disabled={saving || !form.name.trim()}>
+      <Button onclick={save} disabled={saving || !form.name.trim()}>
         {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
       </Button>
       {#if editingId}
-        <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button color="alternative" onclick={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
       {/if}
     </div>
   </div>
 
-  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-    <Table>
-      <TableHead>
-        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Parent' : $_('assets.parent')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Path' : $_('assets.path')}</TableHeadCell>
-        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
-      </TableHead>
-      <TableBody>
-        {#each locations as location}
-          <TableBodyRow>
-            <TableBodyCell>{location.name}</TableBodyCell>
-            <TableBodyCell>{locations.find(loc => loc.id === location.parentId)?.name || '-'}</TableBodyCell>
-            <TableBodyCell class="text-xs text-gray-500">{location.path}</TableBodyCell>
-            <TableBodyCell>
-              <div class="flex gap-2">
-                <Button size="xs" color="alternative" on:click={() => edit(location)}>
-                  <Pencil class="w-3 h-3" />
-                </Button>
-                <Button size="xs" color="alternative" on:click={() => remove(location.id)}>
-                  <Trash2 class="w-3 h-3" />
-                </Button>
-              </div>
-            </TableBodyCell>
-          </TableBodyRow>
-        {/each}
-      </TableBody>
-    </Table>
-  </div>
+  <DataTable
+    data={safeLocations}
+    columns={[
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true },
+      { key: 'parentId', label: $isLoading ? 'Parent' : $_('assets.parent'), sortable: true, filterable: false, editable: false, render: (val) => safeLocations.find((loc: { id: string; name: string; parentId?: string | null; path: string }) => loc.id === val)?.name || '-' },
+      { key: 'path', label: $isLoading ? 'Path' : $_('assets.path'), sortable: true, filterable: true, editable: false }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={false}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 </div>

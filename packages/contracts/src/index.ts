@@ -24,3 +24,6 @@ export * from './maintenanceWarehouse/index.js'
 
 // CMDB
 export * from './cmdb/index.js'
+
+// Documents (QLTS)
+export * from './documents/index.js'

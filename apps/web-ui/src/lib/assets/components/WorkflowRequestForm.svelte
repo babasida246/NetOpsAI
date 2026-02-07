@@ -1,10 +1,9 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Label, Select, Textarea } from 'flowbite-svelte';
   import { createWorkflowRequest } from '$lib/api/assetMgmt';
 
-  const dispatch = createEventDispatcher<{ submitted: void }>();
+  let { onsubmitted, assetId: presetAssetId = '' } = $props<{ onsubmitted?: () => void; assetId?: string }>();
 
   let requestType = $state('assign');
   let assetId = $state('');
@@ -13,6 +12,12 @@
   let payload = $state('');
   let submitting = $state(false);
   let error = $state('');
+
+  $effect(() => {
+    if (presetAssetId && assetId !== presetAssetId) {
+      assetId = presetAssetId;
+    }
+  });
 
   async function handleSubmit() {
     try {
@@ -26,7 +31,7 @@
         toDept: toDept || undefined,
         payload: parsedPayload
       });
-      dispatch('submitted');
+      onsubmitted?.();
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to submit request';
     } finally {
@@ -51,7 +56,7 @@
   </div>
   <div>
     <Label class="mb-2">{$isLoading ? 'Asset ID' : $_('assets.assetId')}</Label>
-    <Input bind:value={assetId} placeholder="UUID" />
+    <Input bind:value={assetId} placeholder="UUID" disabled={Boolean(presetAssetId)} />
   </div>
   <div class="grid grid-cols-2 gap-4">
     <div>
@@ -65,9 +70,9 @@
   </div>
   <div>
     <Label class="mb-2">{$isLoading ? 'Payload (JSON)' : $_('assets.payloadJson')}</Label>
-    <Textarea bind:value={payload} rows="4" placeholder={$isLoading ? 'e.g. {"note":"optional"}' : $_('assets.placeholders.optionalNote')} />
+    <Textarea bind:value={payload} rows={4} placeholder={$isLoading ? 'e.g. {"note":"optional"}' : $_('assets.placeholders.optionalNote')} />
   </div>
-  <Button on:click={handleSubmit} disabled={submitting}>
+  <Button onclick={handleSubmit} disabled={submitting}>
     {submitting ? ($isLoading ? 'Submitting...' : $_('common.submitting')) : ($isLoading ? 'Submit Request' : $_('assets.submitRequest'))}
   </Button>
 </div>

@@ -69,7 +69,7 @@
       <div>
         <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'Change Requests' : $_('netops.changesPage.title')}</h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {$isLoading ? `${changes.length} changes` : $_('netops.changesPage.summary', { count: changes.length })}
+          {$isLoading ? `${changes.length} changes` : $_('netops.changesPage.summary', { values: { count: changes.length } })}
           {#if Object.keys(statusCounts()).length > 0}
             - {Object.entries(statusCounts()).slice(0, 3).map(([s, c]) => `${c} ${$isLoading ? s : $_(`netops.changesPage.statuses.${s}`)}`).join(' - ')}
           {/if}
@@ -81,7 +81,7 @@
           <Plus class="w-4 h-4 mr-2" />
           {$isLoading ? 'New Change' : $_('netops.changesPage.actions.newChange')}
         </Button>
-        <Button color="alternative" on:click={loadChanges}>
+        <Button color="alternative" onclick={loadChanges}>
           <RefreshCw class="w-4 h-4" />
         </Button>
       </div>
@@ -96,7 +96,9 @@
             bind:value={searchQuery}
             placeholder={$isLoading ? 'Search title...' : $_('netops.changesPage.filters.searchPlaceholder')}
           >
-            <Search slot="left" class="w-4 h-4" />
+            <svelte:fragment slot="left">
+                        <Search  class="w-4 h-4" />
+                      </svelte:fragment>
           </Input>
         </div>
         
@@ -130,7 +132,7 @@
       
       {#if searchQuery || filterStatus || filterRisk}
         <div class="mt-3">
-          <Button size="xs" color="alternative" on:click={clearFilters}>
+          <Button size="xs" color="alternative" onclick={clearFilters}>
             {$isLoading ? 'Clear Filters' : $_('netops.changesPage.actions.clearFilters')}
           </Button>
         </div>
@@ -208,4 +210,5 @@
     </div>
   {/if}
 </div>
+
 

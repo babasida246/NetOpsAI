@@ -18,7 +18,7 @@
       loading = true;
       error = '';
       const response = await getAssetCatalogs();
-      catalogs = response.data;
+      catalogs = response.data ?? [];
     } catch (err) {
       error = err instanceof Error ? err.message : $_('assets.errors.loadCatalogsFailed');
     } finally {
@@ -26,8 +26,8 @@
     }
   }
 
-  function handleError(event: CustomEvent<string>) {
-    error = event.detail;
+  function handleError(msg: string) {
+    error = msg;
   }
 
   $effect(() => {
@@ -54,15 +54,15 @@
       <TabItem open={activeTab === 'categories'} onclick={() => activeTab = 'categories'} title={$isLoading ? 'Categories' : $_('assets.categories')}>
         <CategoryCatalog
           categories={catalogs?.categories ?? []}
-          on:updated={loadCatalogs}
-          on:error={handleError}
+          onupdated={loadCatalogs}
+          onerror={handleError}
         />
       </TabItem>
       <TabItem open={activeTab === 'vendors'} onclick={() => activeTab = 'vendors'} title={$isLoading ? 'Vendors' : $_('assets.vendors')}>
         <VendorCatalog
           vendors={catalogs?.vendors ?? []}
-          on:updated={loadCatalogs}
-          on:error={handleError}
+          onupdated={loadCatalogs}
+          onerror={handleError}
         />
       </TabItem>
       <TabItem open={activeTab === 'models'} onclick={() => activeTab = 'models'} title={$isLoading ? 'Models' : $_('assets.models')}>
@@ -70,15 +70,15 @@
           models={catalogs?.models ?? []}
           categories={catalogs?.categories ?? []}
           vendors={catalogs?.vendors ?? []}
-          on:updated={loadCatalogs}
-          on:error={handleError}
+          onupdated={loadCatalogs}
+          onerror={handleError}
         />
       </TabItem>
       <TabItem open={activeTab === 'locations'} onclick={() => activeTab = 'locations'} title={$isLoading ? 'Locations' : $_('assets.locations')}>
         <LocationCatalog
           locations={catalogs?.locations ?? []}
-          on:updated={loadCatalogs}
-          on:error={handleError}
+          onupdated={loadCatalogs}
+          onerror={handleError}
         />
       </TabItem>
       <TabItem open={activeTab === 'status'} onclick={() => activeTab = 'status'} title={$isLoading ? 'Statuses' : $_('assets.statuses')}>

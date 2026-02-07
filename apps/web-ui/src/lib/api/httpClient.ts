@@ -1,4 +1,5 @@
-export const API_BASE = import.meta.env?.VITE_API_BASE || import.meta.env?.BACKEND_BASE_URL || 'http://localhost:3000'
+// API base URL - includes /api prefix for versioned endpoints
+export const API_BASE = import.meta.env?.VITE_API_BASE || import.meta.env?.BACKEND_BASE_URL || 'http://localhost:3000/api'
 
 export type StoredUser = {
     email?: string | null
@@ -54,7 +55,7 @@ export async function refreshAccessToken(fetchImpl: typeof fetch = fetch): Promi
 
     if (!refreshingPromise) {
         refreshingPromise = (async () => {
-            const response = await fetchImpl(`${API_BASE}/auth/refresh`, {
+            const response = await fetchImpl(`${API_BASE}/v1/auth/refresh`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ refreshToken })
@@ -66,8 +67,10 @@ export async function refreshAccessToken(fetchImpl: typeof fetch = fetch): Promi
             }
 
             const data = await response.json()
-            setStoredTokens(data.accessToken, data.refreshToken)
-            return data.accessToken as string
+            // API returns {success: true, data: {accessToken, refreshToken}, meta: {...}}
+            const tokens = data.data || data
+            setStoredTokens(tokens.accessToken, tokens.refreshToken)
+            return tokens.accessToken as string
         })()
 
         refreshingPromise.finally(() => {
@@ -109,5 +112,115 @@ export async function apiJson<T>(input: string, init?: RequestInit): Promise<T> 
         const message = await response.text()
         throw new Error(message || `HTTP ${response.status}`)
     }
-    return response.json() as Promise<T>
+    const json = await response.json()
+    return json as T
+}
+
+type ApiEnvelope<T> = {
+    data: T
+    meta?: unknown
+    success?: boolean
+}
+
+export function unwrapApiData<T>(payload: ApiEnvelope<T> | T): T {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+        return (payload as ApiEnvelope<T>).data
+    }
+    return payload as T
+}
+
+export async function apiJsonData<T>(input: string, init?: RequestInit): Promise<T> {
+    const payload = await apiJson<ApiEnvelope<T> | T>(input, init)
+    return unwrapApiData(payload)
+}
+
+type CacheEntry = {
+    expiresAt: number
+    value: unknown
+    isError: boolean
+}
+
+const inflightRequests = new Map<string, Promise<unknown>>()
+const responseCache = new Map<string, CacheEntry>()
+
+/**
+ * Clears the in-memory GET cache used by apiJsonCached/apiJsonDataCached.
+ *
+ * This is primarily used by unit tests to ensure deterministic assertions on fetch calls.
+ */
+export function clearApiCache(): void {
+    inflightRequests.clear()
+    responseCache.clear()
+}
+
+function buildCacheKey(input: string, init?: RequestInit): string {
+    const method = init?.method?.toUpperCase() ?? 'GET'
+    return `${method}:${input}`
+}
+
+function readCache<T>(key: string): T | null {
+    const cached = responseCache.get(key)
+    if (!cached) return null
+    if (cached.expiresAt <= Date.now()) {
+        responseCache.delete(key)
+        return null
+    }
+    if (cached.isError) {
+        throw cached.value
+    }
+    return cached.value as T
+}
+
+export async function apiJsonCached<T>(
+    input: string,
+    init?: RequestInit,
+    options?: { ttlMs?: number; errorTtlMs?: number }
+): Promise<T> {
+    const method = init?.method?.toUpperCase() ?? 'GET'
+    if (method !== 'GET') {
+        return apiJson<T>(input, init)
+    }
+
+    const key = buildCacheKey(input, init)
+    const cached = readCache<T>(key)
+    if (cached !== null) return cached
+
+    const existing = inflightRequests.get(key)
+    if (existing) return existing as Promise<T>
+
+    const ttlMs = options?.ttlMs ?? 5000
+    const errorTtlMs = options?.errorTtlMs ?? 2000
+
+    const promise = apiJson<T>(input, init)
+        .then((data) => {
+            responseCache.set(key, {
+                expiresAt: Date.now() + ttlMs,
+                value: data,
+                isError: false
+            })
+            return data
+        })
+        .catch((error) => {
+            responseCache.set(key, {
+                expiresAt: Date.now() + errorTtlMs,
+                value: error,
+                isError: true
+            })
+            throw error
+        })
+        .finally(() => {
+            inflightRequests.delete(key)
+        })
+
+    inflightRequests.set(key, promise)
+    return promise
+}
+
+export async function apiJsonDataCached<T>(
+    input: string,
+    init?: RequestInit,
+    options?: { ttlMs?: number; errorTtlMs?: number }
+): Promise<T> {
+    const payload = await apiJsonCached<ApiEnvelope<T> | T>(input, init, options)
+    return unwrapApiData(payload)
 }

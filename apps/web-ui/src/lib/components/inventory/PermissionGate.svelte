@@ -2,7 +2,7 @@
 	import { _, isLoading } from '$lib/i18n';
 	import { hasPermission, type Permission } from '$lib/stores/permissionStore';
 	
-	let {
+	let { children,
 		permission,
 		orgId = undefined,
 		warehouseId = undefined,
@@ -18,13 +18,13 @@
 </script>
 
 {#if allowed}
-	<slot />
+	{@render children?.()}
 {:else if fallback === 'disable'}
 	<div class="pointer-events-none opacity-50">
-		<slot />
+		{@render children?.()}
 	</div>
 {:else if fallback === 'show'}
 	<div class="opacity-50" title={$isLoading ? "You don't have permission for this action" : $_('warehouse.permissionDenied')}>
-		<slot />
+		{@render children?.()}
 	</div>
 {/if}

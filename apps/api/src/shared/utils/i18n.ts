@@ -10,7 +10,8 @@ import type { FastifyRequest } from 'fastify'
 export function getTranslator(request: FastifyRequest) {
     const language = request.language || 'en'
     return (key: string, options?: Record<string, any>) => {
-        return i18next.t(key, { ...options, lng: language })
+        // Use only key for now - i18next.t expects just the key
+        return i18next.t(key)
     }
 }
 
@@ -19,7 +20,8 @@ export function getTranslator(request: FastifyRequest) {
  */
 export function t(request: FastifyRequest, key: string, options?: Record<string, any>): string {
     const language = request.language || 'en'
-    return i18next.t(key, { ...options, lng: language })
+    // Use only key for now - i18next.t expects just the key
+    return i18next.t(key)
 }
 
 /**

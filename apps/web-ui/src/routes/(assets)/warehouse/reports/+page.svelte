@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Alert, Button, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Select, Spinner } from 'flowbite-svelte';
   import { _, isLoading } from '$lib/i18n';
   import {
     listWarehouses,
@@ -15,6 +15,7 @@
     type ValuationResult,
     type WarehouseRecord
   } from '$lib/api/warehouse';
+  import ReportsTable from '$lib/warehouse/ReportsTable.svelte';
 
   type ReportType = 'stockOnHand' | 'stockAvailable' | 'reorderAlerts' | 'fefoLots' | 'valuation';
 
@@ -104,141 +105,14 @@
       <Spinner size="8" />
     </div>
   {:else}
-    {#if reportType === 'stockOnHand'}
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'On hand' : $_('inventory.onHand')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Min level' : $_('common.minLevel')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if stockOnHandRows.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="4" class="text-center text-slate-500">{$isLoading ? 'No data.' : $_('common.noDataAvailable')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each stockOnHandRows as row}
-              <TableBodyRow>
-                <TableBodyCell>{row.warehouseName}</TableBodyCell>
-                <TableBodyCell>{row.partCode} - {row.partName}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.onHand}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.minLevel}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    {:else if reportType === 'stockAvailable'}
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'On hand' : $_('inventory.onHand')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Reserved' : $_('inventory.reserved')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Available' : $_('inventory.available')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if stockAvailableRows.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="5" class="text-center text-slate-500">{$isLoading ? 'No data.' : $_('common.noDataAvailable')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each stockAvailableRows as row}
-              <TableBodyRow>
-                <TableBodyCell>{row.warehouseName}</TableBodyCell>
-                <TableBodyCell>{row.partCode} - {row.partName}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.onHand}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.reserved}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.available}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    {:else if reportType === 'reorderAlerts'}
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'On hand' : $_('inventory.onHand')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Min level' : $_('common.minLevel')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if reorderRows.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="4" class="text-center text-slate-500">{$isLoading ? 'No alerts.' : $_('warehouse.noReorderAlerts')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each reorderRows as row}
-              <TableBodyRow>
-                <TableBodyCell>{row.warehouseName}</TableBodyCell>
-                <TableBodyCell>{row.partCode} - {row.partName}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.onHand}</TableBodyCell>
-                <TableBodyCell class="text-right">{row.minLevel}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    {:else if reportType === 'fefoLots'}
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Lot' : $_('warehouse.lot')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Expiry' : $_('warehouse.expiry')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Status' : $_('assets.status')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if fefoRows.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="5" class="text-center text-slate-500">{$isLoading ? 'No lots.' : $_('warehouse.noLots')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each fefoRows as row}
-              <TableBodyRow>
-                <TableBodyCell>{row.warehouseName}</TableBodyCell>
-                <TableBodyCell>{row.partCode} - {row.partName}</TableBodyCell>
-                <TableBodyCell>{row.lotNumber}</TableBodyCell>
-                <TableBodyCell>{row.expiryDate ?? '-'}</TableBodyCell>
-                <TableBodyCell>{row.status}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    {:else if reportType === 'valuation'}
-      <div class="space-y-3">
-        <div class="text-sm text-slate-600">
-          {$isLoading ? 'Total value:' : $_('warehouse.totalValue')}
-          <span class="font-semibold">{valuation?.currency ?? ''} {valuation?.total ?? 0}</span>
-        </div>
-        <Table>
-          <TableHead>
-            <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-            <TableHeadCell class="text-right">{$isLoading ? 'On hand' : $_('inventory.onHand')}</TableHeadCell>
-            <TableHeadCell class="text-right">{$isLoading ? 'Avg cost' : $_('warehouse.avgCost')}</TableHeadCell>
-            <TableHeadCell class="text-right">{$isLoading ? 'Value' : $_('warehouse.value')}</TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#if !valuation || valuation.items.length === 0}
-              <TableBodyRow>
-                <TableBodyCell colspan="4" class="text-center text-slate-500">{$isLoading ? 'No valuation data.' : $_('warehouse.noValuation')}</TableBodyCell>
-              </TableBodyRow>
-            {:else}
-              {#each valuation.items as row}
-                <TableBodyRow>
-                  <TableBodyCell>{row.partCode} - {row.partName}</TableBodyCell>
-                  <TableBodyCell class="text-right">{row.onHand}</TableBodyCell>
-                  <TableBodyCell class="text-right">{row.avgCost}</TableBodyCell>
-                  <TableBodyCell class="text-right">{row.value}</TableBodyCell>
-                </TableBodyRow>
-              {/each}
-            {/if}
-          </TableBody>
-        </Table>
-      </div>
-    {/if}
+    <ReportsTable
+      {reportType}
+      {stockOnHandRows}
+      {stockAvailableRows}
+      {reorderRows}
+      {fefoRows}
+      {valuation}
+      {loading}
+    />
   {/if}
 </div>

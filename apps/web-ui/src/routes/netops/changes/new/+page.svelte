@@ -265,7 +265,7 @@
           {#if deviceScope.length > 0}
             <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
-                {$isLoading ? `Selected: ${deviceScope.length} devices` : $_('netops.changeForm.alerts.selectedDevices', { count: deviceScope.length })}
+                {$isLoading ? `Selected: ${deviceScope.length} devices` : $_('netops.changeForm.alerts.selectedDevices', { values: { count: deviceScope.length } })}
               </p>
             </div>
           {/if}
@@ -334,7 +334,7 @@
   <div class="flex justify-between">
     <Button
       color="alternative"
-      on:click={() => currentStep > 1 ? currentStep-- : goto('/netops/changes')}
+      onclick={() => currentStep > 1 ? currentStep-- : goto('/netops/changes')}
     >
       <ArrowLeft class="w-4 h-4 mr-2" />
       {currentStep === 1 ? ($isLoading ? 'Cancel' : $_('netops.changeForm.cta.cancel')) : ($isLoading ? 'Previous' : $_('netops.changeForm.cta.previous'))}
@@ -342,14 +342,14 @@
     
     {#if currentStep < 4}
       <Button
-        on:click={() => currentStep++}
+        onclick={() => currentStep++}
         disabled={!canGoNext()}
       >
         {$isLoading ? 'Next' : $_('netops.changeForm.cta.next')}
         <ArrowRight class="w-4 h-4 ml-2" />
       </Button>
     {:else}
-      <Button on:click={handleCreate} disabled={creating}>
+      <Button onclick={handleCreate} disabled={creating}>
         {creating ? ($isLoading ? 'Creating...' : $_('netops.changeForm.cta.creating')) : ($isLoading ? 'Create Change' : $_('netops.changeForm.cta.create'))}
       </Button>
     {/if}

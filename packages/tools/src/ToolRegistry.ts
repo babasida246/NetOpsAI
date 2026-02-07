@@ -9,7 +9,8 @@ const addFormats = (addFormatsModule as any).default || addFormatsModule
 const AppError = {
     notFound: (msg: string) => Object.assign(new Error(msg), { statusCode: 404, code: 'NOT_FOUND' }),
     badRequest: (msg: string, details?: any) => Object.assign(new Error(msg), { statusCode: 400, code: 'BAD_REQUEST', details }),
-    unauthorized: (msg: string) => Object.assign(new Error(msg), { statusCode: 401, code: 'UNAUTHORIZED' })
+    unauthorized: (msg: string) => Object.assign(new Error(msg), { statusCode: 401, code: 'UNAUTHORIZED' }),
+    forbidden: (msg: string) => Object.assign(new Error(msg), { statusCode: 403, code: 'FORBIDDEN' })
 }
 
 export interface ToolDefinition {
@@ -27,6 +28,13 @@ export interface ToolDefinition {
 export interface ToolContext {
     userId: string
     correlationId: string
+    /**
+     * Optional role for RBAC enforcement.
+     *
+     * The platform uses roles like: user | admin | super_admin
+     * Some legacy tools may use additional role strings.
+     */
+    role?: string
     logger?: any
 }
 
@@ -101,6 +109,17 @@ export class ToolRegistry {
         // Check auth
         if (tool.requiresAuth && !context.userId) {
             throw AppError.unauthorized('Authentication required')
+        }
+
+        // Check RBAC
+        if (tool.requiredRole) {
+            const role = context.role
+            if (!role) {
+                throw AppError.unauthorized('Role required')
+            }
+            if (!hasRequiredRole(role, tool.requiredRole)) {
+                throw AppError.forbidden('Insufficient role')
+            }
         }
 
         const start = Date.now()
@@ -185,4 +204,28 @@ export class ToolRegistry {
 
         return stats
     }
+}
+
+const ROLE_RANK: Record<string, number> = {
+    user: 1,
+    admin: 2,
+    super_admin: 3
+}
+
+function hasRequiredRole(userRole: string, requiredRole: string): boolean {
+    if (userRole === requiredRole) return true
+
+    // Always allow top-level admins
+    if (userRole === 'super_admin') return true
+
+    const userRank = ROLE_RANK[userRole]
+    const requiredRank = ROLE_RANK[requiredRole]
+    if (userRank !== undefined && requiredRank !== undefined) {
+        return userRank >= requiredRank
+    }
+
+    // For non-standard roles, treat 'admin' as elevated.
+    if (userRole === 'admin') return true
+
+    return false
 }

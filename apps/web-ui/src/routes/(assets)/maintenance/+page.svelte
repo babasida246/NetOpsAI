@@ -41,7 +41,7 @@
         page,
         limit: meta.limit
       });
-      tickets = response.data;
+      tickets = response.data ?? [];
       meta = {
         total: response.meta?.total ?? response.data.length,
         page: response.meta?.page ?? page,
@@ -83,7 +83,7 @@
       <h1 class="text-2xl font-semibold">{$isLoading ? 'Maintenance Tickets' : $_('maintenance.title')}</h1>
       <p class="text-sm text-gray-500">{meta.total} {$isLoading ? 'tickets' : $_('maintenance.tickets')}</p>
     </div>
-    <Button on:click={() => showModal = true}>
+    <Button onclick={() => showModal = true}>
       <Plus class="w-4 h-4 mr-2" /> {$isLoading ? 'New Ticket' : $_('maintenance.newTicket')}
     </Button>
   </div>
@@ -94,7 +94,7 @@
 
   <div class="mb-4">
     <Label class="mb-2">{$isLoading ? 'Status' : $_('cmdb.status')}</Label>
-    <Select bind:value={status} on:change={() => loadTickets(1)}>
+    <Select bind:value={status} onchange={() => loadTickets(1)}>
       <option value="">{$isLoading ? 'All' : $_('common.all')}</option>
       <option value="open">{$isLoading ? 'Open' : $_('maintenance.open')}</option>
       <option value="in_progress">{$isLoading ? 'In progress' : $_('maintenance.inProgress')}</option>
@@ -135,7 +135,9 @@
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">{$isLoading ? 'Open Maintenance Ticket' : $_('maintenance.openTicket')}</h3>
+  
+      <h3 class="text-lg font-semibold">{$isLoading ? 'Open Maintenance Ticket' : $_('maintenance.openTicket')}</h3>
+    
   </svelte:fragment>
   <div class="space-y-4">
     <div>
@@ -165,11 +167,14 @@
     </div>
   </div>
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={handleCreate} disabled={creating || !assetId || !title}>
-        {creating ? ($isLoading ? 'Creating...' : $_('common.loading')) : ($isLoading ? 'Create' : $_('common.create'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={handleCreate} disabled={creating || !assetId || !title}>
+          {creating ? ($isLoading ? 'Creating...' : $_('common.loading')) : ($isLoading ? 'Create' : $_('common.create'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

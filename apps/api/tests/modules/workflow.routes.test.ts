@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { workflowRoutes } from '../../src/routes/v1/workflow.routes.js'
+import { workflowRoutes } from '../../src/routes/v1/workflow/workflow.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { WorkflowService } from '@application/core'
 import type { WorkflowRequestRecord } from '@contracts/shared'
@@ -53,6 +53,33 @@ describe('workflow routes', () => {
         })
 
         expect(response.statusCode).toBe(200)
+        expect(workflowService.listRequests).toHaveBeenCalledWith(expect.objectContaining({ requestedBy: 'user-1' }))
+    })
+
+    it('forces requestedBy filter for non-privileged roles', async () => {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/v1/workflows?requestedBy=other-user',
+            headers: { 'x-user-id': 'user-1', 'x-user-role': 'viewer' }
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(workflowService.listRequests).toHaveBeenCalledWith(expect.objectContaining({ requestedBy: 'user-1' }))
+    })
+
+    it('returns 404 when a non-privileged user tries to access another user request', async () => {
+        ;(workflowService.getRequest as any).mockResolvedValueOnce({
+            ...requestRecord,
+            requestedBy: 'user-2'
+        })
+
+        const response = await app.inject({
+            method: 'GET',
+            url: `/v1/workflows/${requestRecord.id}`,
+            headers: { 'x-user-id': 'user-1', 'x-user-role': 'viewer' }
+        })
+
+        expect(response.statusCode).toBe(404)
     })
 
     it('rejects submit without role', async () => {

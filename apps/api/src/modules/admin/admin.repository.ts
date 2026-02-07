@@ -30,7 +30,7 @@ interface AuditLogRow {
     user_id: string | null
     action: string
     resource: string
-    resource_id: string | null
+    resource_id?: string | null
     details: Record<string, any> | null
     ip_address: string | null
     user_agent: string | null
@@ -39,8 +39,30 @@ interface AuditLogRow {
 
 export class AdminRepository {
     private readonly SALT_ROUNDS = 12
+    private auditLogColumnCache = new Map<string, boolean>()
 
     constructor(private db: Pool) { }
+
+    private async hasAuditLogColumn(columnName: string): Promise<boolean> {
+        const cached = this.auditLogColumnCache.get(columnName)
+        if (cached !== undefined) return cached
+
+        const result = await this.db.query<{ exists: boolean }>(
+            `SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'audit_logs'
+                  AND column_name = $1
+            ) AS exists`
+            ,
+            [columnName]
+        )
+
+        const exists = result.rows[0]?.exists ?? false
+        this.auditLogColumnCache.set(columnName, exists)
+        return exists
+    }
 
     // User management
     async findUsers(query: ListUsersQuery): Promise<{ data: AdminUser[]; total: number }> {
@@ -68,7 +90,18 @@ export class AdminRepository {
         }
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-        const orderBy = `${query.sortBy || 'created_at'} ${query.sortOrder}`
+        const allowedSorts: Record<string, string> = {
+            created_at: 'created_at',
+            email: 'email',
+            name: 'name',
+            role: 'role',
+            is_active: 'is_active',
+            last_login: 'updated_at',
+            updated_at: 'updated_at'
+        }
+        const sortBy = allowedSorts[query.sortBy || 'created_at'] ?? 'created_at'
+        const sortOrder = query.sortOrder === 'asc' ? 'ASC' : 'DESC'
+        const orderBy = `${sortBy} ${sortOrder}`
 
         // Get total count
         const countResult = await this.db.query<{ count: string }>(
@@ -240,6 +273,9 @@ export class AdminRepository {
         const conditions: string[] = []
         const params: any[] = []
         let paramIndex = 1
+        const hasResourceId = await this.hasAuditLogColumn('resource_id')
+        const hasIpAddress = await this.hasAuditLogColumn('ip_address')
+        const hasUserAgent = await this.hasAuditLogColumn('user_agent')
 
         if (query.userId) {
             conditions.push(`user_id = $${paramIndex}`)
@@ -259,6 +295,31 @@ export class AdminRepository {
             paramIndex++
         }
 
+        if (query.resourceId) {
+            if (hasResourceId) {
+                conditions.push(`resource_id = $${paramIndex}`)
+                params.push(query.resourceId)
+                paramIndex++
+            } else {
+                conditions.push(`(details->>'resourceId') = $${paramIndex}`)
+                params.push(query.resourceId)
+                paramIndex++
+            }
+        }
+
+        if (query.q) {
+            const qParam = `%${query.q}%`
+            const resourceIdSearch = hasResourceId ? 'COALESCE(resource_id::text, \'\')' : 'COALESCE(details::text, \'\')'
+            conditions.push(`(
+                action ILIKE $${paramIndex}
+                OR resource ILIKE $${paramIndex}
+                OR COALESCE(user_id::text, '') ILIKE $${paramIndex}
+                OR ${resourceIdSearch} ILIKE $${paramIndex}
+            )`)
+            params.push(qParam)
+            paramIndex++
+        }
+
         if (query.startDate) {
             conditions.push(`created_at >= $${paramIndex}`)
             params.push(query.startDate)
@@ -272,7 +333,15 @@ export class AdminRepository {
         }
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
-        const orderBy = `${query.sortBy || 'created_at'} ${query.sortOrder}`
+        const allowedSorts: Record<string, string> = {
+            created_at: 'created_at',
+            action: 'action',
+            resource: 'resource',
+            user_id: 'user_id'
+        }
+        const sortBy = allowedSorts[query.sortBy || 'created_at'] ?? 'created_at'
+        const sortOrder = query.sortOrder === 'asc' ? 'ASC' : 'DESC'
+        const orderBy = `${sortBy} ${sortOrder}`
 
         // Get total count
         const countResult = await this.db.query<{ count: string }>(
@@ -282,8 +351,17 @@ export class AdminRepository {
         const total = parseInt(countResult.rows[0].count, 10)
 
         // Get data
+        const resourceIdSelect = hasResourceId
+            ? 'resource_id'
+            : `COALESCE(details->>'resourceId', NULL) as resource_id`
+        const ipAddressSelect = hasIpAddress
+            ? 'ip_address'
+            : `COALESCE(details->>'ipAddress', NULL) as ip_address`
+        const userAgentSelect = hasUserAgent
+            ? 'user_agent'
+            : `COALESCE(details->>'userAgent', NULL) as user_agent`
         const dataResult = await this.db.query<AuditLogRow>(
-            `SELECT id, user_id, action, resource, resource_id, details, ip_address, user_agent, created_at
+            `SELECT id, user_id, action, resource, ${resourceIdSelect}, details, ${ipAddressSelect}, ${userAgentSelect}, created_at
        FROM audit_logs ${whereClause}
        ORDER BY ${orderBy}
        LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
@@ -305,20 +383,77 @@ export class AdminRepository {
         ipAddress?: string
         userAgent?: string
     }): Promise<AuditLog> {
+        const hasResourceId = await this.hasAuditLogColumn('resource_id')
+        const hasIpAddress = await this.hasAuditLogColumn('ip_address')
+        const hasUserAgent = await this.hasAuditLogColumn('user_agent')
+
+        const mergedDetails: Record<string, any> = { ...(data.details ?? {}) }
+        if (data.resourceId && !hasResourceId) mergedDetails.resourceId = data.resourceId
+        if (data.ipAddress && !hasIpAddress) mergedDetails.ipAddress = data.ipAddress
+        if (data.userAgent && !hasUserAgent) mergedDetails.userAgent = data.userAgent
+        const details = Object.keys(mergedDetails).length > 0 ? mergedDetails : null
+
+        const columns: string[] = ['user_id', 'action', 'resource', 'details']
+        const values: any[] = [data.userId || null, data.action, data.resource, details]
+
+        if (hasResourceId) {
+            columns.push('resource_id')
+            values.push(data.resourceId || null)
+        }
+        if (hasIpAddress) {
+            columns.push('ip_address')
+            values.push(data.ipAddress || null)
+        }
+        if (hasUserAgent) {
+            columns.push('user_agent')
+            values.push(data.userAgent || null)
+        }
+
+        const placeholders = values.map((_, index) => `$${index + 1}`).join(', ')
+
+        const resourceIdSelect = hasResourceId
+            ? 'resource_id'
+            : `COALESCE(details->>'resourceId', NULL) as resource_id`
+        const ipAddressSelect = hasIpAddress
+            ? 'ip_address'
+            : `COALESCE(details->>'ipAddress', NULL) as ip_address`
+        const userAgentSelect = hasUserAgent
+            ? 'user_agent'
+            : `COALESCE(details->>'userAgent', NULL) as user_agent`
+
         const result = await this.db.query<AuditLogRow>(
-            `INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip_address, user_agent)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, user_id, action, resource, resource_id, details, ip_address, user_agent, created_at`,
-            [
-                data.userId || null,
-                data.action,
-                data.resource,
-                data.resourceId || null,
-                data.details || null,
-                data.ipAddress || null,
-                data.userAgent || null
-            ]
+            `INSERT INTO audit_logs (${columns.join(', ')})
+             VALUES (${placeholders})
+             RETURNING id, user_id, action, resource, ${resourceIdSelect}, details, ${ipAddressSelect}, ${userAgentSelect}, created_at`,
+            values
         )
+
+        return this.mapAuditLog(result.rows[0])
+    }
+
+    async findAuditLogById(id: string): Promise<AuditLog | null> {
+        const hasResourceId = await this.hasAuditLogColumn('resource_id')
+        const hasIpAddress = await this.hasAuditLogColumn('ip_address')
+        const hasUserAgent = await this.hasAuditLogColumn('user_agent')
+
+        const resourceIdSelect = hasResourceId
+            ? 'resource_id'
+            : `COALESCE(details->>'resourceId', NULL) as resource_id`
+        const ipAddressSelect = hasIpAddress
+            ? 'ip_address'
+            : `COALESCE(details->>'ipAddress', NULL) as ip_address`
+        const userAgentSelect = hasUserAgent
+            ? 'user_agent'
+            : `COALESCE(details->>'userAgent', NULL) as user_agent`
+
+        const result = await this.db.query<AuditLogRow>(
+            `SELECT id, user_id, action, resource, ${resourceIdSelect}, details, ${ipAddressSelect}, ${userAgentSelect}, created_at
+             FROM audit_logs
+             WHERE id = $1`,
+            [id]
+        )
+
+        if (result.rows.length === 0) return null
         return this.mapAuditLog(result.rows[0])
     }
 
@@ -341,7 +476,7 @@ export class AdminRepository {
             userId: row.user_id,
             action: row.action,
             resource: row.resource,
-            resourceId: row.resource_id,
+            resourceId: row.resource_id ?? null,
             details: row.details,
             ipAddress: row.ip_address,
             userAgent: row.user_agent,

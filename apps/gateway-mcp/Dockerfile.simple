@@ -1,4 +1,4 @@
-# Simple Dockerfile for gateway-mcp - Assumes code is already built
+# Simple Dockerfile for gateway-mcp - Expects code already built on host
 FROM node:20-alpine AS runner
 
 # Install pnpm
@@ -10,23 +10,39 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy all sources FIRST (needed for workspace resolution)
-COPY packages packages/
-COPY packages/mcp-servers packages/mcp-servers/
-COPY apps/gateway-mcp apps/gateway-mcp/
-
-# Copy package files
+# Copy package files first
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/*/package.json packages/
-COPY packages/mcp-servers/core/*/package.json packages/mcp-servers/core/
+
+# Copy package.json files for all workspace packages
+COPY packages/domain/package.json packages/domain/
+COPY packages/contracts/package.json packages/contracts/
+COPY packages/application/package.json packages/application/
+COPY packages/config/package.json packages/config/
+COPY packages/infra-postgres/package.json packages/infra-postgres/
+COPY packages/infra-redis/package.json packages/infra-redis/
+COPY packages/infra-vector/package.json packages/infra-vector/
+COPY packages/observability/package.json packages/observability/
+COPY packages/providers/package.json packages/providers/
+COPY packages/security/package.json packages/security/
+COPY packages/tools/package.json packages/tools/
 COPY apps/gateway-mcp/package.json apps/gateway-mcp/
 
-# Install ALL dependencies (needed for pnpm workspace resolution)
-RUN pnpm install --frozen-lockfile
+# Copy BUILT dist folders
+COPY --chown=nodejs:nodejs packages/domain/dist packages/domain/dist/
+COPY --chown=nodejs:nodejs packages/contracts/dist packages/contracts/dist/
+COPY --chown=nodejs:nodejs packages/application/dist packages/application/dist/
+COPY --chown=nodejs:nodejs packages/config/dist packages/config/dist/
+COPY --chown=nodejs:nodejs packages/infra-postgres/dist packages/infra-postgres/dist/
+COPY --chown=nodejs:nodejs packages/infra-redis/dist packages/infra-redis/dist/
+COPY --chown=nodejs:nodejs packages/infra-vector/dist packages/infra-vector/dist/
+COPY --chown=nodejs:nodejs packages/observability/dist packages/observability/dist/
+COPY --chown=nodejs:nodejs packages/providers/dist packages/providers/dist/
+COPY --chown=nodejs:nodejs packages/security/dist packages/security/dist/
+COPY --chown=nodejs:nodejs packages/tools/dist packages/tools/dist/
+COPY --chown=nodejs:nodejs apps/gateway-mcp/dist apps/gateway-mcp/dist/
 
-# Copy built artifacts (already copied above with full packages)
-# Note: dist folders are already in packages/ from previous COPY
-COPY --chown=nodejs:nodejs apps/gateway-mcp/dist apps/gateway-mcp/dist
+# Install production dependencies only
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
 # Switch to non-root user
 USER nodejs

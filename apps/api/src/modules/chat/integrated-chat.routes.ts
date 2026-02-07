@@ -122,7 +122,7 @@ export async function integratedChatRoutes(
         }
 
         const token = authHeader.substring(7)
-        request.user = authService.verifyAccessToken(token)
+        request.user = { ...authService.verifyAccessToken(token), id: authService.verifyAccessToken(token).sub }
     }
 
     const requireAdmin = async (request: FastifyRequest) => {
@@ -138,7 +138,7 @@ export async function integratedChatRoutes(
 
     const sendMessageHandler = async (request: FastifyRequest, reply: FastifyReply) => {
         const data = sendMessageSchema.parse(request.body)
-        const userId = request.user!.sub
+        const userId = request.user!.id
 
         const messages: ChatCompletionRequest['messages'] = []
         if (data.systemPrompt) {
@@ -219,7 +219,7 @@ export async function integratedChatRoutes(
      */
     const completionHandler = async (request: FastifyRequest, reply: FastifyReply) => {
         const data = chatCompletionRequestSchema.parse(request.body)
-        const userId = request.user!.sub
+        const userId = request.user!.id
 
         const result = await chatService.chat(data, {
             userId,
@@ -301,7 +301,7 @@ export async function integratedChatRoutes(
 
     const userStatsHandler = async (request: FastifyRequest, reply: FastifyReply) => {
         const query = statsQuerySchema.parse(request.query)
-        const userId = request.user!.sub
+        const userId = request.user!.id
 
         const startDate = query.startDate ? new Date(query.startDate) : undefined
         const endDate = query.endDate ? new Date(query.endDate) : undefined
@@ -333,7 +333,7 @@ export async function integratedChatRoutes(
     }
 
     const dailySummaryHandler = async (request: FastifyRequest, reply: FastifyReply) => {
-        const userId = request.user!.sub
+        const userId = request.user!.id
         const summary = await chatService.getDailySummary(userId)
         return reply.status(200).send(summary)
     }

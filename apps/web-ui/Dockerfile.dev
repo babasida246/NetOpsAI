@@ -14,7 +14,7 @@ COPY tsconfig.base.json ./
 COPY packages ./packages
 COPY apps/web-ui/package.json ./apps/web-ui/
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 EXPOSE 5173
 

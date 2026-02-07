@@ -1,5 +1,4 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Modal, Spinner } from 'flowbite-svelte';
   import {
@@ -9,9 +8,7 @@
     type AssetImportRow
   } from '$lib/api/assetMgmt';
 
-  let { open = $bindable(false) } = $props<{ open?: boolean }>();
-
-  const dispatch = createEventDispatcher<{ imported: void }>();
+  let { open = $bindable(false), onimported } = $props<{ open?: boolean; onimported?: () => void }>();
 
   let preview = $state<AssetImportPreview | null>(null);
   let rows = $state<AssetImportRow[]>([]);
@@ -174,7 +171,7 @@
       committing = true;
       error = '';
       await commitAssetImport(rows);
-      dispatch('imported');
+      onimported?.();
       open = false;
       reset();
     } catch (err) {
@@ -185,9 +182,11 @@
   }
 </script>
 
-<Modal bind:open on:close={reset} size="lg">
+<Modal bind:open onclose={reset} size="lg">
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">{$isLoading ? 'Import Assets' : $_('assets.importAssets')}</h3>
+  
+      <h3 class="text-xl font-semibold">{$isLoading ? 'Import Assets' : $_('assets.importAssets')}</h3>
+    
   </svelte:fragment>
 
   {#if error}
@@ -227,11 +226,14 @@
   </div>
 
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => open = false}>Close</Button>
-      <Button on:click={commitImport} disabled={!preview || preview.validCount === 0 || committing}>
-        {committing ? 'Importing...' : 'Commit Import'}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => open = false}>Close</Button>
+        <Button onclick={commitImport} disabled={!preview || preview.validCount === 0 || committing}>
+          {committing ? 'Importing...' : 'Commit Import'}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

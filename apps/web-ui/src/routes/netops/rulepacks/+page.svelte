@@ -65,7 +65,7 @@
       </div>
       
       <div class="flex gap-2">
-        <Button color="alternative" on:click={loadRulepacks}>
+        <Button color="alternative" onclick={loadRulepacks}>
           <RefreshCw class="w-4 h-4" />
         </Button>
       </div>
@@ -146,14 +146,14 @@
             </div>
             
             <div class="flex gap-2">
-              <Button size="sm" color="alternative" on:click={() => viewRulepack(rulepack)}>
+              <Button size="sm" color="alternative" onclick={() => viewRulepack(rulepack)}>
                 <FileText class="w-4 h-4 mr-2" />
                 {$isLoading ? 'View JSON' : $_('netops.rulepacksPage.viewJson')}
               </Button>
               {#if !rulepack.active}
                 <Button 
                   size="sm" 
-                  on:click={() => handleActivate(rulepack.id)}
+                  onclick={() => handleActivate(rulepack.id)}
                   disabled={activating}
                 >
                   {activating ? ($isLoading ? 'Activating...' : $_('netops.rulepacksPage.activating')) : ($isLoading ? 'Activate' : $_('netops.rulepacksPage.activate'))}
@@ -170,9 +170,11 @@
 <!-- View Rulepack Modal -->
 <Modal bind:open={showViewModal} size="xl">
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">
-      {selectedRulepack?.name} v{selectedRulepack?.version}
-    </h3>
+  
+      <h3 class="text-xl font-semibold">
+        {selectedRulepack?.name} v{selectedRulepack?.version}
+      </h3>
+    
   </svelte:fragment>
   
   {#if selectedRulepack}
@@ -180,9 +182,12 @@
   {/if}
   
   <svelte:fragment slot="footer">
-    <div class="flex justify-end">
-      <Button color="alternative" on:click={() => showViewModal = false}>{$isLoading ? 'Close' : $_('common.close')}</Button>
-    </div>
+  
+      <div class="flex justify-end">
+        <Button color="alternative" onclick={() => showViewModal = false}>{$isLoading ? 'Close' : $_('common.close')}</Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+
 

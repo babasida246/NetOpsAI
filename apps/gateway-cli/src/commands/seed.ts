@@ -11,7 +11,13 @@ export async function seedCommand() {
 
     try {
         const env = EnvSchema.parse(process.env)
-        const pg = new PgClient({ connectionString: env.DATABASE_URL })
+        const pg = new PgClient({
+            connectionString: env.DATABASE_URL,
+            max: 10,
+            min: 2,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000
+        })
 
         // Seed model configs
         for (const model of FREE_MODELS) {

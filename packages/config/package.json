@@ -5,7 +5,7 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts --clean",
+        "build": "tsc --project tsconfig.json && tsc src/index.ts src/models.ts --outDir dist --declaration --module NodeNext --target ES2022",
         "dev": "tsup src/index.ts --format esm --dts --watch",
         "test": "echo 'No tests for config yet'"
     },

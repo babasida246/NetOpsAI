@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Alert, Button, Input, Select, Spinner } from 'flowbite-svelte';
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { _, isLoading } from '$lib/i18n';
   import StockDocumentLines from '$lib/warehouse/StockDocumentLines.svelte';
   import {
@@ -17,7 +17,7 @@
     type WarehouseRecord
   } from '$lib/api/warehouse';
 
-  let docId = $derived($page.params.id);
+  const docId = $derived(page.params.id);
 
   let document = $state<StockDocumentRecord | null>(null);
   let lines = $state<StockDocumentLine[]>([]);
@@ -85,7 +85,7 @@
     try {
       saving = true;
       const response = await postStockDocument(document.id);
-      document = response.data;
+      document = response.data ?? null;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('warehouse.errors.postDocumentFailed');
     } finally {
@@ -98,7 +98,7 @@
     try {
       saving = true;
       const response = await cancelStockDocument(document.id);
-      document = response.data;
+      document = response.data ?? null;
     } catch (err) {
       error = err instanceof Error ? err.message : $_('warehouse.errors.cancelDocumentFailed');
     } finally {

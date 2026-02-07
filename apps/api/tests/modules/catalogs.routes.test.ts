@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { catalogRoutes } from '../../src/routes/v1/catalogs.routes.js'
+import { catalogRoutes } from '../../src/routes/v1/assets/catalogs.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { CatalogService } from '@application/core'
 

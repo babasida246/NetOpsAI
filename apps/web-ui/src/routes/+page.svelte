@@ -1,9 +1,14 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import { _, isLoading } from '$lib/i18n';
+  import { defaultLandingPath, getCapabilities } from '$lib/auth/capabilities';
 
   $effect(() => {
-    goto('/netops/devices');
+    if (typeof window === 'undefined') return;
+
+    const role = localStorage.getItem('userRole');
+    const caps = getCapabilities(role);
+    goto(defaultLandingPath(caps), { replaceState: true });
   });
 </script>
 

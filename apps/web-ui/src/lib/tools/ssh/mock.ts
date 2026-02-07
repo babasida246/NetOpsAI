@@ -1,0 +1,152 @@
+import type { SshCommandPolicy, SshCommandResult, SshLogEvent, SshSession } from './types'
+
+const sessions = new Map<string, { session: SshSession; log: SshLogEvent[] }>()
+
+const DEFAULT_IDLE = 600
+
+function createId(prefix: string): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+        return `${prefix}_${crypto.randomUUID()}`
+    }
+    return `${prefix}_${Math.random().toString(36).slice(2)}`
+}
+
+function nowIso(): string {
+    return new Date().toISOString()
+}
+
+function matchRule(command: string, rule: string): boolean {
+    if (!rule) return false
+    if (rule.startsWith('/') && rule.endsWith('/')) {
+        try {
+            const regex = new RegExp(rule.slice(1, -1), 'i')
+            return regex.test(command)
+        } catch {
+            return false
+        }
+    }
+    return command.toLowerCase().includes(rule.toLowerCase())
+}
+
+function isDenied(command: string, policy?: SshCommandPolicy): boolean {
+    if (!policy) return false
+    return policy.denyList.some((rule) => matchRule(command, rule))
+}
+
+function isAllowed(command: string, policy?: SshCommandPolicy): boolean {
+    if (!policy || policy.allowList.length === 0) return true
+    return policy.allowList.some((rule) => matchRule(command, rule))
+}
+
+function isDangerous(command: string, policy?: SshCommandPolicy): boolean {
+    if (!policy) return false
+    return policy.dangerousList.some((rule) => matchRule(command, rule))
+}
+
+export function listSessions(): SshSession[] {
+    return Array.from(sessions.values()).map((item) => item.session)
+}
+
+export function openSession(input: {
+    deviceId: string
+    deviceName: string
+    host: string
+    port: number
+    user: string
+    authType: 'password' | 'key'
+    idleTimeoutSec?: number
+}): SshSession {
+    const existing = Array.from(sessions.values()).find(
+        (item) => item.session.deviceId === input.deviceId && item.session.user === input.user && item.session.status === 'connected'
+    )
+    if (existing) {
+        existing.session.lastActiveAt = nowIso()
+        return existing.session
+    }
+
+    const session: SshSession = {
+        id: createId('ssh'),
+        deviceId: input.deviceId,
+        deviceName: input.deviceName,
+        host: input.host,
+        port: input.port,
+        user: input.user,
+        authType: input.authType,
+        createdAt: nowIso(),
+        lastActiveAt: nowIso(),
+        status: 'connected',
+        idleTimeoutSec: input.idleTimeoutSec ?? DEFAULT_IDLE
+    }
+
+    sessions.set(session.id, {
+        session,
+        log: [
+            {
+                timestamp: nowIso(),
+                type: 'system',
+                message: `Mock SSH session opened to ${session.user}@${session.host}:${session.port}`
+            }
+        ]
+    })
+
+    return session
+}
+
+export function closeSession(sessionId: string, reason = 'Closed by user'): void {
+    const entry = sessions.get(sessionId)
+    if (!entry) return
+    entry.session.status = 'closed'
+    entry.session.lastActiveAt = nowIso()
+    entry.log.push({ timestamp: nowIso(), type: 'system', message: reason })
+}
+
+export function sendCommand(sessionId: string, command: string, policy?: SshCommandPolicy): SshCommandResult {
+    const entry = sessions.get(sessionId)
+    if (!entry) {
+        return { output: ['Session not found.'] }
+    }
+
+    entry.session.lastActiveAt = nowIso()
+
+    if (entry.session.status !== 'connected') {
+        return { output: ['Session closed.'] }
+    }
+
+    if (!isAllowed(command, policy)) {
+        entry.log.push({ timestamp: nowIso(), type: 'error', message: `Command blocked by allowlist: ${command}` })
+        return { output: ['Command blocked by allowlist.'] }
+    }
+
+    if (isDenied(command, policy)) {
+        entry.log.push({ timestamp: nowIso(), type: 'error', message: `Command blocked by denylist: ${command}` })
+        return { output: ['Command blocked by denylist.'] }
+    }
+
+    const warning = isDangerous(command, policy) ? 'Dangerous command flagged.' : undefined
+
+    entry.log.push({ timestamp: nowIso(), type: 'input', message: command })
+    entry.log.push({ timestamp: nowIso(), type: 'output', message: `[mock] executed: ${command}` })
+
+    return { output: [`[mock] executed: ${command}`], warning }
+}
+
+export function getSessionLog(sessionId: string): SshLogEvent[] {
+    const entry = sessions.get(sessionId)
+    return entry ? entry.log : []
+}
+
+export function exportSessionText(sessionId: string): string {
+    const log = getSessionLog(sessionId)
+    return log.map((event) => `[${event.timestamp}] ${event.type.toUpperCase()}: ${event.message}`).join('\n')
+}
+
+export function purgeIdleSessions(): void {
+    const now = Date.now()
+    for (const entry of sessions.values()) {
+        if (entry.session.status !== 'connected') continue
+        const last = new Date(entry.session.lastActiveAt).getTime()
+        if (now - last > entry.session.idleTimeoutSec * 1000) {
+            closeSession(entry.session.id, 'Closed due to idle timeout')
+        }
+    }
+}

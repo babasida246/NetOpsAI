@@ -19,7 +19,7 @@
         }
     },
     "scripts": {
-        "build": "tsup src/index.ts src/parsers/index.ts src/collectors/index.ts --format esm --dts --clean",
+        "build": "tsc --project tsconfig.json",
         "test": "vitest run",
         "test:watch": "vitest"
     },

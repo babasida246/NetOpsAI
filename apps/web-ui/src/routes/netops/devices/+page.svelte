@@ -151,7 +151,7 @@
       <div>
         <h1 class="text-2xl font-semibold tracking-tight">{$isLoading ? 'NetOps Devices' : $_('netops.devicesPage.title')}</h1>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          {$isLoading ? `${devices.length} devices` : $_('netops.devicesPage.summary', { count: devices.length })}
+        {$isLoading ? `${devices.length} devices` : $_('netops.devicesPage.summary', { values: { count: devices.length } })}
           {#if Object.keys(vendorCounts()).length > 0}
             - {Object.entries(vendorCounts()).map(([v, c]) => `${c} ${v}`).join(' - ')}
           {/if}

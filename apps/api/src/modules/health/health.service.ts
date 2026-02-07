@@ -14,6 +14,14 @@ export class HealthService {
         private version: string = '2.0.0'
     ) { }
 
+    async check(): Promise<HealthCheck> {
+        return this.getHealth()
+    }
+
+    async detailedCheck(): Promise<HealthCheck> {
+        return this.getHealth()
+    }
+
     async getHealth(): Promise<HealthCheck> {
         const [dbStatus, redisStatus] = await Promise.all([
             this.checkDatabase(),

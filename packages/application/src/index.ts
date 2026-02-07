@@ -35,3 +35,44 @@ export { SchemaService } from './cmdb/SchemaService.js'
 export { CiService } from './cmdb/CiService.js'
 export { RelationshipService } from './cmdb/RelationshipService.js'
 export { ServiceMappingService } from './cmdb/ServiceMappingService.js'
+export { CiInventoryReportService } from './cmdb/CiInventoryReportService.js'
+export { RelationshipAnalyticsService } from './cmdb/RelationshipAnalyticsService.js'
+export { AuditTrailService } from './cmdb/AuditTrailService.js'
+
+// CMDB Export Utilities
+export {
+    exportCiInventoryReportToCSV,
+    exportRelationshipAnalyticsToCSV,
+    exportAuditTrailToCSV,
+    exportCiInventoryReportToPDF,
+    exportRelationshipAnalyticsToPDF,
+    exportAuditTrailToPDF
+} from './cmdb/export/index.js'
+
+// CMDB Caching Services
+export {
+    ReportCachingService,
+    CachedCiInventoryReportService,
+    CachedRelationshipAnalyticsService,
+    CachedAuditTrailService,
+    CacheInvalidator,
+    type CacheConfig
+} from './cmdb/ReportCachingService.js'
+
+// CMDB Report Scheduling
+export {
+    ReportScheduler,
+    ScheduledReportStorage,
+    type ScheduledReportConfig
+} from './cmdb/ReportScheduler.js'
+
+// CMDB Email Delivery
+export {
+    ReportEmailService,
+    CachedEmailService,
+    type EmailConfig,
+    type EmailSubscription,
+    type EmailTemplate,
+    type ReportType,
+    type ReportEmailData
+} from './cmdb/ReportEmailService.js'

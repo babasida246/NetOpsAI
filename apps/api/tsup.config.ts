@@ -8,6 +8,29 @@ export default defineConfig({
     dts: false,
     sourcemap: false,
     minify: false,
+    // Bundle workspace packages but not node_modules
+    noExternal: [
+        '@domain/core',
+        '@contracts/shared',
+        '@application/core',
+        '@config/env',
+        '@infra/postgres',
+        '@infra/redis',
+        '@infra/vector',
+        '@infra/netdevice',
+        '@providers/provider',
+        '@tools/tools',
+        '@observability/observability',
+        '@security/security',
+    ],
+    // External all production dependencies that have dynamic requires
+    external: [
+        'redis',
+        'bull',
+        'nodemailer',
+        'pg',
+        '@redis/client',
+    ],
     onSuccess: async () => {
         // Copy locale files after build
         const fs = await import('fs')

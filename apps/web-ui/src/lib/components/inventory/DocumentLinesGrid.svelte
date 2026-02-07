@@ -1,7 +1,6 @@
-﻿<script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+<script lang="ts">
 	import { _, isLoading } from '$lib/i18n';
-	import type { InventoryDocumentLine, InventoryItem, WarehouseLocation, UOM, InventoryLot } from '$lib/types/inventory';
+	import type { InventoryDocumentLine, InventoryItem, WarehouseLocation, UOM, InventoryLot, ItemUOMConversion } from '$lib/types/inventory';
 	import EntitySelect from './EntitySelect.svelte';
 	import UomInput from './UomInput.svelte';
 	import MoneyInput from './MoneyInput.svelte';
@@ -13,7 +12,9 @@
 		uoms = [],
 		lots = [],
 		docType,
-		readonly = false
+		readonly = false,
+		onupdate,
+		onstockcheck
 	} = $props<{
 		lines?: Partial<InventoryDocumentLine>[];
 		items?: InventoryItem[];
@@ -22,11 +23,8 @@
 		lots?: InventoryLot[];
 		docType: 'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUST' | 'STOCKTAKE';
 		readonly?: boolean;
-	}>();
-
-	const dispatch = createEventDispatcher<{
-		update: Partial<InventoryDocumentLine>[];
-		stockCheck: { lineNo: number; itemId: string; locationId?: string; quantity: number };
+		onupdate?: (lines: Partial<InventoryDocumentLine>[]) => void;
+		onstockcheck?: (data: { lineNo: number; itemId: string; locationId?: string; quantity: number }) => void;
 	}>();
 
 	function addLine() {
@@ -46,14 +44,14 @@
 		}
 		
 		lines = [...lines, newLine];
-		dispatch('update', lines);
+		onupdate?.(lines);
 	}
 
 	function removeLine(index: number) {
-		lines = lines.filter((_, i) => i !== index);
+		lines = lines.filter((_: Partial<InventoryDocumentLine>, i: number) => i !== index);
 		// Renumber lines
-		lines = lines.map((line, i) => ({ ...line, lineNo: i + 1 }));
-		dispatch('update', lines);
+		lines = lines.map((line: Partial<InventoryDocumentLine>, i: number) => ({ ...line, lineNo: i + 1 }));
+		onupdate?.(lines);
 	}
 
 	function updateLine<K extends keyof InventoryDocumentLine>(
@@ -63,35 +61,35 @@
 	) {
 		lines[index] = { ...lines[index], [field]: value };
 		lines = [...lines];
-		dispatch('update', lines);
+		onupdate?.(lines);
 		
 		// Trigger stock check for quantity changes
 		if (field === 'quantity' && lines[index].itemId) {
-			dispatch('stockCheck', {
+			onstockcheck?.({
 				lineNo: lines[index].lineNo || index + 1,
 				itemId: lines[index].itemId!,
 				locationId: lines[index].sourceLocationId,
-				quantity: value
+				quantity: value as number
 			});
 		}
 	}
 
-	const itemOptions = $derived(items.map(item => ({
+	const itemOptions = $derived(items.map((item: InventoryItem) => ({
 		id: item.id,
 		label: item.name,
 		sublabel: `${item.sku} • ${item.baseUom?.code || ''}`
 	})));
 
-	const locationOptions = $derived(locations.map(loc => ({
+	const locationOptions = $derived(locations.map((loc: WarehouseLocation) => ({
 		id: loc.id,
 		label: loc.name,
 		sublabel: `${loc.code} • ${loc.locationType}`
 	})));
 
 	function getItemUoms(itemId: string): UOM[] {
-		const item = items.find(i => i.id === itemId);
+		const item = items.find((i: InventoryItem) => i.id === itemId);
 		if (!item) return uoms;
-		return uoms.filter(u => u.id === item.baseUomId || item.conversions?.some(c => c.toUomId === u.id || c.fromUomId === u.id));
+		return uoms.filter((u: UOM) => u.id === item.baseUomId || item.conversions?.some((c: ItemUOMConversion) => c.toUomId === u.id || c.fromUomId === u.id));
 	}
 </script>
 
@@ -137,7 +135,7 @@
 								bind:value={line.itemId}
 								options={itemOptions}
 								placeholder={$isLoading ? 'Select item...' : $_('assets.placeholders.selectItem')}
-								on:select={(e) => updateLine(index, 'itemId', e.detail)}
+							onselect={(id) => updateLine(index, 'itemId', id || '')}
 							/>
 						{/if}
 					</td>
@@ -151,7 +149,7 @@
 									bind:value={line.sourceLocationId}
 									options={locationOptions}
 									placeholder={$isLoading ? 'Select...' : $_('assets.placeholders.select')}
-									on:select={(e) => updateLine(index, 'sourceLocationId', e.detail)}
+									onselect={(id) => updateLine(index, 'sourceLocationId', id ?? undefined)}
 								/>
 							{/if}
 						</td>
@@ -166,7 +164,7 @@
 									bind:value={line.targetLocationId}
 									options={locationOptions}
 									placeholder={$isLoading ? 'Select...' : $_('assets.placeholders.select')}
-									on:select={(e) => updateLine(index, 'targetLocationId', e.detail)}
+									onselect={(id) => updateLine(index, 'targetLocationId', id ?? undefined)}
 								/>
 							{/if}
 						</td>
@@ -178,10 +176,10 @@
 							<select
 								class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 								bind:value={line.lotId}
-								on:change={(e) => updateLine(index, 'lotId', e.currentTarget.value)}
+								onchange={(e) => updateLine(index, 'lotId', e.currentTarget.value)}
 							>
 								<option value="">-- None --</option>
-								{#each lots.filter(l => l.itemId === line.itemId) as lot}
+								{#each lots.filter((l: InventoryLot) => l.itemId === line.itemId) as lot}
 									<option value={lot.id}>{lot.lotCode} {lot.expiryDate ? `(Exp: ${new Date(lot.expiryDate).toLocaleDateString()})` : ''}</option>
 								{/each}
 							</select>
@@ -195,7 +193,7 @@
 								type="number"
 								class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 								bind:value={line.quantity}
-								on:input={(e) => updateLine(index, 'quantity', parseFloat(e.currentTarget.value))}
+								oninput={(e) => updateLine(index, 'quantity', parseFloat(e.currentTarget.value))}
 								step="0.01"
 								min="0"
 							/>
@@ -208,7 +206,7 @@
 							<select
 								class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 								bind:value={line.uomId}
-								on:change={(e) => updateLine(index, 'uomId', e.currentTarget.value)}
+								onchange={(e) => updateLine(index, 'uomId', e.currentTarget.value)}
 							>
 								<option value="">-- Base UOM --</option>
 								{#each getItemUoms(line.itemId || '') as uom}
@@ -226,7 +224,7 @@
 									type="number"
 									class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 									bind:value={line.unitCost}
-									on:input={(e) => updateLine(index, 'unitCost', parseFloat(e.currentTarget.value))}
+									oninput={(e) => updateLine(index, 'unitCost', parseFloat(e.currentTarget.value))}
 									step="0.01"
 									min="0"
 								/>
@@ -241,7 +239,7 @@
 								<select
 									class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 									bind:value={line.adjustDirection}
-									on:change={(e) => updateLine(index, 'adjustDirection', e.currentTarget.value)}
+									onchange={(e) => updateLine(index, 'adjustDirection', e.currentTarget.value as 'plus' | 'minus')}
 								>
 									<option value="plus">Plus (+)</option>
 									<option value="minus">Minus (-)</option>
@@ -257,7 +255,7 @@
 								type="text"
 								class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 								bind:value={line.note}
-								on:input={(e) => updateLine(index, 'note', e.currentTarget.value)}
+								oninput={(e) => updateLine(index, 'note', e.currentTarget.value)}
 								placeholder={$isLoading ? 'Optional note...' : $_('assets.placeholders.optionalNote')}
 							/>
 						{/if}
@@ -267,7 +265,8 @@
 							<button
 								type="button"
 								class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-								on:click={() => removeLine(index)}
+								aria-label={$_('common.remove')}
+								onclick={() => removeLine(index)}
 							>
 								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
 									<path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
@@ -292,7 +291,7 @@
 			<button
 				type="button"
 				class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
-				on:click={addLine}
+				onclick={addLine}
 			>
 				<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />

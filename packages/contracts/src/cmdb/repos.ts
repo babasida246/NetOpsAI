@@ -67,12 +67,24 @@ export interface IRelTypeRepo {
     create(input: { code: string; name: string; reverseName?: string | null; allowedFromTypeId?: string | null; allowedToTypeId?: string | null }): Promise<RelationshipTypeRecord>
     list(): Promise<RelationshipTypeRecord[]>
     getById(id: string): Promise<RelationshipTypeRecord | null>
+    update(
+        id: string,
+        patch: Partial<{
+            code: string
+            name: string
+            reverseName: string | null
+            allowedFromTypeId: string | null
+            allowedToTypeId: string | null
+        }>
+    ): Promise<RelationshipTypeRecord | null>
+    delete(id: string): Promise<boolean>
 }
 
 export interface IRelRepo {
     create(input: { relTypeId: string; fromCiId: string; toCiId: string; sinceDate?: string | null; note?: string | null }): Promise<RelationshipRecord>
     retire(id: string): Promise<RelationshipRecord | null>
     listByCi(ciId: string): Promise<RelationshipRecord[]>
+    list(): Promise<RelationshipRecord[]>
 }
 
 export interface IServiceRepo {

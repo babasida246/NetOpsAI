@@ -35,4 +35,7 @@ export { CiAttrValueRepo } from './repositories/CiAttrValueRepo.js'
 export { RelationshipTypeRepo } from './repositories/RelationshipTypeRepo.js'
 export { RelationshipRepo } from './repositories/RelationshipRepo.js'
 export { CmdbServiceRepo } from './repositories/CmdbServiceRepo.js'
+export { PurchasePlanRepo } from './repositories/PurchasePlanRepo.js'
+export { AssetIncreaseRepo } from './repositories/AssetIncreaseRepo.js'
+export { ApprovalRepo } from './repositories/ApprovalRepo.js'
 

@@ -15,7 +15,7 @@
   }>();
 
   const partOptions = $derived(
-    parts.map((part) => ({ id: part.id, label: `${part.partCode} - ${part.name}` }))
+    parts.map((part: SparePartRecord) => ({ id: part.id, label: `${part.partCode} - ${part.name}` }))
   );
 
   function addLine() {
@@ -29,7 +29,7 @@
   }
 
   function removeLine(index: number) {
-    lines = lines.filter((_, i) => i !== index);
+    lines = lines.filter((_: StockDocumentLine, i: number) => i !== index);
   }
 
   function updateLine<K extends keyof StockDocumentLine>(index: number, field: K, value: StockDocumentLine[K]) {
@@ -39,7 +39,7 @@
   }
 
   function getPartLabel(partId: string) {
-    return partOptions.find((part) => part.id === partId)?.label ?? partId;
+    return partOptions.find((part: { id: string; label: string }) => part.id === partId)?.label ?? partId;
   }
 </script>
 

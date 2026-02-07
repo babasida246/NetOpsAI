@@ -157,6 +157,13 @@ export async function updateCi(id: string, patch: Partial<{ name: string; status
     })
 }
 
+export async function deleteCi(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/cmdb/cis/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
+    })
+}
+
 export async function getCiGraph(id: string, params?: { depth?: number; direction?: 'upstream' | 'downstream' | 'both' }): Promise<ApiResponse<CiGraph>> {
     const query = new URLSearchParams()
     if (params?.depth) query.set('depth', String(params.depth))
@@ -184,6 +191,46 @@ export async function createRelationshipType(input: { code: string; name: string
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
         body: JSON.stringify(input)
+    })
+}
+
+export async function updateRelationshipType(id: string, input: Partial<RelationshipTypeRecord>): Promise<ApiResponse<RelationshipTypeRecord>> {
+    return apiJson<ApiResponse<RelationshipTypeRecord>>(`${API_BASE}/v1/cmdb/relationship-types/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
+        body: JSON.stringify(input)
+    })
+}
+
+export async function deleteRelationshipType(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/cmdb/relationship-types/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
+    })
+}
+
+export async function listCiRelationships(ciId: string): Promise<ApiResponse<RelationshipRecord[]>> {
+    return apiJson<ApiResponse<RelationshipRecord[]>>(`${API_BASE}/v1/cmdb/cis/${ciId}/relationships`, { headers: getAssetHeaders() })
+}
+
+export async function createCiRelationship(ciId: string, input: {
+    relTypeId: string;
+    toCiId: string;
+    status?: string;
+    sinceDate?: string | null;
+    note?: string | null;
+}): Promise<ApiResponse<RelationshipRecord>> {
+    return apiJson<ApiResponse<RelationshipRecord>>(`${API_BASE}/v1/cmdb/cis/${ciId}/relationships`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
+        body: JSON.stringify(input)
+    })
+}
+
+export async function deleteRelationship(relationshipId: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/cmdb/relationships/${relationshipId}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
     })
 }
 
@@ -216,6 +263,13 @@ export async function updateService(id: string, patch: Partial<CmdbServiceRecord
     })
 }
 
+export async function deleteService(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/cmdb/services/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
+    })
+}
+
 export async function addServiceMember(id: string, input: { ciId: string; role?: string | null }): Promise<ApiResponse<CmdbServiceMember>> {
     return apiJson<ApiResponse<CmdbServiceMember>>(`${API_BASE}/v1/cmdb/services/${id}/members`, {
         method: 'POST',
@@ -237,4 +291,20 @@ export async function getServiceImpact(serviceId: string, params?: { depth?: num
     if (params?.direction) query.set('direction', params.direction)
     const suffix = query.toString() ? `?${query.toString()}` : ''
     return apiJson<ApiResponse<CiGraph>>(`${API_BASE}/v1/cmdb/services/${serviceId}/impact${suffix}`, { headers: getAssetHeaders() })
+}
+
+export async function getCmdbGraph(params?: { depth?: number; direction?: 'upstream' | 'downstream' | 'both' }): Promise<ApiResponse<CiGraph>> {
+    const query = new URLSearchParams()
+    if (params?.depth) query.set('depth', String(params.depth))
+    if (params?.direction) query.set('direction', params.direction)
+    const suffix = query.toString() ? `?${query.toString()}` : ''
+    return apiJson<ApiResponse<CiGraph>>(`${API_BASE}/v1/cmdb/graph${suffix}`, { headers: getAssetHeaders() })
+}
+
+export async function getCiDependencyPath(ciId: string, direction: 'upstream' | 'downstream' = 'downstream'): Promise<ApiResponse<{ path: CiRecord[]; chain: string[] }>> {
+    return apiJson<ApiResponse<{ path: CiRecord[]; chain: string[] }>>(`${API_BASE}/v1/cmdb/cis/${ciId}/dependency-path?direction=${direction}`, { headers: getAssetHeaders() })
+}
+
+export async function getCiImpact(ciId: string): Promise<ApiResponse<{ affected: CiRecord[]; count: number; depth: number }>> {
+    return apiJson<ApiResponse<{ affected: CiRecord[]; count: number; depth: number }>>(`${API_BASE}/v1/cmdb/cis/${ciId}/impact`, { headers: getAssetHeaders() })
 }

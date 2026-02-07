@@ -1,0 +1,140 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`generate_firewall_mermaid (file mode) > renders FortiGate diagrams from show blocks bundle 1`] = `
+"flowchart LR
+  IN[Packet In] --> DNAT{DNAT rules?}
+  DNAT -->|yes| DNAT_APPLY[Apply DNAT (none detected)]
+  DNAT -->|no| ROUTE[Routing]
+  DNAT_APPLY --> ROUTE
+  ROUTE --> POLICY[Policy / Filter]
+  POLICY --> SNAT{SNAT rules?}
+  SNAT -->|yes| SNAT_APPLY[Apply SNAT]
+  SNAT -->|no| OUT[Packet Out]
+  SNAT_APPLY --> OUT"
+`;
+
+exports[`generate_firewall_mermaid (file mode) > renders FortiGate diagrams from show blocks bundle 2`] = `
+"flowchart TD
+  classDef disabled fill:#f8f8f8,stroke:#999,stroke-dasharray: 5 5,color:#666;
+  START([Packet enters policy])
+  END([END])
+  R1{"R1: src=MGMT_NET | dst=all | svc=SSH | in=port1 | out=port2?"}
+  A1["ACCEPT | log=all | allow-mgmt-ssh"]
+  START --> R1
+  R1 -->|match| A1
+  A1 --> END
+  R1 -->|no| N1
+  N1([next rule])
+  R2{"R2: src=STAFF | dst=SERVERS | svc=HTTPS | in=port2 | out=port3?"}
+  A2["ACCEPT | SNAT | staff-to-servers-https"]
+  N1 --> R2
+  R2 -->|match| A2
+  A2 --> END
+  R2 -->|no| N2
+  N2([next rule])
+  R3{"R3: src=all | dst=all | svc=ALL | in=any | out=any?"}
+  A3["DENY | deny-all"]
+  N2 --> R3
+  R3 -->|match| A3
+  A3 --> END
+  R3 -->|no| N3
+  N3([next rule])
+  N3 --> DEF["Default: unknown"]
+  DEF --> END"
+`;
+
+exports[`generate_firewall_mermaid (file mode) > renders FortiGate diagrams from show blocks bundle 3`] = `
+"flowchart LR
+  classDef allow stroke:#16a34a,color:#16a34a;
+  classDef deny stroke:#dc2626,color:#dc2626;
+  Z_any["any"]
+  Z_port1["port1"]
+  Z_port2["port2"]
+  Z_port3["port3"]
+  Z_any -->|"src=all dst=all svc=ALL"| Z_any
+  class Z_any,Z_any deny;
+  Z_port1 -->|"src=MGMT_NET dst=all svc=SSH"| Z_port2
+  class Z_port1,Z_port2 allow;
+  Z_port2 -->|"src=STAFF dst=SERVERS svc=HTTPS"| Z_port3
+  class Z_port2,Z_port3 allow;"
+`;
+
+exports[`generate_firewall_mermaid (file mode) > renders MikroTik diagrams from export terse bundle 1`] = `
+"flowchart LR
+  IN[Packet In] --> DNAT{DNAT rules?}
+  DNAT -->|yes| DNAT_APPLY[Apply DNAT]
+  DNAT -->|no| ROUTE[Routing]
+  DNAT_APPLY --> ROUTE
+  ROUTE --> POLICY[Policy / Filter]
+  POLICY --> SNAT{SNAT rules?}
+  SNAT -->|yes| SNAT_APPLY[Apply SNAT]
+  SNAT -->|no| OUT[Packet Out]
+  SNAT_APPLY --> OUT"
+`;
+
+exports[`generate_firewall_mermaid (file mode) > renders MikroTik diagrams from export terse bundle 2`] = `
+"flowchart TD
+  classDef disabled fill:#f8f8f8,stroke:#999,stroke-dasharray: 5 5,color:#666;
+  START([Packet enters forward])
+  END([END])
+  R1{"R1: state=established, related?"}
+  A1["FASTTRACK | FastTrack established"]
+  START --> R1
+  R1 -->|match| A1
+  A1 --> END
+  R1 -->|no| N1
+  N1([next rule])
+  R2{"R2: state=established, related?"}
+  A2["ACCEPT | Allow established/related"]
+  N1 --> R2
+  R2 -->|match| A2
+  A2 --> END
+  R2 -->|no| N2
+  N2([next rule])
+  R3{"R3: state=invalid?"}
+  A3["DENY | Drop invalid"]
+  N2 --> R3
+  R3 -->|match| A3
+  A3 --> END
+  R3 -->|no| N3
+  N3([next rule])
+  R4{"R4: src=STAFF | dst=SERVERS | svc=tcp dport=443?"}
+  A4["ACCEPT | Staff to servers HTTPS"]
+  N3 --> R4
+  R4 -->|match| A4
+  A4 --> END
+  R4 -->|no| N4
+  N4([next rule])
+  R5{"R5: src=GUEST | dst=SERVERS | svc=tcp dport=445?"}
+  A5["ACCEPT | (disabled) Guest SMB to servers"]
+  N4 --> R5
+  R5 -->|match| A5
+  A5 --> END
+  R5 -->|no| N5
+  N5([next rule])
+  class R5 disabled;
+  class A5 disabled;
+  R6{"R6: any?"}
+  A6["DENY | Default drop"]
+  N5 --> R6
+  R6 -->|match| A6
+  A6 --> END
+  R6 -->|no| N6
+  N6([next rule])
+  N6 --> DEF["Default: deny"]
+  DEF --> END"
+`;
+
+exports[`generate_firewall_mermaid (file mode) > renders MikroTik diagrams from export terse bundle 3`] = `
+"flowchart LR
+  classDef allow stroke:#16a34a,color:#16a34a;
+  classDef deny stroke:#dc2626,color:#dc2626;
+  Z_any["any"]
+  Z_WAN["WAN"]
+  Z_any -->|"src=STAFF dst=SERVERS svc=tcp dport=443 | src=10.0.0.x/24 svc=tcp dport=22 | svc=icmp"| Z_any
+  class Z_any,Z_any allow;
+  Z_any --> Z_any
+  class Z_any,Z_any deny;
+  Z_WAN --> Z_any
+  class Z_WAN,Z_any deny;"
+`;

@@ -2,7 +2,21 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "composite": true
   },
+  "references": [
+    { "path": "../../packages/domain" },
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/application" },
+    { "path": "../../packages/config" },
+    { "path": "../../packages/infra-postgres" },
+    { "path": "../../packages/infra-redis" },
+    { "path": "../../packages/infra-vector" },
+    { "path": "../../packages/providers" },
+    { "path": "../../packages/tools" },
+    { "path": "../../packages/observability" },
+    { "path": "../../packages/security" }
+  ],
   "include": ["src/**/*"]
 }

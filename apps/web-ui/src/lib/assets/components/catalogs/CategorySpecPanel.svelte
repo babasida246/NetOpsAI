@@ -1,5 +1,4 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { Alert, Button, Modal, Spinner } from 'flowbite-svelte';
   import { _, isLoading } from '$lib/i18n';
   import SpecWarnings from './SpecWarnings.svelte';
@@ -16,8 +15,17 @@
 
   type CategoryRef = { id: string; name: string };
 
-  let { open = $bindable(false), category = null } = $props<{ open?: boolean; category?: CategoryRef | null }>();
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
+  let {
+    open = $bindable(false),
+    category = null,
+    onupdated,
+    onerror
+  } = $props<{
+    open?: boolean;
+    category?: CategoryRef | null;
+    onupdated?: () => void;
+    onerror?: (message: string) => void;
+  }>();
 
   let specDefs = $state<CategorySpecDef[]>([]);
   let versions = $state<CategorySpecVersion[]>([]);
@@ -58,7 +66,7 @@
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load spec versions';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       loading = false;
     }
@@ -73,7 +81,7 @@
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load spec fields';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       loading = false;
     }
@@ -89,7 +97,7 @@
     if (selectedVersionId) {
       await loadDefs(selectedVersionId);
     }
-    dispatch('updated');
+    onupdated?.();
   }
 
   async function createDraft() {
@@ -101,11 +109,11 @@
       versions = [response.data.version, ...versions];
       selectedVersionId = response.data.version.id;
       specDefs = response.data.specDefs ?? [];
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create draft';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       saving = false;
     }
@@ -119,11 +127,11 @@
       const response = await publishSpecVersion(selectedVersionId);
       publishWarnings = response.data.warnings ?? [];
       await loadVersions();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to publish version';
       error = message;
-      dispatch('error', message);
+      onerror?.(message);
     } finally {
       saving = false;
     }
@@ -140,12 +148,14 @@
   }
 </script>
 
-<Modal bind:open size="xl" on:close={closePanel}>
+<Modal bind:open size="xl" onclose={closePanel}>
   <svelte:fragment slot="header">
-    <div>
-      <h3 class="text-lg font-semibold">{$isLoading ? 'Spec Fields' : $_('assets.specFields')}</h3>
-      <p class="text-sm text-gray-500">{category ? `Category: ${category.name}` : ''}</p>
-    </div>
+  
+      <div>
+        <h3 class="text-lg font-semibold">{$isLoading ? 'Spec Fields' : $_('assets.specFields')}</h3>
+        <p class="text-sm text-gray-500">{category ? `Category: ${category.name}` : ''}</p>
+      </div>
+    
   </svelte:fragment>
 
   {#if error}
@@ -158,9 +168,9 @@
       versions={versions}
       bind:selectedVersionId
       saving={saving}
-      on:select={(event) => handleSelect(event.detail)}
-      on:createDraft={createDraft}
-      on:publish={publishVersion}
+      onselect={(versionId) => handleSelect(versionId)}
+      oncreatedraft={createDraft}
+      onpublish={publishVersion}
     />
 
     {#if selectedVersion && !canEdit}
@@ -180,15 +190,18 @@
         selectedVersionId={selectedVersionId}
         disabled={!canEdit}
         canApplyTemplate={canApplyTemplate}
-        on:updated={handleUpdated}
-        on:error={(event) => dispatch('error', event.detail)}
+        onupdated={handleUpdated}
+        onerror={(message) => onerror?.(message)}
       />
     {/if}
   </div>
 
   <svelte:fragment slot="footer">
-    <div class="flex justify-end">
-      <Button color="alternative" on:click={closePanel}>{$isLoading ? 'Close' : $_('common.close')}</Button>
-    </div>
+  
+      <div class="flex justify-end">
+        <Button color="alternative" onclick={closePanel}>{$isLoading ? 'Close' : $_('common.close')}</Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

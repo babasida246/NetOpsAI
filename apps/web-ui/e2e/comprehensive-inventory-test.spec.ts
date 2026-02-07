@@ -349,7 +349,7 @@ test.describe('Inventory Module - Comprehensive Tests', () => {
 
             // Extract session ID from URL
             const currentUrl = page.url()
-            const match = currentUrl.match(/\/inventory\/([^\/\?]+)/)
+            const match = currentUrl.match(/\/inventory\/([^/?]+)/)
             if (match) {
                 sessionId = match[1]
             }
@@ -442,7 +442,7 @@ test.describe('Inventory Module - Comprehensive Tests', () => {
             await page.waitForTimeout(3000)
 
             const currentUrl = page.url()
-            const match = currentUrl.match(/\/inventory\/([^\/\?]+)/)
+            const match = currentUrl.match(/\/inventory\/([^/?]+)/)
             if (match) {
                 sessionId = match[1]
             }
@@ -549,7 +549,7 @@ test.describe('Inventory Module - Comprehensive Tests', () => {
             await page.waitForTimeout(3000)
 
             const currentUrl = page.url()
-            const match = currentUrl.match(/\/inventory\/([^\/\?]+)/)
+            const match = currentUrl.match(/\/inventory\/([^/?]+)/)
             if (match) {
                 sessionId = match[1]
             }
@@ -628,7 +628,7 @@ test.describe('Inventory Module - Comprehensive Tests', () => {
             await page.waitForTimeout(3000)
 
             const currentUrl = page.url()
-            const match = currentUrl.match(/\/inventory\/([^\/\?]+)/)
+            const match = currentUrl.match(/\/inventory\/([^/?]+)/)
             if (match) {
                 sessionId = match[1]
             }

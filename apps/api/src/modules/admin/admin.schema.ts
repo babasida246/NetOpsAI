@@ -92,6 +92,8 @@ export const listAuditLogsQuerySchema = paginationQuerySchema.extend({
     userId: z.string().uuid().optional(),
     action: z.string().optional(),
     resource: z.string().optional(),
+    resourceId: z.string().optional(),
+    q: z.string().optional(),
     startDate: z.string().datetime().optional(),
     endDate: z.string().datetime().optional()
 })

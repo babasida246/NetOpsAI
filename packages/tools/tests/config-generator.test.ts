@@ -16,7 +16,7 @@ describe('config-generator', () => {
         expect(() => generateConfigCommand({
             vendor: 'fortigate',
             action: 'set_interface_ip',
-            // @ts-expect-error
+            // @ts-expect-error - Testing missing required parameters
             params: { interface: 'port1' }
         })).toThrow(/Missing param/)
     })

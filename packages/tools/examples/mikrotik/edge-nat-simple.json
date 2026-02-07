@@ -1,0 +1,55 @@
+{
+  "device": {
+    "model": "CCR2004-1G-12S+2XS",
+    "routerOsMajor": 7,
+    "routerOsVersion": "7.12.1"
+  },
+  "role": "edge-internet",
+  "hostname": "EDGE-NAT-01",
+  "environment": "dev",
+  "interfaces": [
+    { "name": "ether1", "purpose": "wan", "comment": "ISP uplink" },
+    { "name": "ether2", "purpose": "trunk", "comment": "LAN trunk", "trunkVlanIds": [10, 20, 30] }
+  ],
+  "vlans": [
+    { "id": 10, "name": "mgmt", "subnet": "10.10.0.0/24", "gateway": "10.10.0.1", "group": "MGMT" },
+    {
+      "id": 20,
+      "name": "staff",
+      "subnet": "10.20.0.0/24",
+      "gateway": "10.20.0.1",
+      "group": "STAFF",
+      "dhcp": { "enabled": true }
+    },
+    {
+      "id": 30,
+      "name": "guest",
+      "subnet": "10.30.0.0/24",
+      "gateway": "10.30.0.1",
+      "group": "GUEST",
+      "dhcp": { "enabled": true }
+    }
+  ],
+  "internet": {
+    "wanInterface": "ether1",
+    "publicType": "dhcp",
+    "dnsServers": ["1.1.1.1", "8.8.8.8"],
+    "defaultRoute": true
+  },
+  "securityProfile": { "preset": "standard-secure" },
+  "management": {
+    "mgmtSubnet": "10.10.0.0/24",
+    "allowedSubnets": ["10.10.0.0/24"],
+    "ssh": {
+      "port": 22,
+      "allowPassword": false,
+      "authorizedKeys": ["ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFakeKeyForTestsOnly netops@example"]
+    },
+    "winbox": { "enabled": true, "port": 8291 },
+    "timezone": "Asia/Ho_Chi_Minh",
+    "ntpServers": ["162.159.200.1", "162.159.200.123"],
+    "syslog": { "remote": "10.10.0.10", "topics": ["info", "warning", "error"] },
+    "snmp": { "enabled": true, "community": "netopsai", "allowedSubnet": "10.10.0.0/24" }
+  },
+  "notes": "example: edge NAT simple"
+}

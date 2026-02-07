@@ -149,7 +149,9 @@ export async function getInventoryReport(sessionId: string): Promise<ApiResponse
     })
 }
 
-export async function listWorkflowRequests(params: { status?: string; requestType?: string; page?: number; limit?: number } = {}): Promise<ApiResponse<WorkflowRequest[]>> {
+export async function listWorkflowRequests(
+    params: { status?: string; requestType?: string; requestedBy?: string; page?: number; limit?: number } = {}
+): Promise<ApiResponse<WorkflowRequest[]>> {
     const query = buildQuery(params)
     return apiJson<ApiResponse<WorkflowRequest[]>>(`${API_BASE}/v1/workflows${query}`, {
         headers: getAssetHeaders()
@@ -189,6 +191,21 @@ export async function executeWorkflowRequest(id: string): Promise<ApiResponse<Wo
     return apiJson<ApiResponse<WorkflowRequest>>(`${API_BASE}/v1/workflows/${id}/execute`, {
         method: 'POST',
         headers: { ...getAssetHeaders() }
+    })
+}
+
+export async function updateWorkflowRequest(id: string, patch: Partial<WorkflowRequest>): Promise<ApiResponse<WorkflowRequest>> {
+    return apiJson<ApiResponse<WorkflowRequest>>(`${API_BASE}/v1/workflows/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
+        body: JSON.stringify(patch)
+    })
+}
+
+export async function deleteWorkflowRequest(id: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/workflows/${id}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
     })
 }
 

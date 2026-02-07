@@ -130,10 +130,10 @@ describe('AuthService', () => {
                 confirmPassword: testUser.password
             })
 
-            expect(result.id).toBeDefined()
-            expect(result.email).toBe(testUser.email)
-            expect(result.name).toBe(testUser.name)
-            expect(result.role).toBe('user')
+            expect(result.user.id).toBeDefined()
+            expect(result.user.email).toBe(testUser.email)
+            expect(result.user.name).toBe(testUser.name)
+            expect(result.user.role).toBe('user')
         })
 
         it('should throw ConflictError when email exists', async () => {

@@ -52,7 +52,7 @@ test.describe('Smoke Test - Error Detection', () => {
         })
     })
 
-    test.afterEach(async ({ }, testInfo) => {
+    test.afterEach(async (context, testInfo) => {
         // Report collected errors
         if (
             errorReport.consoleErrors.length > 0 ||

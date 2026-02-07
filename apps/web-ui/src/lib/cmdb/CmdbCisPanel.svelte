@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Alert, Button, Input, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Select, Spinner } from 'flowbite-svelte';
   import { RefreshCw, Search } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { listCis, listCmdbTypes, type CiRecord, type CmdbType } from '$lib/api/cmdb';
+  import { deleteCi, listCis, listCmdbTypes, updateCi, type CiRecord, type CmdbType } from '$lib/api/cmdb';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let items = $state<CiRecord[]>([]);
   let types = $state<CmdbType[]>([]);
@@ -64,6 +65,30 @@
     environment = '';
     typeId = '';
     void loadCis(1);
+  }
+
+  async function handleEdit(ci: CiRecord, changes: Partial<CiRecord>) {
+    try {
+      await updateCi(ci.id, {
+        name: changes.name,
+        status: changes.status,
+        environment: changes.environment
+      });
+      await loadCis(meta.page);
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Failed to update CI';
+    }
+  }
+
+  async function handleDelete(rows: CiRecord[]) {
+    try {
+      for (const row of rows) {
+        await deleteCi(row.id);
+      }
+      await loadCis(meta.page);
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Failed to delete CI';
+    }
   }
 
   $effect(() => {
@@ -129,40 +154,32 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'CI Code' : $_('cmdb.ciCode')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Type' : $_('common.type')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Status' : $_('common.status')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Environment' : $_('cmdb.environment')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if items.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="5" class="text-center text-slate-500">{$isLoading ? 'No items found.' : $_('cmdb.noItems')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each items as ci}
-              <TableBodyRow>
-                <TableBodyCell class="font-medium">{ci.ciCode}</TableBodyCell>
-                <TableBodyCell>{ci.name}</TableBodyCell>
-                <TableBodyCell>{typeLabel(ci.typeId)}</TableBodyCell>
-                <TableBodyCell>{ci.status}</TableBodyCell>
-                <TableBodyCell>{ci.environment}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
+  <DataTable
+    data={items}
+    columns={[
+      { key: 'ciCode', label: $isLoading ? 'CI Code' : $_('cmdb.ciCode'), sortable: true, filterable: true, editable: true, width: 'w-40' },
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true },
+      { key: 'typeId', label: $isLoading ? 'Type' : $_('common.type'), sortable: true, filterable: false, editable: false, render: (val) => typeLabel(val) },
+      { key: 'status', label: $isLoading ? 'Status' : $_('common.status'), sortable: true, filterable: true, editable: true, width: 'w-32' },
+      { key: 'environment', label: $isLoading ? 'Environment' : $_('cmdb.environment'), sortable: true, filterable: true, editable: true, width: 'w-32' },
+      { 
+        key: 'id', 
+        label: $isLoading ? 'Actions' : $_('common.actions'), 
+        sortable: false, 
+        filterable: false, 
+        editable: false, 
+        width: 'w-24',
+        render: (val) => `<a href="/cmdb/cis/${val}" class="text-blue-600 hover:underline">View</a>`
+      }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={loading}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 
+  {#if !loading && items.length > 0}
     <div class="flex items-center justify-between text-sm text-slate-500">
       <span>Page {meta.page}</span>
       <div class="flex gap-2">

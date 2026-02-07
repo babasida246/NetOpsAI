@@ -8,10 +8,8 @@ describe('MaintenanceModal', () => {
     const { getByText, getByPlaceholderText } = render(MaintenanceModal, {
       props: {
         open: true,
-        assetCode: 'ASSET-1'
-      },
-      events: {
-        submit: () => {
+        assetCode: 'ASSET-1',
+        onsubmit: () => {
           fired = true;
         }
       }

@@ -122,6 +122,10 @@ export class WorkflowRepo implements IWorkflowRepo {
             params.push(filters.requestType)
             conditions.push(`request_type = $${params.length}`)
         }
+        if (filters.requestedBy) {
+            params.push(filters.requestedBy)
+            conditions.push(`requested_by = $${params.length}`)
+        }
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
         const { page, limit, offset } = normalizePagination(filters)
 

@@ -6,7 +6,7 @@
         { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' }
     ]
 
-    let currentLocale = 'en'
+    let currentLocale = $state('en')
     locale.subscribe((value) => {
         if (value) currentLocale = value
     })
@@ -23,7 +23,8 @@
 <div class="language-switcher">
     <select 
         bind:value={currentLocale} 
-        on:change={(e) => changeLanguage(e.currentTarget.value)}
+        onchange={() => changeLanguage(currentLocale)}
+        aria-label="Select language"
         class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     >
         {#each languages as lang}

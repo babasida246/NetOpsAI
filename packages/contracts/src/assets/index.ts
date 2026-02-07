@@ -46,6 +46,7 @@ export interface AssetRecord {
     vendorName?: string | null
     locationName?: string | null
     notes?: string | null
+    spec?: Record<string, unknown> | null
     createdAt: Date
     updatedAt: Date
 }
@@ -66,6 +67,7 @@ export interface AssetUpsertFields {
     warrantyEnd?: Date | null
     vendorId?: string | null
     notes?: string | null
+    spec?: Record<string, unknown> | null
 }
 
 export type AssetCreateInput = AssetUpsertFields

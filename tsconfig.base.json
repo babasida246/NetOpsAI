@@ -12,24 +12,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./dist",
-    "paths": {
-      "@domain/core": ["./packages/domain/src/index.ts"],
-      "@domain/*": ["./packages/domain/src/*"],
-      "@application/core": ["./packages/application/src/index.ts"],
-      "@application/*": ["./packages/application/src/*"],
-      "@contracts/shared": ["./packages/contracts/src/index.ts"],
-      "@contracts/*": ["./packages/contracts/src/*"],
-      "@config/*": ["./packages/config/src/*"],
-      "@infra/postgres": ["./packages/infra-postgres/src"],
-      "@infra/redis": ["./packages/infra-redis/src"],
-      "@infra/vector": ["./packages/infra-vector/src"],
-      "@providers": ["./packages/providers/src"],
-      "@tools": ["./packages/tools/src"],
-      "@mcp/*": ["./packages/mcp-servers/*/src"],
-      "@observability": ["./packages/observability/src"],
-      "@security": ["./packages/security/src"],
-      "@testing": ["./packages/testing/src"]
-    }
+    "composite": true,
+    "incremental": true
   }
 }

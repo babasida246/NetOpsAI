@@ -17,5 +17,5 @@
     </Button>
   </div>
   <h1 class="text-2xl font-semibold mb-6">{$isLoading ? 'New Workflow Request' : $_('requests.newTitle')}</h1>
-  <WorkflowRequestForm on:submitted={handleSubmitted} />
+  <WorkflowRequestForm onsubmitted={handleSubmitted} />
 </div>

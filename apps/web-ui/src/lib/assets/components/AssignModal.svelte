@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { Button, Input, Label, Modal, Select } from 'flowbite-svelte';
   import type { AssigneeType } from '$lib/api/assets';
   import { _, isLoading } from '$lib/i18n';
 
-  let { open = $bindable(false), assetCode = '' } = $props<{
+  let { open = $bindable(false), assetCode = '', onassign } = $props<{
     open?: boolean;
     assetCode?: string;
+    onassign?: (data: { assigneeType: AssigneeType; assigneeName: string; assigneeId: string; note?: string }) => void;
   }>();
 
   let assigneeType = $state<AssigneeType>('person');
@@ -14,10 +14,8 @@
   let assigneeId = $state('');
   let note = $state('');
 
-  const dispatch = createEventDispatcher<{ assign: { assigneeType: AssigneeType; assigneeName: string; assigneeId: string; note?: string } }>();
-
   function submit() {
-    dispatch('assign', {
+    onassign?.({
       assigneeType,
       assigneeName,
       assigneeId,
@@ -33,9 +31,11 @@
   }
 </script>
 
-<Modal bind:open on:close={reset}>
+<Modal bind:open onclose={reset}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">{$isLoading ? 'Assign Asset' : $_('assets.assignAsset')} {assetCode ? `(${assetCode})` : ''}</h3>
+  
+      <h3 class="text-lg font-semibold">{$isLoading ? 'Assign Asset' : $_('assets.assignAsset')} {assetCode ? `(${assetCode})` : ''}</h3>
+    
   </svelte:fragment>
 
   <div class="space-y-4">
@@ -62,9 +62,12 @@
   </div>
 
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => { open = false; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={submit} disabled={!assigneeName || !assigneeId}>{$isLoading ? 'Assign' : $_('assets.assign')}</Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => { open = false; }}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={submit} disabled={!assigneeName || !assigneeId}>{$isLoading ? 'Assign' : $_('assets.assign')}</Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

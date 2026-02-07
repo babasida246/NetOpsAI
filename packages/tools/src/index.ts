@@ -19,3 +19,17 @@ export {
     scanInventoryAssetTool,
     submitWorkflowRequestTool
 } from './tools/assets.actions.js'
+
+export {
+    generateMikrotikFullConfigTool,
+    validateMikrotikConfigTool,
+    generateMikrotikRollbackTool,
+    diffMikrotikRunningConfigTool,
+    pushMikrotikConfigSshTool
+} from './netops/mikrotik/tools.js'
+
+export {
+    generateFirewallMermaidTool,
+    generateFirewallMermaidSchema,
+    generateFirewallMermaid
+} from './netops/firewall-diagram/generate_firewall_mermaid.js'

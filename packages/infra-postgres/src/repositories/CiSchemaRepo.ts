@@ -14,7 +14,7 @@ import { CiTypeVersionRepo } from './CiTypeVersionRepo.js'
 
 type DefRow = {
     id: string
-    version_id: string
+    ci_type_version_id: string
     key: string
     label: string
     field_type: CiAttrDefRecord['fieldType']
@@ -40,7 +40,7 @@ type Update = { column: string; value: unknown }
 
 const mapRow = (row: DefRow): CiAttrDefRecord => ({
     id: row.id,
-    versionId: row.version_id,
+    versionId: row.ci_type_version_id,
     key: row.key,
     label: row.label,
     fieldType: row.field_type,
@@ -93,11 +93,11 @@ export class CiSchemaRepo implements ICiSchemaRepo {
 
     async listByVersion(versionId: string): Promise<CiAttrDefRecord[]> {
         const result = await this.pg.query<DefRow>(
-            `SELECT id, version_id, key, label, field_type, required, unit, enum_values, pattern,
+            `SELECT id, ci_type_version_id, key, label, field_type, required, unit, enum_values, pattern,
                 min_value, max_value, step_value, min_len, max_len, default_value, is_searchable,
                 is_filterable, sort_order, is_active, created_at, updated_at
              FROM cmdb_ci_type_attr_defs
-             WHERE version_id = $1 AND is_active = true
+             WHERE ci_type_version_id = $1 AND is_active = true
              ORDER BY sort_order ASC, key ASC`,
             [versionId]
         )
@@ -107,7 +107,7 @@ export class CiSchemaRepo implements ICiSchemaRepo {
     async bulkInsert(versionId: string, defs: CiAttrDefInput[]): Promise<CiAttrDefRecord[]> {
         if (defs.length === 0) return []
         const columns = [
-            'version_id',
+            'ci_type_version_id',
             'key',
             'label',
             'field_type',
@@ -167,11 +167,11 @@ export class CiSchemaRepo implements ICiSchemaRepo {
     async create(input: CiAttrDefCreateInput): Promise<CiAttrDefRecord> {
         const result = await this.pg.query<DefRow>(
             `INSERT INTO cmdb_ci_type_attr_defs
-                (version_id, key, label, field_type, required, unit, enum_values, pattern, min_value,
+                (ci_type_version_id, key, label, field_type, required, unit, enum_values, pattern, min_value,
                  max_value, step_value, min_len, max_len, default_value, is_searchable, is_filterable,
                  sort_order, is_active)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
-             RETURNING id, version_id, key, label, field_type, required, unit, enum_values, pattern,
+             RETURNING id, ci_type_version_id, key, label, field_type, required, unit, enum_values, pattern,
                 min_value, max_value, step_value, min_len, max_len, default_value, is_searchable,
                 is_filterable, sort_order, is_active, created_at, updated_at`,
             [
@@ -202,7 +202,7 @@ export class CiSchemaRepo implements ICiSchemaRepo {
         const updates = buildUpdates(patch)
         if (updates.length === 0) {
             const existing = await this.pg.query<DefRow>(
-                `SELECT id, version_id, key, label, field_type, required, unit, enum_values, pattern,
+                `SELECT id, ci_type_version_id, key, label, field_type, required, unit, enum_values, pattern,
                     min_value, max_value, step_value, min_len, max_len, default_value, is_searchable,
                     is_filterable, sort_order, is_active, created_at, updated_at
                  FROM cmdb_ci_type_attr_defs WHERE id = $1`,
@@ -216,7 +216,7 @@ export class CiSchemaRepo implements ICiSchemaRepo {
         const result = await this.pg.query<DefRow>(
             `UPDATE cmdb_ci_type_attr_defs SET ${setClause}, updated_at = NOW()
              WHERE id = $${params.length}
-             RETURNING id, version_id, key, label, field_type, required, unit, enum_values, pattern,
+             RETURNING id, ci_type_version_id, key, label, field_type, required, unit, enum_values, pattern,
                 min_value, max_value, step_value, min_len, max_len, default_value, is_searchable,
                 is_filterable, sort_order, is_active, created_at, updated_at`,
             params

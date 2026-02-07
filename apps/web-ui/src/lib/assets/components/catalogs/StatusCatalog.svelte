@@ -1,15 +1,21 @@
 ﻿<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
   import type { AssetStatus } from '$lib/api/assets';
 
   const statusRows: Array<{ value: AssetStatus; label: string; description: string }> = [
     { value: 'in_stock', label: 'In stock', description: 'Available in storage.' },
     { value: 'in_use', label: 'In use', description: 'Assigned to a person or system.' },
     { value: 'in_repair', label: 'In repair', description: 'Under maintenance or repair.' },
+    { value: 'lost', label: 'Lost', description: 'Missing or lost asset.' },
     { value: 'retired', label: 'Retired', description: 'Retired from active usage.' },
-    { value: 'disposed', label: 'Disposed', description: 'Disposed or decommissioned.' },
-    { value: 'lost', label: 'Lost', description: 'Missing or lost asset.' }
+    { value: 'disposed', label: 'Disposed', description: 'Disposed or decommissioned.' }
+  ];
+
+  const columns = [
+    { key: 'value' as const, label: $isLoading ? 'Value' : $_('assets.value'), sortable: true, filterable: true, render: (row: typeof statusRows[0]) => `<span class="font-mono text-xs">${row.value}</span>` },
+    { key: 'label' as const, label: $isLoading ? 'Label' : $_('assets.label'), sortable: true, filterable: true },
+    { key: 'description' as const, label: $isLoading ? 'Description' : $_('assets.description'), sortable: true, filterable: true, render: (row: typeof statusRows[0]) => `<span class="text-sm text-gray-500">${row.description}</span>` }
   ];
 </script>
 
@@ -19,22 +25,12 @@
       Status values are fixed by the asset workflow and can be updated per asset.
     </p>
   </div>
-  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-    <Table>
-      <TableHead>
-        <TableHeadCell>{$isLoading ? 'Value' : $_('assets.value')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Label' : $_('assets.label')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Description' : $_('assets.description')}</TableHeadCell>
-      </TableHead>
-      <TableBody>
-        {#each statusRows as row}
-          <TableBodyRow>
-            <TableBodyCell class="font-mono text-xs">{row.value}</TableBodyCell>
-            <TableBodyCell>{row.label}</TableBodyCell>
-            <TableBodyCell class="text-sm text-gray-500">{row.description}</TableBodyCell>
-          </TableBodyRow>
-        {/each}
-      </TableBody>
-    </Table>
-  </div>
+
+  <DataTable
+    data={statusRows}
+    {columns}
+    rowKey="value"
+    selectable={false}
+    loading={false}
+  />
 </div>

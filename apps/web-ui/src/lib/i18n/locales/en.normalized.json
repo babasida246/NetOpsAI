@@ -769,6 +769,7 @@
     "title": "Tools & Utils",
     "subtitle": "Quick helpers for diagrams, network troubleshooting, and SSH access",
     "sections": "Sections",
+    "configGenerator": "Config generator",
     "mermaid": "Mermaid",
     "fieldKit": "Field kit",
     "sshTerminal": "SSH terminal",

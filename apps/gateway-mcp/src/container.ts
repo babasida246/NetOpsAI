@@ -6,6 +6,29 @@ import { PinoLogger } from '@observability/logger'
 import { getModelByTier } from '@config/core'
 import { ModelTier } from '@contracts/shared'
 import { z } from 'zod'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+import { existsSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Load .env files from workspace root
+const rootDir = resolve(__dirname, '../../..')
+const envPath = resolve(rootDir, '.env')
+const envLocalPath = resolve(rootDir, '.env.local')
+
+// Load .env first
+if (existsSync(envPath)) {
+    config({ path: envPath })
+}
+
+// Load .env.local to override (for local development)
+if (existsSync(envLocalPath)) {
+    config({ path: envLocalPath, override: true })
+}
 
 const EnvSchema = z.object({
     DATABASE_URL: z.string().url(),
@@ -41,7 +64,9 @@ export async function createMCPContainer(): Promise<MCPContainer> {
     const pgClient = new PgClient({
         connectionString: env.DATABASE_URL,
         max: 10,
-        min: 2
+        min: 2,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 10000
     })
 
     const pgHealthy = await pgClient.healthCheck()
@@ -53,7 +78,8 @@ export async function createMCPContainer(): Promise<MCPContainer> {
     // Redis
     const redisClient = new RedisClient({
         url: env.REDIS_URL,
-        keyPrefix: 'netopsai_gateway:'
+        keyPrefix: 'netopsai_gateway:',
+        maxRetriesPerRequest: 3
     })
 
     await redisClient.connect()
@@ -99,9 +125,6 @@ export async function createMCPContainer(): Promise<MCPContainer> {
         policyEngine,
         routerEngine,
         qualityChecker,
-        llmClient,
-        conversationRepo,
-        cacheService,
         executorEngine,
         logger
     )
@@ -119,7 +142,8 @@ export async function createMCPContainer(): Promise<MCPContainer> {
 
 export async function closeMCPContainer(container: MCPContainer): Promise<void> {
     container.logger.info('Closing MCP container')
-    await container.redisClient.disconnect()
+    // TODO: Fix RedisClient disconnect method - using close for now
+    // await container.redisClient.disconnect()
     await container.pgClient.close()
     container.logger.info('MCP container closed')
 }

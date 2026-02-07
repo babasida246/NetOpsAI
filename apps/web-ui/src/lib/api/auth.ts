@@ -1,4 +1,4 @@
-import { API_BASE, apiJson, authorizedFetch, clearStoredSession, setStoredTokens, setStoredUser } from './httpClient'
+import { API_BASE, apiJsonData, authorizedFetch, clearStoredSession, setStoredTokens, setStoredUser, unwrapApiData } from './httpClient'
 
 export interface AuthResponse {
     accessToken: string
@@ -13,7 +13,7 @@ export interface AuthResponse {
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
-    const result = await apiJson<AuthResponse>(`${API_BASE}/auth/login`, {
+    const result = await apiJsonData<AuthResponse>(`${API_BASE}/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -33,7 +33,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
 }
 
 export async function refresh(): Promise<AuthResponse> {
-    const response = await authorizedFetch(`${API_BASE}/auth/refresh`, {
+    const response = await authorizedFetch(`${API_BASE}/v1/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken: localStorage.getItem('refreshToken') })
@@ -44,14 +44,15 @@ export async function refresh(): Promise<AuthResponse> {
         throw new Error('Unable to refresh token')
     }
 
-    const data = await response.json()
+    const payload = await response.json()
+    const data = unwrapApiData<AuthResponse>(payload as AuthResponse | { data: AuthResponse })
     setStoredTokens(data.accessToken, data.refreshToken)
     return data
 }
 
 export async function logout(): Promise<void> {
     const refreshToken = localStorage.getItem('refreshToken')
-    await authorizedFetch(`${API_BASE}/auth/logout`, {
+    await authorizedFetch(`${API_BASE}/v1/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken })
@@ -60,7 +61,7 @@ export async function logout(): Promise<void> {
 }
 
 export async function getCurrentUser() {
-    return apiJson<{ id: string; email: string; name: string; role: string }>(`${API_BASE}/auth/me`, {
+    return apiJsonData<{ id: string; email: string; name: string; role: string }>(`${API_BASE}/v1/auth/me`, {
         method: 'GET'
     })
 }

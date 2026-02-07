@@ -63,4 +63,14 @@ export class RelationshipRepo implements IRelRepo {
         )
         return result.rows.map(mapRow)
     }
+
+    async list(): Promise<RelationshipRecord[]> {
+        const result = await this.pg.query<RelRow>(
+            `SELECT id, rel_type_id, from_ci_id, to_ci_id, status, since_date, note, created_at
+             FROM cmdb_relationships
+             WHERE status = 'active'
+             ORDER BY created_at DESC`
+        )
+        return result.rows.map(mapRow)
+    }
 }

@@ -1,15 +1,13 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Alert, Button, Input, Label, Select } from 'flowbite-svelte';
   import { scanInventoryAsset } from '$lib/api/assetMgmt';
 
   let {
     sessionId = '',
-    locations = []
-  } = $props<{ sessionId?: string; locations?: Array<{ id: string; name: string }> }>();
-
-  const dispatch = createEventDispatcher<{ scanned: void }>();
+    locations = [],
+    onscanned
+  } = $props<{ sessionId?: string; locations?: Array<{ id: string; name: string }>; onscanned?: () => void }>();
 
   let assetCode = $state('');
   let scannedLocationId = $state('');
@@ -17,6 +15,10 @@
   let scanning = $state(false);
 
   async function handleScan() {
+    if (!sessionId) {
+      error = $_('assets.inventory.selectSessionError');
+      return;
+    }
     if (!assetCode) {
       error = 'Asset code is required';
       return;
@@ -30,7 +32,7 @@
       });
       assetCode = '';
       scannedLocationId = '';
-      dispatch('scanned');
+      onscanned?.();
     } catch (err) {
       error = err instanceof Error ? err.message : 'Scan failed';
     } finally {
@@ -58,7 +60,7 @@
       </Select>
     </div>
     <div class="flex items-end">
-      <Button on:click={handleScan} disabled={scanning || !assetCode}>
+      <Button onclick={handleScan} disabled={scanning || !assetCode || !sessionId}>
         {scanning ? ($isLoading ? 'Scanning...' : $_('assets.scanning')) : ($isLoading ? 'Scan' : $_('assets.scan'))}
       </Button>
     </div>

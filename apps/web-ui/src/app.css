@@ -10,7 +10,7 @@
 
 @layer components {
   .page-shell {
-    @apply w-full max-w-screen-2xl xl:max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8;
+    @apply w-full px-4 sm:px-6 lg:px-8;
   }
   .page-content {
     @apply w-full space-y-6 lg:space-y-8;

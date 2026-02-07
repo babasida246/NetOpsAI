@@ -57,7 +57,7 @@
 				id="org-select"
 				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
 				value={$contextStore.selectedOrgId || ''}
-				on:change={handleOrgChange}
+				onchange={handleOrgChange}
 			>
 				<option value="">-- All Organizations --</option>
 				{#each $contextStore.organizations as org}
@@ -75,7 +75,7 @@
 				id="warehouse-select"
 				class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
 				value={$contextStore.selectedWarehouseId || ''}
-				on:change={handleWarehouseChange}
+				onchange={handleWarehouseChange}
 				disabled={$filteredWarehouses.length === 0}
 			>
 				<option value="">-- All Warehouses --</option>

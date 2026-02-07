@@ -1,0 +1,28 @@
+{
+  "device": {
+    "model": "CRS326-24G-2S+RM",
+    "routerOsMajor": 7,
+    "routerOsVersion": "7.12.1"
+  },
+  "role": "access-switch-crs",
+  "hostname": "ACCESS-CRS-01",
+  "environment": "dev",
+  "interfaces": [
+    { "name": "ether1", "purpose": "trunk", "comment": "Uplink trunk", "trunkVlanIds": [10, 20, 30] },
+    { "name": "ether2", "purpose": "access", "comment": "Staff access", "accessVlanId": 20 },
+    { "name": "ether3", "purpose": "access", "comment": "Guest access", "accessVlanId": 30 },
+    { "name": "ether24", "purpose": "mgmt", "comment": "OOB mgmt", "accessVlanId": 10 }
+  ],
+  "vlans": [
+    { "id": 10, "name": "mgmt", "subnet": "10.10.10.0/24", "gateway": "10.10.10.2", "group": "MGMT" },
+    { "id": 20, "name": "staff", "subnet": "10.20.20.0/24", "gateway": "10.20.20.2", "group": "STAFF" },
+    { "id": 30, "name": "guest", "subnet": "10.30.30.0/24", "gateway": "10.30.30.2", "group": "GUEST" }
+  ],
+  "securityProfile": { "preset": "standard-secure" },
+  "management": {
+    "mgmtSubnet": "10.10.10.0/24",
+    "allowedSubnets": ["10.10.10.0/24"],
+    "ssh": { "allowPassword": false }
+  },
+  "notes": "example: CRS access switch trunk + access ports"
+}

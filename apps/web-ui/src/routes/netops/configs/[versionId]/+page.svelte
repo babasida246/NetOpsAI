@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Button, Alert, Spinner, Modal, Label, Select } from 'flowbite-svelte';
   import { ArrowLeft, FileCode, Play, GitCompare } from 'lucide-svelte';
   import { configsApi, rulepacksApi, lintApi, devicesApi } from '$lib/netops/api/netopsApi';
@@ -10,7 +10,7 @@
   import LintFindingsList from '$lib/netops/components/LintFindingsList.svelte';
   import { formatDate } from '$lib/netops/utils/format';
   
-  let versionId = $derived($page.params.versionId);
+  let versionId = $derived(page.params.versionId);
   
   let config: ConfigVersion | null = $state(null);
   let device: Device | null = $state(null);
@@ -165,15 +165,15 @@
         </div>
         
         <div class="flex gap-2">
-          <Button on:click={handleParseNormalize} disabled={parsing}>
+          <Button onclick={handleParseNormalize} disabled={parsing}>
             <FileCode class="w-4 h-4 mr-2" />
             {parsing ? ($isLoading ? 'Parsing...' : $_('netops.parsing')) : ($isLoading ? 'Parse & Normalize' : $_('netops.parseNormalize'))}
           </Button>
-          <Button color="alternative" on:click={() => showLintModal = true}>
+          <Button color="alternative" onclick={() => showLintModal = true}>
             <Play class="w-4 h-4 mr-2" />
             {$isLoading ? 'Run Lint' : $_('netops.runLint')}
           </Button>
-          <Button color="alternative" on:click={() => showDiffModal = true}>
+          <Button color="alternative" onclick={() => showDiffModal = true}>
             <GitCompare class="w-4 h-4 mr-2" />
             {$isLoading ? 'Compare' : $_('netops.compare')}
           </Button>
@@ -264,7 +264,9 @@
 <!-- Lint Modal -->
 <Modal bind:open={showLintModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">{$isLoading ? 'Run Lint Check' : $_('netops.configsDetail.runLintCheck')}</h3>
+  
+      <h3 class="text-xl font-semibold">{$isLoading ? 'Run Lint Check' : $_('netops.configsDetail.runLintCheck')}</h3>
+    
   </svelte:fragment>
   
   {#if lintError}
@@ -286,19 +288,23 @@
   </div>
   
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showLintModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={handleRunLint} disabled={linting || !selectedRulepackId}>
-        {linting ? ($isLoading ? 'Running...' : $_('netops.running')) : ($isLoading ? 'Run Lint' : $_('netops.runLint'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showLintModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={handleRunLint} disabled={linting || !selectedRulepackId}>
+          {linting ? ($isLoading ? 'Running...' : $_('netops.running')) : ($isLoading ? 'Run Lint' : $_('netops.runLint'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
 
 <!-- Diff Modal -->
 <Modal bind:open={showDiffModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">{$isLoading ? 'Compare Configurations' : $_('netops.compareConfigs')}</h3>
+  
+      <h3 class="text-xl font-semibold">{$isLoading ? 'Compare Configurations' : $_('netops.compareConfigs')}</h3>
+    
   </svelte:fragment>
   
   {#if diffError}
@@ -326,11 +332,14 @@
   </div>
   
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showDiffModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={handleDiff} disabled={diffing || !compareWithId}>
-        {diffing ? ($isLoading ? 'Comparing...' : $_('netops.comparing')) : ($isLoading ? 'Compare' : $_('netops.compare'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showDiffModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={handleDiff} disabled={diffing || !compareWithId}>
+          {diffing ? ($isLoading ? 'Comparing...' : $_('netops.comparing')) : ($isLoading ? 'Compare' : $_('netops.compare'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

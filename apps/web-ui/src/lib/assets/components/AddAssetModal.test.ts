@@ -8,10 +8,8 @@ describe('AddAssetModal', () => {
     const { getByPlaceholderText, getByText, container } = render(AddAssetModal, {
       props: {
         open: true,
-        models: [{ id: 'm1', label: 'Model 1' }]
-      },
-      events: {
-        create: () => {
+        models: [{ id: 'm1', model: 'Model 1', spec: {} }],
+        oncreate: () => {
           submitted = true;
         }
       }

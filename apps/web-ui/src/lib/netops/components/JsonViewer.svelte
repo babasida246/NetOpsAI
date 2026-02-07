@@ -23,7 +23,7 @@
 <div class="border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-900 overflow-hidden">
   <div class="flex items-center justify-between px-4 py-2 border-b border-gray-700">
     <span class="text-xs text-gray-400 uppercase">JSON</span>
-    <Button size="xs" color="alternative" on:click={handleCopy}>
+    <Button size="xs" color="alternative" onclick={handleCopy}>
       {#if copied}
         <Check class="w-3 h-3 mr-1" />
         Copied

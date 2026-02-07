@@ -1,5 +1,4 @@
 ﻿<script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { _, isLoading } from '$lib/i18n';
 	import type { Currency, FxRate } from '$lib/types/inventory';
 	import { fxRatesAPI } from '$lib/api/inventory';
@@ -8,15 +7,15 @@
 		fromCurrency = null,
 		toCurrency = null,
 		amount = 0,
-		asOf = null
+		asOf = null,
+		onrateloaded
 	} = $props<{
 		fromCurrency?: Currency | null;
 		toCurrency?: Currency | null;
 		amount?: number;
 		asOf?: string | null;
+		onrateloaded?: (rate: FxRate | null) => void;
 	}>();
-
-	const dispatch = createEventDispatcher<{ rateLoaded: FxRate | null }>();
 
 	let rate = $state<FxRate | null>(null);
 	let loading = $state(false);
@@ -31,7 +30,7 @@
 			loading = true;
 			error = null;
 			rate = await fxRatesAPI.getLatest(fromCurrency.id, toCurrency.id, asOf || undefined);
-			dispatch('rateLoaded', rate);
+		onrateloaded?.(rate);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load FX rate';
 			console.error('Failed to load FX rate:', err);

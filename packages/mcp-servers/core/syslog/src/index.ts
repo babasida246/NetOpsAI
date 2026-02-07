@@ -237,9 +237,9 @@ export class SyslogClient extends EventEmitter {
     ): Promise<void> {
         const priority = (this.config.facility! * 8) + severity
         const timestamp = new Date().toISOString()
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const hostname = options?.hostname || require('os').hostname()
         const appName = options?.appName || 'netopsai-gateway'
-
         const syslogMsg = `<${priority}>1 ${timestamp} ${hostname} ${appName} - - - ${message}`
 
         if (this.config.protocol === 'udp') {

@@ -26,4 +26,5 @@ export type OpsEventInput = Omit<OpsEventRecord, 'id' | 'createdAt'>
 export interface IOpsEventRepo {
     append(event: OpsEventInput): Promise<OpsEventRecord>
     listByEntity(entityType: OpsEntityType, entityId: string, limit: number): Promise<OpsEventRecord[]>
+    list(): Promise<OpsEventRecord[]>
 }

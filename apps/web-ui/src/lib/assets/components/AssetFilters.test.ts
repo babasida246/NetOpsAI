@@ -16,10 +16,8 @@ describe('AssetFilters', () => {
         categories: [{ id: 'c1', name: 'Servers' }],
         vendors: [{ id: 'v1', name: 'Dell' }],
         models: [{ id: 'm1', name: 'R740' }],
-        locations: [{ id: 'l1', name: 'HQ' }]
-      },
-      events: {
-        apply: () => {
+        locations: [{ id: 'l1', name: 'HQ' }],
+        onapply: () => {
           applied = true;
         }
       }

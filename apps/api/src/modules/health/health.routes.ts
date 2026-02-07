@@ -1,33 +1,82 @@
 /**
- * Health Check Routes
+ * Health Routes
  */
 import type { FastifyInstance } from 'fastify'
-import { HealthService } from './health.service.js'
-import { healthCheckSchema, readinessSchema, livenessSchema } from './health.schema.js'
-import { zodToJsonSchema } from 'zod-to-json-schema'
+import type { HealthController } from './health.controller.js'
 
-export async function healthRoutes(
+export async function registerHealthRoutes(
     fastify: FastifyInstance,
-    healthService: HealthService
+    controller: HealthController
 ): Promise<void> {
-    // GET /health - Full health check
-    fastify.get('/health', {}, async (request, reply) => {
-        const health = await healthService.getHealth()
-        const statusCode = health.status === 'healthy' ? 200 : 503
-        return reply.status(statusCode).send(health)
-    })
 
-    // GET /health/ready - Kubernetes readiness probe
-    fastify.get('/health/ready', {}, async (request, reply) => {
-        const readiness = await healthService.getReadiness()
-        const statusCode = readiness.ready ? 200 : 503
-        return reply.status(statusCode).send(readiness)
-    })
+    // GET /health
+    fastify.get('/health', {
+        schema: {
+            tags: ['Health'],
+            description: 'Basic health check',
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                            type: 'object',
+                            properties: {
+                                status: { type: 'string' },
+                                timestamp: { type: 'string' },
+                                uptime: { type: 'number' }
+                            }
+                        },
+                        meta: {
+                            type: 'object',
+                            properties: {
+                                timestamp: { type: 'string' },
+                                requestId: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }, controller.check.bind(controller))
 
-    // GET /health/live - Kubernetes liveness probe
-    fastify.get('/health/live', {}, async () => {
-        return healthService.getLiveness()
-    })
+    // GET /health/detailed
+    fastify.get('/health/detailed', {
+        schema: {
+            tags: ['Health'],
+            description: 'Detailed health check including dependencies',
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        data: { type: 'object', additionalProperties: true },
+                        meta: {
+                            type: 'object',
+                            properties: {
+                                timestamp: { type: 'string' },
+                                requestId: { type: 'string' }
+                            }
+                        }
+                    }
+                },
+                503: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        error: { type: 'object' },
+                        meta: {
+                            type: 'object',
+                            properties: {
+                                timestamp: { type: 'string' },
+                                requestId: { type: 'string' }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }, controller.detailed.bind(controller))
 }
 
 

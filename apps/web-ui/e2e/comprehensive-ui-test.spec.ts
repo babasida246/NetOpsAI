@@ -73,9 +73,13 @@ test.beforeEach(async ({ page }) => {
             }
         }
     })
+
+    page.on('pageerror', error => {
+        errorReport.pageErrors.push(error.message)
+    })
 })
 
-test.afterEach(async ({ }, testInfo) => {
+test.afterEach(async (context, testInfo) => {
     // Report errors if any found
     if (errorReport.consoleErrors.length > 0 ||
         errorReport.pageErrors.length > 0 ||

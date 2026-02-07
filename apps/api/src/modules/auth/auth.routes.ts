@@ -1,92 +1,159 @@
 /**
- * Authentication Routes
+ * Auth Routes
+ * 
+ * Defines authentication endpoints and their configurations
  */
-import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { AuthService } from './auth.service.js'
-import {
-    loginRequestSchema, loginResponseSchema,
-    registerRequestSchema, registerResponseSchema,
-    refreshTokenRequestSchema, refreshTokenResponseSchema,
-    logoutRequestSchema, changePasswordRequestSchema,
-    currentUserSchema, type JwtPayload
-} from './auth.schema.js'
-import { zodToJsonSchema } from 'zod-to-json-schema'
-import { UnauthorizedError } from '../../shared/errors/http-errors.js'
+import type { FastifyInstance } from 'fastify'
+import type { AuthController } from './auth.controller.js'
 
-// Extend FastifyRequest to include user
-declare module 'fastify' {
-    interface FastifyRequest {
-        user?: JwtPayload
-    }
-}
-
-export async function authRoutes(
+export async function registerAuthRoutes(
     fastify: FastifyInstance,
-    authService: AuthService
+    controller: AuthController
 ): Promise<void> {
-    // Authentication hook for protected routes
-    const authenticate = async (request: FastifyRequest) => {
-        const authHeader = request.headers.authorization
-        if (!authHeader?.startsWith('Bearer ')) {
-            throw new UnauthorizedError('Missing or invalid authorization header')
-        }
 
-        const token = authHeader.substring(7)
-        request.user = authService.verifyAccessToken(token)
-    }
+    console.log('Registering auth routes...')
+
+    // Simple test route first
+    fastify.get('/auth/test', async () => {
+        console.log('Test route called!')
+        return { message: 'Auth routes work!' }
+    })
 
     // POST /auth/login
     fastify.post('/auth/login', {
-    }, async (request, reply) => {
-        const data = loginRequestSchema.parse(request.body)
-        const result = await authService.login(data, {
-            userAgent: request.headers['user-agent'],
-            ip: request.ip
-        })
-        return reply.status(200).send(result)
-    })
+        schema: {
+            body: {
+                type: 'object',
+                properties: {
+                    email: { type: 'string', format: 'email' },
+                    password: { type: 'string' }
+                },
+                required: ['email', 'password']
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        data: {
+                            type: 'object',
+                            properties: {
+                                accessToken: { type: 'string' },
+                                refreshToken: { type: 'string' },
+                                expiresIn: { type: 'number' },
+                                user: {
+                                    type: 'object',
+                                    properties: {
+                                        id: { type: 'string' },
+                                        email: { type: 'string' },
+                                        name: { type: 'string' },
+                                        role: { type: 'string' },
+                                        isActive: { type: 'boolean' }
+                                    }
+                                }
+                            }
+                        },
+                        meta: { type: 'object' }
+                    },
+                    required: ['success', 'data', 'meta']
+                }
+            }
+        },
+        config: {
+            rateLimit: {
+                max: 5,
+                timeWindow: 60000 // 1 minute
+            }
+        }
+    }, controller.login.bind(controller))
+
+    console.log('Auth routes registered successfully')
 
     // POST /auth/register
     fastify.post('/auth/register', {
-    }, async (request, reply) => {
-        const data = registerRequestSchema.parse(request.body)
-        const result = await authService.register(data)
-        return reply.status(201).send(result)
-    })
+        schema: {
+            body: {
+                type: 'object',
+                properties: {
+                    email: { type: 'string', format: 'email' },
+                    password: { type: 'string', minLength: 8 },
+                    name: { type: 'string', minLength: 2 },
+                    confirmPassword: { type: 'string' }
+                },
+                required: ['email', 'password', 'name', 'confirmPassword']
+            },
+            response: {
+                201: {
+                    type: 'object',
+                    properties: {
+                        success: { type: 'boolean' },
+                        data: { type: 'object' },
+                        meta: { type: 'object' }
+                    }
+                }
+            }
+        },
+        config: {
+            rateLimit: {
+                max: 3,
+                timeWindow: 300000 // 5 minutes
+            }
+        }
+    }, controller.register.bind(controller))
 
     // POST /auth/refresh
     fastify.post('/auth/refresh', {
-    }, async (request, reply) => {
-        const data = refreshTokenRequestSchema.parse(request.body)
-        const result = await authService.refreshToken(data)
-        return reply.status(200).send(result)
-    })
+        schema: {
+            body: {
+                type: 'object',
+                properties: {
+                    refreshToken: { type: 'string' }
+                },
+                required: ['refreshToken']
+            }
+        },
+        config: {
+            rateLimit: {
+                max: 10,
+                timeWindow: 60000 // 1 minute
+            }
+        }
+    }, controller.refresh.bind(controller))
 
     // POST /auth/logout
     fastify.post('/auth/logout', {
-        preHandler: authenticate
-    }, async (request, reply) => {
-        const { refreshToken } = logoutRequestSchema.parse(request.body)
-        await authService.logout(request.user!.sub, refreshToken)
-        return reply.status(200).send({ success: true, message: 'Logged out successfully' })
-    })
+        preHandler: [fastify.authenticate]
+    }, controller.logout.bind(controller))
 
     // GET /auth/me
     fastify.get('/auth/me', {
-        preHandler: authenticate
-    }, async (request, reply) => {
-        const user = await authService.getCurrentUser(request.user!.sub)
-        return reply.status(200).send(user)
-    })
+        preHandler: [fastify.authenticate]
+    }, controller.getCurrentUser.bind(controller))
+
+    // GET /users/me - Alias for compatibility
+    fastify.get('/users/me', {
+        preHandler: [fastify.authenticate]
+    }, controller.getCurrentUser.bind(controller))
 
     // POST /auth/change-password
     fastify.post('/auth/change-password', {
-        preHandler: authenticate
-    }, async (request, reply) => {
-        const data = changePasswordRequestSchema.parse(request.body)
-        await authService.changePassword(request.user!.sub, data)
-        return reply.status(200).send({ success: true, message: 'Password changed successfully' })
-    })
+        schema: {
+            body: {
+                type: 'object',
+                properties: {
+                    currentPassword: { type: 'string' },
+                    newPassword: { type: 'string', minLength: 8 },
+                    confirmPassword: { type: 'string' }
+                },
+                required: ['currentPassword', 'newPassword', 'confirmPassword']
+            }
+        },
+        preHandler: [fastify.authenticate],
+        config: {
+            rateLimit: {
+                max: 3,
+                timeWindow: 300000 // 5 minutes
+            }
+        }
+    }, controller.changePassword.bind(controller))
 }
-
-

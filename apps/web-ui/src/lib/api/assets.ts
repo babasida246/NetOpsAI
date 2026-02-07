@@ -1,6 +1,7 @@
 import { API_BASE, apiJson, authorizedFetch } from './httpClient'
 
 export type AssetStatus = 'in_stock' | 'in_use' | 'in_repair' | 'retired' | 'disposed' | 'lost'
+export type AssetStatusCounts = Record<AssetStatus, number>
 export type AssigneeType = 'person' | 'department' | 'system'
 export type MaintenanceSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type MaintenanceStatus = 'open' | 'in_progress' | 'closed' | 'canceled'
@@ -95,6 +96,7 @@ export type AssetCreateInput = {
     purchaseDate?: string
     warrantyEnd?: string
     notes?: string
+    spec?: Record<string, unknown>
 }
 
 export type AssetAssignInput = {
@@ -144,6 +146,22 @@ export async function listAssets(params: AssetSearchParams = {}): Promise<ApiRes
     })
 }
 
+export async function getAssetStatusCounts(): Promise<ApiResponse<AssetStatusCounts> | null> {
+    const response = await authorizedFetch(`${API_BASE}/v1/assets/status-counts`, {
+        headers: getAssetHeaders()
+    })
+
+    if (response.status === 404 || response.status === 501) {
+        return null
+    }
+
+    if (!response.ok) {
+        throw new Error(await response.text())
+    }
+
+    return (await response.json()) as ApiResponse<AssetStatusCounts>
+}
+
 export async function exportAssetsCsv(params: AssetSearchParams = {}): Promise<string> {
     const query = buildQuery({ ...params, export: 'csv' })
     const response = await authorizedFetch(`${API_BASE}/v1/assets${query}`, {
@@ -186,6 +204,13 @@ export async function updateAsset(assetId: string, patch: Partial<AssetCreateInp
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...getAssetHeaders() },
         body: JSON.stringify(patch)
+    })
+}
+
+export async function deleteAsset(assetId: string): Promise<void> {
+    await apiJson<void>(`${API_BASE}/v1/assets/${assetId}`, {
+        method: 'DELETE',
+        headers: getAssetHeaders()
     })
 }
 

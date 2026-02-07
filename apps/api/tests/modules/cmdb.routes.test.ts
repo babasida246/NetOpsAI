@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { cmdbRoutes } from '../../src/routes/v1/cmdb.routes.js'
+import { cmdbRoutes } from '../../src/routes/v1/cmdb/cmdb.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type {
     CiService,

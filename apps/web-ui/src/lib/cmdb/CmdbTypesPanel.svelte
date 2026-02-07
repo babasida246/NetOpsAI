@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Alert, Button, Input, Modal, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Modal, Spinner } from 'flowbite-svelte';
   import { Plus } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
   import { createCmdbType, listCmdbTypes, type CmdbType } from '$lib/api/cmdb';
   import CmdbTypeSchema from './CmdbTypeSchema.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let types = $state<CmdbType[]>([]);
   let loading = $state(true);
@@ -57,6 +58,15 @@
     }
   }
 
+  async function handleRowClick(row: CmdbType) {
+    selectedType = row;
+  }
+
+  const columns = [
+    { key: 'code' as const, label: $isLoading ? 'Code' : $_('common.code'), sortable: true, filterable: true, render: (row: CmdbType) => `<span class="font-medium">${row.code}</span>` },
+    { key: 'name' as const, label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true }
+  ];
+
   $effect(() => {
     void loadTypes();
   });
@@ -84,30 +94,12 @@
           <Spinner size="8" />
         </div>
       {:else}
-        <Table>
-          <TableHead>
-            <TableHeadCell>{$isLoading ? 'Code' : $_('common.code')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#if types.length === 0}
-              <TableBodyRow>
-                <TableBodyCell colspan="2" class="text-center text-slate-500">{$isLoading ? 'No types found.' : $_('cmdb.noTypes')}</TableBodyCell>
-              </TableBodyRow>
-            {:else}
-              {#each types as type}
-                <TableBodyRow class={selectedType?.id === type.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}>
-                  <TableBodyCell class="font-medium">
-                    <button class="text-left w-full" onclick={() => selectedType = type}>
-                      {type.code}
-                    </button>
-                  </TableBodyCell>
-                  <TableBodyCell>{type.name}</TableBodyCell>
-                </TableBodyRow>
-              {/each}
-            {/if}
-          </TableBody>
-        </Table>
+        <DataTable
+          data={types}
+          {columns}
+          rowKey="id"
+          selectable={false}
+        />
       {/if}
     </div>
 
@@ -119,7 +111,9 @@
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">{$isLoading ? 'New CMDB Type' : $_('cmdb.newType')}</h3>
+  
+      <h3 class="text-lg font-semibold">{$isLoading ? 'New CMDB Type' : $_('cmdb.newType')}</h3>
+    
   </svelte:fragment>
   <div class="space-y-3">
     <div>
@@ -136,11 +130,14 @@
     </div>
   </div>
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button disabled={saving || !code || !name} onclick={saveType}>
-        {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Create' : $_('common.create'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button disabled={saving || !code || !name} onclick={saveType}>
+          {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Create' : $_('common.create'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

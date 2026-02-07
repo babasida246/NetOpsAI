@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { Alert, Button, Input, Label, Modal, Select } from 'flowbite-svelte';
+  import { Alert, Button, Input, Label, Modal, Select, Spinner } from 'flowbite-svelte';
   import type { AssetCreateInput, AssetStatus } from '$lib/api/assets';
+  import type { AssetModel, CategorySpecDef } from '$lib/api/assetCatalogs';
+  import { getCategorySpecDefs } from '$lib/api/assetCatalogs';
+  import DynamicSpecForm from '$lib/assets/components/catalogs/DynamicSpecForm.svelte';
   import { _, isLoading } from '$lib/i18n';
 
   let {
@@ -9,16 +11,16 @@
     models = [],
     vendors = [],
     locations = [],
-    error = ''
+    error = '',
+    oncreate
   } = $props<{
     open?: boolean;
-    models?: Array<{ id: string; label: string }>;
+    models?: AssetModel[];
     vendors?: Array<{ id: string; name: string }>;
     locations?: Array<{ id: string; name: string }>;
     error?: string;
+    oncreate?: (data: AssetCreateInput) => void;
   }>();
-
-  const dispatch = createEventDispatcher<{ create: AssetCreateInput }>();
 
   let form = $state({
     assetCode: '',
@@ -30,8 +32,28 @@
     macAddress: '',
     mgmtIp: '',
     hostname: '',
-    notes: ''
+    notes: '',
+    spec: {} as Record<string, unknown>
   });
+
+  let selectedModel = $state<AssetModel | null>(null);
+  let specDefs = $state<CategorySpecDef[]>([]);
+  let specLoading = $state(false);
+  let specError = $state('');
+
+  async function loadSpecDefs(categoryId: string) {
+    try {
+      specLoading = true;
+      specError = '';
+      const response = await getCategorySpecDefs(categoryId);
+      specDefs = response.data;
+    } catch (err) {
+      specDefs = [];
+      specError = err instanceof Error ? err.message : 'Failed to load spec fields';
+    } finally {
+      specLoading = false;
+    }
+  }
 
   function reset() {
     form = {
@@ -44,12 +66,16 @@
       macAddress: '',
       mgmtIp: '',
       hostname: '',
-      notes: ''
+      notes: '',
+      spec: {}
     };
+    selectedModel = null;
+    specDefs = [];
+    specError = '';
   }
 
   function submit() {
-    dispatch('create', {
+    oncreate?.({
       assetCode: form.assetCode,
       modelId: form.modelId,
       status: form.status,
@@ -59,14 +85,42 @@
       macAddress: form.macAddress || undefined,
       mgmtIp: form.mgmtIp || undefined,
       hostname: form.hostname || undefined,
-      notes: form.notes || undefined
+      notes: form.notes || undefined,
+      spec: Object.keys(form.spec).length > 0 ? form.spec : undefined
     });
   }
+
+  $effect(() => {
+    const modelId = form.modelId;
+    if (!modelId) {
+      selectedModel = null;
+      specDefs = [];
+      specError = '';
+      return;
+    }
+    const model = models.find((m: AssetModel) => m.id === modelId);
+    if (!model) {
+      selectedModel = null;
+      specDefs = [];
+      return;
+    }
+    selectedModel = model;
+    // Load spec from model as default
+    form.spec = { ...(model.spec || {}) };
+    // Load spec definitions if category exists
+    if (model.categoryId) {
+      loadSpecDefs(model.categoryId);
+    } else {
+      specDefs = [];
+    }
+  });
 </script>
 
-<Modal bind:open on:close={reset} size="lg">
+<Modal bind:open onclose={reset} size="lg">
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">{$isLoading ? 'Create Asset' : $_('assets.createAsset')}</h3>
+  
+      <h3 class="text-xl font-semibold">{$isLoading ? 'Create Asset' : $_('assets.createAsset')}</h3>
+    
   </svelte:fragment>
 
   {#if error}
@@ -83,7 +137,7 @@
       <Select bind:value={form.modelId}>
         <option value="">{$isLoading ? 'Select model' : $_('assets.selectModel')}</option>
         {#each models as model}
-          <option value={model.id}>{model.label}</option>
+          <option value={model.id}>{[model.brand, model.model].filter(Boolean).join(' ') || model.model}</option>
         {/each}
       </Select>
     </div>
@@ -142,12 +196,32 @@
       <Label class="mb-2">{$isLoading ? 'Notes' : $_('assets.notes')}</Label>
       <Input bind:value={form.notes} />
     </div>
+    
+    {#if selectedModel && selectedModel.categoryId}
+      <div class="border-t pt-4 mt-4">
+        <h4 class="text-sm font-semibold mb-3">{$isLoading ? 'Specifications' : 'Thông số kỹ thuật'}</h4>
+        {#if specLoading}
+          <div class="flex justify-center py-4">
+            <Spinner size="6" />
+          </div>
+        {:else if specError}
+          <Alert color="yellow" class="text-sm">{specError}</Alert>
+        {:else if specDefs.length > 0}
+          <DynamicSpecForm bind:spec={form.spec} {specDefs} />
+        {:else}
+          <p class="text-sm text-gray-500">{$isLoading ? 'No specifications defined' : 'Chưa có thông số kỹ thuật'}</p>
+        {/if}
+      </div>
+    {/if}
   </div>
 
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => open = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button on:click={submit} disabled={!form.assetCode || !form.modelId}>{$isLoading ? 'Create' : $_('common.create')}</Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => open = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button onclick={submit} disabled={!form.assetCode || !form.modelId}>{$isLoading ? 'Create' : $_('common.create')}</Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

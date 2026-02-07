@@ -31,9 +31,10 @@ export class AssetRepo implements IAssetRepo {
                 purchase_date,
                 warranty_end,
                 vendor_id,
-                notes
+                notes,
+                spec
             ) VALUES (
-                $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15
+                $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16
             )
             RETURNING *`,
             [
@@ -51,7 +52,8 @@ export class AssetRepo implements IAssetRepo {
                 asset.purchaseDate ?? null,
                 asset.warrantyEnd ?? null,
                 asset.vendorId ?? null,
-                asset.notes ?? null
+                asset.notes ?? null,
+                asset.spec ? JSON.stringify(asset.spec) : '{}'
             ]
         )
 
@@ -76,6 +78,7 @@ export class AssetRepo implements IAssetRepo {
         if (patch.warrantyEnd !== undefined) updates.push({ column: 'warranty_end', value: patch.warrantyEnd })
         if (patch.vendorId !== undefined) updates.push({ column: 'vendor_id', value: patch.vendorId })
         if (patch.notes !== undefined) updates.push({ column: 'notes', value: patch.notes })
+        if (patch.spec !== undefined) updates.push({ column: 'spec', value: patch.spec ? JSON.stringify(patch.spec) : '{}' })
 
         if (updates.length === 0) {
             const existing = await this.getById(id)

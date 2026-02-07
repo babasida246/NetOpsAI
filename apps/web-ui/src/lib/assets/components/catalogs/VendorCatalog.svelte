@@ -1,14 +1,17 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { Button, Input, Label, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
-  import { Pencil, Trash2 } from 'lucide-svelte';
+  import { Button, Input, Label } from 'flowbite-svelte';
   import { createVendor, deleteVendor, updateVendor } from '$lib/api/assetCatalogs';
+  import DataTable from '$lib/components/DataTable.svelte';
 
-  let { vendors = [] } = $props<{
+  let { vendors = [], onupdated, onerror } = $props<{
     vendors?: Array<{ id: string; name: string; taxCode?: string | null; phone?: string | null; email?: string | null; address?: string | null }>;
+    onupdated?: () => void;
+    onerror?: (msg: string) => void;
   }>();
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
+
+  // Ensure vendors is always an array
+  const safeVendors = $derived(Array.isArray(vendors) ? vendors : []);
 
   let form = $state({ name: '', taxCode: '', phone: '', email: '', address: '' });
   let editingId = $state<string | null>(null);
@@ -36,9 +39,9 @@
         await createVendor(payload);
       }
       reset();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to save vendor');
+      onerror?.(err instanceof Error ? err.message : 'Failed to save vendor');
     } finally {
       saving = false;
     }
@@ -55,13 +58,29 @@
     editingId = vendor.id;
   }
 
-  async function remove(id: string) {
-    if (!confirm('Delete this vendor?')) return;
+  async function handleEdit(vendor: any, changes: Partial<any>) {
     try {
-      await deleteVendor(id);
-      dispatch('updated');
+      await updateVendor(vendor.id, {
+        name: changes.name || vendor.name,
+        taxCode: changes.taxCode !== undefined ? changes.taxCode : vendor.taxCode,
+        phone: changes.phone !== undefined ? changes.phone : vendor.phone,
+        email: changes.email !== undefined ? changes.email : vendor.email,
+        address: changes.address !== undefined ? changes.address : vendor.address
+      });
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to delete vendor');
+      onerror?.(err instanceof Error ? err.message : 'Failed to update vendor');
+    }
+  }
+
+  async function handleDelete(rows: any[]) {
+    try {
+      for (const row of rows) {
+        await deleteVendor(row.id);
+      }
+      onupdated?.();
+    } catch (err) {
+      onerror?.(err instanceof Error ? err.message : 'Failed to delete vendor');
     }
   }
 </script>
@@ -91,44 +110,27 @@
       </div>
     </div>
     <div class="flex gap-2">
-      <Button on:click={save} disabled={saving || !form.name.trim()}>
+      <Button onclick={save} disabled={saving || !form.name.trim()}>
         {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : editingId ? ($isLoading ? 'Update' : $_('common.update')) : ($isLoading ? 'Add' : $_('common.add'))}
       </Button>
       {#if editingId}
-        <Button color="alternative" on:click={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button color="alternative" onclick={reset}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
       {/if}
     </div>
   </div>
 
-  <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-    <Table>
-      <TableHead>
-        <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Tax code' : $_('assets.taxCode')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Phone' : $_('assets.phone')}</TableHeadCell>
-        <TableHeadCell>{$isLoading ? 'Email' : $_('assets.email')}</TableHeadCell>
-        <TableHeadCell class="w-32">{$isLoading ? 'Actions' : $_('common.actions')}</TableHeadCell>
-      </TableHead>
-      <TableBody>
-        {#each vendors as vendor}
-          <TableBodyRow>
-            <TableBodyCell>{vendor.name}</TableBodyCell>
-            <TableBodyCell>{vendor.taxCode || '-'}</TableBodyCell>
-            <TableBodyCell>{vendor.phone || '-'}</TableBodyCell>
-            <TableBodyCell>{vendor.email || '-'}</TableBodyCell>
-            <TableBodyCell>
-              <div class="flex gap-2">
-                <Button size="xs" color="alternative" on:click={() => edit(vendor)}>
-                  <Pencil class="w-3 h-3" />
-                </Button>
-                <Button size="xs" color="alternative" on:click={() => remove(vendor.id)}>
-                  <Trash2 class="w-3 h-3" />
-                </Button>
-              </div>
-            </TableBodyCell>
-          </TableBodyRow>
-        {/each}
-      </TableBody>
-    </Table>
-  </div>
+  <DataTable
+    data={safeVendors}
+    columns={[
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true },
+      { key: 'taxCode', label: $isLoading ? 'Tax code' : $_('assets.taxCode'), sortable: true, filterable: true, editable: true, render: (val) => val || '-' },
+      { key: 'phone', label: $isLoading ? 'Phone' : $_('assets.phone'), sortable: true, filterable: true, editable: true, render: (val) => val || '-' },
+      { key: 'email', label: $isLoading ? 'Email' : $_('assets.email'), sortable: true, filterable: true, editable: true, render: (val) => val || '-' }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={false}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 </div>

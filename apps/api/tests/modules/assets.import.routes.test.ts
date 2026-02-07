@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { assetImportRoutes } from '../../src/routes/v1/assets.import.routes.js'
+import { assetImportRoutes } from '../../src/routes/v1/assets/assets.import.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { AssetService } from '@application/core'
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Button, Alert, Input, Label, Card } from 'flowbite-svelte';
   import { _, isLoading } from '$lib/i18n';
   import { login } from '$lib/api/auth';
@@ -10,16 +10,37 @@
   let loading = $state(false);
   let errorMsg = $state('');
 
-  const redirectTo = $derived($page.url.searchParams.get('redirect') || '/chat');
+  const redirectTo = $derived(page.url.searchParams.get('redirect') || '/chat');
 
-  // Check if already logged in on mount.
+  // Check setup status and redirect if needed
   $effect(() => {
     if (typeof window === 'undefined') return;
+    
+    // Check if already logged in
     const token = localStorage.getItem('authToken');
     if (token) {
       goto(redirectTo);
+      return;
     }
+
+    // Check if setup is needed
+    checkSetup();
   });
+
+  async function checkSetup() {
+    try {
+      const response = await fetch('/api/v1/setup/status');
+      if (response.ok) {
+        const status = await response.json();
+        if (status.data && !status.data.isComplete) {
+          // Redirect to setup if not completed
+          goto('/setup', { replaceState: true });
+        }
+      }
+    } catch (error) {
+      console.log('Setup check failed, assuming setup is complete:', error);
+    }
+  }
 
   async function handleLogin() {
     loading = true;

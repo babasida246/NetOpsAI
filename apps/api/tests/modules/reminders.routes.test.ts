@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { reminderRoutes } from '../../src/routes/v1/reminders.routes.js'
+import { reminderRoutes } from '../../src/routes/v1/reports/reminders.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { ReminderService } from '@application/core'
 import type { ReminderRecord } from '@contracts/shared'

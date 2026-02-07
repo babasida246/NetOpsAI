@@ -1,5 +1,4 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Button } from 'flowbite-svelte';
   import SpecFieldForm from './SpecFieldForm.svelte';
@@ -38,21 +37,27 @@
     isSearchable: boolean;
     isFilterable: boolean;
   };
-  const dispatch = createEventDispatcher<{ updated: void; error: string }>();
 
   let {
     specDefs = [],
     categoryId = '',
     selectedVersionId = '',
     disabled = false,
-    canApplyTemplate = false
+    canApplyTemplate = false,
+    onupdated,
+    onerror
   } = $props<{
     specDefs?: CategorySpecDef[];
     categoryId?: string;
     selectedVersionId?: string;
     disabled?: boolean;
     canApplyTemplate?: boolean;
+    onupdated?: () => void;
+    onerror?: (message: string) => void;
   }>();
+
+  // Ensure specDefs is always an array
+  const safeSpecDefs = $derived(Array.isArray(specDefs) ? specDefs : []);
   const emptyDraft = (): SpecFieldDraft => ({
     key: '',
     label: '',
@@ -171,7 +176,7 @@
       stepValue: parseNumber(draft.stepValue),
       precision: parseNumber(draft.precision),
       scale: parseNumber(draft.scale),
-      normalize: draft.normalize || undefined,
+      normalize: (draft.normalize || undefined) as 'trim' | 'upper' | 'lower' | undefined,
       isReadonly: draft.isReadonly,
       computedExpr: String(draft.computedExpr || '').trim() || undefined,
       isSearchable: draft.isSearchable,
@@ -188,7 +193,7 @@
     const safeLabel = String(draft.label || '').trim();
     if (!safeKey || !safeLabel) return;
     if (!selectedVersionId) {
-      dispatch('error', 'Select a spec version first');
+      onerror?.('Select a spec version first');
       return;
     }
     try {
@@ -200,9 +205,9 @@
         await createSpecDefForVersion(selectedVersionId, payload);
       }
       resetForm();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to save spec field');
+      onerror?.(err instanceof Error ? err.message : 'Failed to save spec field');
     } finally {
       saving = false;
     }
@@ -215,9 +220,9 @@
     if (!confirm('Delete this spec field?')) return;
     try {
       await deleteSpecDef(def.id);
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to delete spec field');
+      onerror?.(err instanceof Error ? err.message : 'Failed to delete spec field');
     }
   }
   async function applyTemplate() {
@@ -225,9 +230,9 @@
     try {
       saving = true;
       await applyCategorySpecTemplate(categoryId);
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
-      dispatch('error', err instanceof Error ? err.message : 'Failed to apply template');
+      onerror?.(err instanceof Error ? err.message : 'Failed to apply template');
     } finally {
       saving = false;
     }
@@ -237,16 +242,16 @@
 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
   <SpecFieldForm bind:draft />
   <div class="flex flex-wrap gap-2 mt-4">
-    <Button on:click={save} disabled={disabled || saving || !String(draft.key || '').trim() || !String(draft.label || '').trim()}>
+    <Button onclick={save} disabled={disabled || saving || !String(draft.key || '').trim() || !String(draft.label || '').trim()}>
       {saving ? 'Saving...' : editingId ? 'Update Field' : 'Add Field'}
     </Button>
     {#if editingId}
-      <Button color="alternative" on:click={resetForm} disabled={disabled}>
+      <Button color="alternative" onclick={resetForm} disabled={disabled}>
         {$isLoading ? 'Cancel' : $_('common.cancel')}
       </Button>
     {/if}
-    {#if specDefs.length === 0 && canApplyTemplate}
-      <Button color="alternative" on:click={applyTemplate} disabled={saving}>
+    {#if safeSpecDefs.length === 0 && canApplyTemplate}
+      <Button color="alternative" onclick={applyTemplate} disabled={saving}>
         {$isLoading ? 'Apply Template' : $_('assets.applyTemplate')}
       </Button>
     {/if}
@@ -254,8 +259,8 @@
 </div>
 
 <SpecDefsTable
-  specDefs={specDefs}
+  specDefs={safeSpecDefs}
   disabled={disabled}
-  on:edit={(event) => edit(event.detail)}
-  on:remove={(event) => remove(event.detail)}
+  onedit={(def) => edit(def)}
+  onremove={(def) => remove(def)}
 />

@@ -15,7 +15,7 @@
         }
     },
     "scripts": {
-        "build": "tsup src/index.ts src/netops/redaction.ts --format esm --dts --clean",
+        "build": "tsc",
         "dev": "tsup src/index.ts src/netops/redaction.ts --format esm --dts --watch"
     },
     "devDependencies": {

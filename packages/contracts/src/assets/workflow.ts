@@ -28,6 +28,7 @@ export interface WorkflowRequestInput {
 export interface WorkflowRequestListFilters {
     status?: WorkflowRequestStatus
     requestType?: WorkflowRequestType
+    requestedBy?: string
     page?: number
     limit?: number
 }

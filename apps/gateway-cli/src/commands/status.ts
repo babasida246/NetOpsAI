@@ -14,13 +14,23 @@ export async function statusCommand() {
         const env = EnvSchema.parse(process.env)
 
         // Check Postgres
-        const pg = new PgClient({ connectionString: env.DATABASE_URL })
+        const pg = new PgClient({
+            connectionString: env.DATABASE_URL,
+            max: 5,
+            min: 1,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000
+        })
         const pgHealthy = await pg.healthCheck()
         console.log(`✓ Postgres: ${pgHealthy ? 'Connected' : 'Disconnected'}`)
         await pg.close()
 
         // Check Redis
-        const redis = new RedisClient({ url: env.REDIS_URL })
+        const redis = new RedisClient({
+            url: env.REDIS_URL,
+            keyPrefix: 'netopsai_cli:',
+            maxRetriesPerRequest: 3
+        })
         await redis.connect()
         const redisHealthy = await redis.healthCheck()
         console.log(`✓ Redis: ${redisHealthy ? 'Connected' : 'Disconnected'}`)

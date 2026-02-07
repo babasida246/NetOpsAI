@@ -1,195 +1,161 @@
 <script lang="ts">
-  import { Card, Button, Badge, Input, Label, Select, Alert } from 'flowbite-svelte';
+  import { Alert, Badge } from 'flowbite-svelte';
+  import { onMount } from 'svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { listUsers, createUser, updateUser, resetPassword, deleteUser, listAuditLogs, type AdminUser, type AuditLogEntry } from '$lib/api/admin';
+  import { getStoredTokens } from '$lib/api/httpClient';
+  import { readLocal, writeLocal, isBrowser } from '$lib/admin/storage';
+  import HealthErrorPanel from '$lib/components/admin/HealthErrorPanel.svelte';
+  import UserManagementPanel from '$lib/components/admin/UserManagementPanel.svelte';
+  import AuditLogsPanel from '$lib/components/admin/AuditLogsPanel.svelte';
+  import RolePermissionMatrix from '$lib/components/admin/RolePermissionMatrix.svelte';
+  import SessionManagementPanel from '$lib/components/admin/SessionManagementPanel.svelte';
+  import ImpersonationPanel from '$lib/components/admin/ImpersonationPanel.svelte';
+  import ModelGovernancePanel from '$lib/components/admin/ModelGovernancePanel.svelte';
+  import AdminStatsPanel from '$lib/components/admin/AdminStatsPanel.svelte';
+  import SecurityCompliancePanel from '$lib/components/admin/SecurityCompliancePanel.svelte';
+  import PolicyAsCodePanel from '$lib/components/admin/PolicyAsCodePanel.svelte';
+  import BreakGlassPanel from '$lib/components/admin/BreakGlassPanel.svelte';
+  import EvidenceBuilderPanel from '$lib/components/admin/EvidenceBuilderPanel.svelte';
+  import OpsMetricsPanel from '$lib/components/admin/OpsMetricsPanel.svelte';
+  import FeatureFlagsPanel from '$lib/components/admin/FeatureFlagsPanel.svelte';
+  import NotificationCenterPanel from '$lib/components/admin/NotificationCenterPanel.svelte';
+  import ChangeCalendarPanel from '$lib/components/admin/ChangeCalendarPanel.svelte';
+  import BaselineDriftPanel from '$lib/components/admin/BaselineDriftPanel.svelte';
+  import GlobalSearchPanel from '$lib/components/admin/GlobalSearchPanel.svelte';
+  import AdminActivityFeedPanel from '$lib/components/admin/AdminActivityFeedPanel.svelte';
+  import JitAccessPanel from '$lib/components/admin/JitAccessPanel.svelte';
+  import ApprovalWorkflowPanel from '$lib/components/admin/ApprovalWorkflowPanel.svelte';
 
-  let users = $state<AdminUser[]>([]);
-  let auditLogs = $state<AuditLogEntry[]>([]);
-  let loading = $state(false);
-  let auditLoading = $state(false);
-  let errorMsg = $state('');
-  let showCreate = $state(false);
-  let newUser = $state({ email: '', name: '', password: '', role: 'user' });
+  type ImpersonationState = {
+    userId: string;
+    email: string;
+    startedAt: string;
+  } | null;
 
-  $effect(() => {
-    void Promise.all([loadUsers(), loadAuditLogs()]);
+  type SectionId = 'quick' | 'core' | 'stats' | 'models' | 'security' | 'ops' | 'ux';
+
+  type AdminSection = {
+    id: SectionId;
+    labelKey: string;
+    descriptionKey: string;
+  };
+
+  const SECTION_KEY = 'admin.activeSection.v1';
+
+  const sections: AdminSection[] = [
+    { id: 'quick', labelKey: 'admin.sections.quickWins', descriptionKey: 'admin.sectionDescriptions.quickWins' },
+    { id: 'core', labelKey: 'admin.sections.coreAdmin', descriptionKey: 'admin.sectionDescriptions.coreAdmin' },
+    { id: 'stats', labelKey: 'admin.sections.stats', descriptionKey: 'admin.sectionDescriptions.stats' },
+    { id: 'models', labelKey: 'admin.sections.models', descriptionKey: 'admin.sectionDescriptions.models' },
+    { id: 'security', labelKey: 'admin.sections.security', descriptionKey: 'admin.sectionDescriptions.security' },
+    { id: 'ops', labelKey: 'admin.sections.ops', descriptionKey: 'admin.sectionDescriptions.ops' },
+    { id: 'ux', labelKey: 'admin.sections.ux', descriptionKey: 'admin.sectionDescriptions.ux' }
+  ];
+
+  function normalizeSection(value: string | null): SectionId {
+    if (!value) return 'quick';
+    if (value === 'ai') return 'models';
+    if (sections.some((section) => section.id === value)) return value as SectionId;
+    return 'quick';
+  }
+
+  let activeSection = $state<SectionId>(normalizeSection(readLocal<string>(SECTION_KEY, 'quick')));
+  let impersonation = $state<ImpersonationState>(readLocal<ImpersonationState>('admin.impersonation.v1', null));
+
+  function init() {
+    const { accessToken } = getStoredTokens();
+    if (!accessToken && isBrowser) {
+      window.location.replace(`/login?redirect=${encodeURIComponent('/admin')}`);
+    }
+  }
+
+  onMount(() => {
+    void init();
+    if (!isBrowser) return;
+
+    const handleStorage = () => {
+      impersonation = readLocal<ImpersonationState>('admin.impersonation.v1', null);
+    };
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      activeSection = normalizeSection(hash || activeSection);
+    };
+
+    handleStorage();
+    handleHash();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('hashchange', handleHash);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('hashchange', handleHash);
+    };
   });
 
-  async function loadUsers() {
-    loading = true;
-    try {
-      const res = await listUsers();
-      users = res.data;
-    } catch (error) {
-      console.error('Failed to load users', error);
-      errorMsg = $_('admin.failedToLoadUsers');
-    } finally {
-      loading = false;
-    }
-  }
+  $effect(() => {
+    if (!isBrowser) return;
+    writeLocal(SECTION_KEY, activeSection);
+  });
 
-  async function loadAuditLogs() {
-    auditLoading = true;
-    try {
-      const res = await listAuditLogs({ limit: 20 });
-      auditLogs = res.data;
-    } catch (error) {
-      console.error('Failed to load audit logs', error);
-      errorMsg = $_('admin.failedToLoadAuditLogs');
-    } finally {
-      auditLoading = false;
-    }
-  }
-
-  async function handleCreate() {
-    try {
-      await createUser(newUser);
-      showCreate = false;
-      newUser = { email: '', name: '', password: '', role: 'user' };
-      await loadUsers();
-    } catch (error) {
-      console.error('Create user failed', error);
-      errorMsg = $_('admin.createUserFailed');
-    }
-  }
-
-  async function toggleActive(user: AdminUser) {
-    await updateUser(user.id, { isActive: !user.isActive });
-    await loadUsers();
-  }
-
-  async function changeRole(user: AdminUser, role: string) {
-    await updateUser(user.id, { role });
-    await loadUsers();
-  }
-
-  async function handleResetPassword(user: AdminUser) {
-    const newPass = prompt($_('admin.resetPasswordPrompt', { values: { email: user.email } }));
-    if (!newPass) return;
-    await resetPassword(user.id, newPass);
-  }
-
-  async function handleDelete(user: AdminUser) {
-    if (!confirm($_('admin.deleteUserConfirm', { values: { email: user.email } }))) return;
-    await deleteUser(user.id);
-    await loadUsers();
-  }
+  const activeMeta = $derived.by(() => sections.find((section) => section.id === activeSection) || sections[0]);
 </script>
 
-<div class="page-shell page-content py-6 lg:py-8">
-  <div class="flex items-center justify-between">
+<div class="page-shell page-content py-6 lg:py-8 space-y-6">
+  <div>
+    <h1
+      class="text-2xl font-bold text-slate-900 dark:text-white"
+      data-testid="admin-title"
+    >
+      {$isLoading ? 'Admin Control Center' : $_('admin.title')}
+    </h1>
+    <p class="text-sm text-slate-500">{$isLoading ? 'Operations, security, and AI governance' : $_('admin.subtitle')}</p>
+  </div>
+
+  {#if impersonation}
+    <Alert color="yellow">
+      <div class="flex items-center gap-2">
+        <Badge color="yellow">Impersonation</Badge>
+        <span>Active session for {impersonation.email} since {new Date(impersonation.startedAt).toLocaleString()}</span>
+      </div>
+    </Alert>
+  {/if}
+
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{$isLoading ? 'Admin Users' : $_('admin.title')}</h1>
-      <p class="text-sm text-slate-500">{$isLoading ? 'Manage accounts, roles, and access status' : $_('admin.subtitle')}</p>
+      <div class="text-sm font-semibold text-slate-900 dark:text-white">{$_(activeMeta.labelKey)}</div>
+      <div class="text-xs text-slate-500">{$_(activeMeta.descriptionKey)}</div>
     </div>
-    <Button on:click={() => showCreate = !showCreate}>{showCreate ? ($isLoading ? 'Close' : $_('admin.closeForm')) : ($isLoading ? 'Add user' : $_('admin.addUser'))}</Button>
+    <Badge color="blue">{$isLoading ? 'Section' : $_('admin.sectionLabel')}: {$_(activeMeta.labelKey)}</Badge>
   </div>
 
-  {#if errorMsg}
-    <Alert color="red">{errorMsg}</Alert>
-  {/if}
-
-  {#if showCreate}
-    <Card class="border border-slate-200 dark:border-slate-800">
-      <div class="grid gap-3 md:grid-cols-2">
-        <div>
-          <Label>{$isLoading ? 'Email' : $_('admin.email')}</Label>
-          <Input bind:value={newUser.email} />
-        </div>
-        <div>
-          <Label>{$isLoading ? 'Name' : $_('admin.name')}</Label>
-          <Input bind:value={newUser.name} />
-        </div>
-        <div>
-          <Label>{$isLoading ? 'Password' : $_('admin.password')}</Label>
-          <Input type="password" bind:value={newUser.password} />
-        </div>
-        <div>
-          <Label>{$isLoading ? 'Role' : $_('admin.role')}</Label>
-          <Select bind:value={newUser.role}>
-            <option value="user">{$isLoading ? 'User' : $_('admin.user')}</option>
-            <option value="admin">{$isLoading ? 'Admin' : $_('admin.admin')}</option>
-            <option value="super_admin">{$isLoading ? 'Super Admin' : $_('admin.superAdmin')}</option>
-          </Select>
-        </div>
-      </div>
-      <div class="mt-3 flex gap-2">
-        <Button on:click={handleCreate} disabled={!newUser.email || !newUser.password}>{$isLoading ? 'Create' : $_('admin.createUser')}</Button>
-        <Button color="light" on:click={() => showCreate = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      </div>
-    </Card>
-  {/if}
-
-  <div class="grid gap-3">
-    {#each users as user}
-      <Card class="border border-slate-200 dark:border-slate-800">
-        <div class="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{user.name}</h3>
-              <Badge color="blue">{user.role}</Badge>
-              <Badge color={user.isActive ? 'green' : 'red'}>{user.isActive ? $_('admin.active') : $_('admin.disabled')}</Badge>
-            </div>
-            <p class="text-sm text-slate-500">{user.email}</p>
-            {#if user.lastLogin}
-              <p class="text-xs text-slate-400">{$isLoading ? 'Last login' : $_('admin.lastLogin')}: {new Date(user.lastLogin).toLocaleString()}</p>
-            {/if}
-          </div>
-          <div class="flex gap-2 flex-wrap">
-            <Select size="sm" value={user.role} on:change={(e) => changeRole(user, (e.target as HTMLSelectElement).value)}>
-              <option value="user">{$isLoading ? 'User' : $_('admin.user')}</option>
-              <option value="admin">{$isLoading ? 'Admin' : $_('admin.admin')}</option>
-              <option value="super_admin">{$isLoading ? 'Super Admin' : $_('admin.superAdmin')}</option>
-            </Select>
-            <Button size="sm" color={user.isActive ? 'red' : 'green'} on:click={() => toggleActive(user)}>
-              {user.isActive ? ($isLoading ? 'Lock' : $_('admin.lock')) : ($isLoading ? 'Unlock' : $_('admin.unlock'))}
-            </Button>
-            <Button size="sm" color="light" on:click={() => handleResetPassword(user)}>{$isLoading ? 'Reset password' : $_('admin.resetPassword')}</Button>
-            <Button size="sm" color="red" on:click={() => handleDelete(user)}>{$isLoading ? 'Delete' : $_('admin.delete')}</Button>
-          </div>
-        </div>
-      </Card>
-    {/each}
-  </div>
-
-  <div class="space-y-3">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-xl font-semibold text-slate-900 dark:text-white">{$isLoading ? 'Audit Logs' : $_('admin.auditLogs')}</h2>
-        <p class="text-sm text-slate-500">{$isLoading ? 'Recent admin actions' : $_('admin.recentActions')}</p>
-      </div>
-      <Button size="sm" color="light" on:click={loadAuditLogs} disabled={auditLoading}>{$isLoading ? 'Refresh' : $_('common.refresh')}</Button>
-    </div>
-
-    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-      <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
-          <tr>
-            <th class="px-6 py-3">{$isLoading ? 'Time' : $_('admin.time')}</th>
-            <th class="px-6 py-3">{$isLoading ? 'Action' : $_('admin.action')}</th>
-            <th class="px-6 py-3">{$isLoading ? 'Resource' : $_('admin.resource')}</th>
-            <th class="px-6 py-3">{$isLoading ? 'Actor' : $_('admin.actor')}</th>
-            <th class="px-6 py-3">{$isLoading ? 'IP' : $_('admin.ip')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#if auditLogs.length === 0}
-            <tr><td colspan="5" class="px-6 py-4 text-center text-slate-500">{$isLoading ? 'No audit entries' : $_('admin.noAuditEntries')}</td></tr>
-          {:else}
-            {#each auditLogs as log}
-              <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
-                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
-                  {new Date(log.createdAt).toLocaleString()}
-                </td>
-                <td class="px-6 py-4">{log.action}</td>
-                <td class="px-6 py-4">{log.resource} {log.resourceId ? `(${log.resourceId})` : ''}</td>
-                <td class="px-6 py-4">{log.userId || ($_('common.system'))}</td>
-                <td class="px-6 py-4">{log.ipAddress || '-'}</td>
-              </tr>
-            {/each}
-          {/if}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <section class="space-y-6">
+    {#if activeSection === 'quick'}
+      <HealthErrorPanel />
+      <UserManagementPanel />
+      <AuditLogsPanel />
+    {:else if activeSection === 'core'}
+      <RolePermissionMatrix />
+      <SessionManagementPanel />
+      <ImpersonationPanel />
+      <JitAccessPanel />
+      <ApprovalWorkflowPanel />
+    {:else if activeSection === 'stats'}
+      <AdminStatsPanel />
+    {:else if activeSection === 'models'}
+      <ModelGovernancePanel />
+    {:else if activeSection === 'security'}
+      <SecurityCompliancePanel />
+      <PolicyAsCodePanel />
+      <BreakGlassPanel />
+      <EvidenceBuilderPanel />
+    {:else if activeSection === 'ops'}
+      <OpsMetricsPanel />
+      <FeatureFlagsPanel />
+      <NotificationCenterPanel />
+      <ChangeCalendarPanel />
+      <BaselineDriftPanel />
+    {:else if activeSection === 'ux'}
+      <GlobalSearchPanel />
+      <AdminActivityFeedPanel />
+    {/if}
+  </section>
 </div>

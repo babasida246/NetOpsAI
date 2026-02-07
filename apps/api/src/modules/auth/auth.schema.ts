@@ -43,10 +43,12 @@ export const registerRequestSchema = z.object({
 })
 
 export const registerResponseSchema = z.object({
-    id: z.string().uuid(),
-    email: z.string().email(),
-    name: z.string(),
-    role: userRoleSchema,
+    user: z.object({
+        id: z.string().uuid(),
+        email: z.string().email(),
+        name: z.string(),
+        role: userRoleSchema
+    }),
     createdAt: z.string().datetime()
 })
 
@@ -98,6 +100,36 @@ export const currentUserSchema = z.object({
 })
 
 export type CurrentUser = z.infer<typeof currentUserSchema>
+
+// Schema collection for routes
+export const authSchemas = {
+    login: {
+        body: loginRequestSchema,
+        response: {
+            200: loginResponseSchema
+        }
+    },
+    register: {
+        body: registerRequestSchema,
+        response: {
+            201: registerResponseSchema
+        }
+    },
+    refreshToken: {
+        body: refreshTokenRequestSchema,
+        response: {
+            200: refreshTokenResponseSchema
+        }
+    },
+    changePassword: {
+        body: changePasswordRequestSchema
+    },
+    currentUser: {
+        response: {
+            200: currentUserSchema
+        }
+    }
+}
 
 // JWT Payload
 export const jwtPayloadSchema = z.object({

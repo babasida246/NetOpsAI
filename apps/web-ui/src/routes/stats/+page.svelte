@@ -9,7 +9,7 @@
   let loading = $state(false);
   let selectedPeriod = $state<'today' | 'week' | 'month'>('week');
 
-  const periodLabel = $derived(() => {
+  const periodLabel = $derived.by(() => {
     if (selectedPeriod === 'today') return $_('stats.today');
     if (selectedPeriod === 'week') return $_('stats.last7Days');
     return $_('stats.last30Days');

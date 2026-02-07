@@ -11,7 +11,7 @@ describe('CategorySpecRepo', () => {
         query.mockResolvedValueOnce({
             rows: [{
                 id: 'spec-1',
-                version_id: 'ver-1',
+                spec_version_id: 'ver-1',
                 key: 'memorySizeGb',
                 label: 'Memory Size',
                 field_type: 'number',
@@ -53,7 +53,7 @@ describe('CategorySpecRepo', () => {
         query.mockResolvedValueOnce({
             rows: [{
                 id: 'spec-2',
-                version_id: 'ver-1',
+                spec_version_id: 'ver-1',
                 key: 'memoryType',
                 label: 'Memory Type',
                 field_type: 'enum',

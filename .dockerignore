@@ -1,10 +1,23 @@
 # Dependencies
 node_modules
 **/node_modules
+**/.ignored_*
+.pnpm-store
+**/.pnpm-store
 
-# Build outputs (commented out for Dockerfile.simple which needs dist)
-# **/dist
+# Source files (not needed - using pre-built dist/ folders)
+**/src
+**/*.ts
+!**/dist/**/*.ts
+!**/dist/**/*.js
+
+# Build outputs - KEEP dist/ folders (pre-built artifacts needed)
+# **/dist  # DO NOT IGNORE - needed for new Docker strategy
 *.tsbuildinfo
+
+# Web-UI build output - KEEP for new Docker strategy
+# apps/web-ui/.svelte-kit  # DO NOT IGNORE - needed for runtime
+# apps/web-ui/build
 
 # Test files
 **/*.test.ts
@@ -47,6 +60,14 @@ logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+
+# Temporary files and cache
+.cache
+**/.cache
+.temp
+**/.temp
+.turbo
+**/.turbo
 
 # Scripts (not needed in container)
 scripts/

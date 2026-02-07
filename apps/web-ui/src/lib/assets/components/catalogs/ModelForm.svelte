@@ -1,5 +1,4 @@
-﻿<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Button, Input, Label, Select, Spinner } from 'flowbite-svelte';
   import {
@@ -17,14 +16,22 @@
   let {
     categories = [],
     vendors = [],
-    selectedModel = null
+    selectedModel = null,
+    onupdated,
+    onerror,
+    oncleared
   } = $props<{
     categories?: AssetCategory[];
     vendors?: Vendor[];
     selectedModel?: AssetModel | null;
+    onupdated?: () => void;
+    onerror?: (message: string) => void;
+    oncleared?: () => void;
   }>();
 
-  const dispatch = createEventDispatcher<{ updated: void; error: string; cleared: void }>();
+  // Ensure all props are always arrays
+  const safeCategories = $derived(Array.isArray(categories) ? categories : []);
+  const safeVendors = $derived(Array.isArray(vendors) ? vendors : []);
 
   let form = $state({
     model: '',
@@ -51,7 +58,7 @@
     specFieldErrors = {};
     lastCategoryId = null;
     useVersionDefs = false;
-    if (emit) dispatch('cleared');
+    if (emit) oncleared?.();
   }
 
   function applySelected(model: AssetModel) {
@@ -174,14 +181,14 @@
         await createModel(payload);
       }
       resetForm();
-      dispatch('updated');
+      onupdated?.();
     } catch (err) {
       const fieldErrors = extractSpecErrors(err);
       if (fieldErrors) {
         specFieldErrors = fieldErrors;
         return;
       }
-      dispatch('error', err instanceof Error ? err.message : 'Failed to save model');
+      onerror?.(err instanceof Error ? err.message : 'Failed to save model');
     } finally {
       saving = false;
     }
@@ -200,9 +207,9 @@
     </div>
     <div>
       <Label class="mb-2">{$isLoading ? 'Category' : $_('assets.category')}</Label>
-      <Select bind:value={form.categoryId} on:change={() => useVersionDefs = false}>
+      <Select bind:value={form.categoryId} onchange={() => useVersionDefs = false}>
         <option value="">{$isLoading ? 'No category' : $_('assets.noCategory')}</option>
-        {#each categories as category}
+        {#each safeCategories as category}
           <option value={category.id}>{category.name}</option>
         {/each}
       </Select>
@@ -211,7 +218,7 @@
         <Label class="mb-2">{$isLoading ? 'Vendor' : $_('common.vendor')}</Label>
         <Select bind:value={form.vendorId}>
           <option value="">{$isLoading ? 'No vendor' : $_('assets.noVendor')}</option>
-        {#each vendors as vendor}
+        {#each safeVendors as vendor}
           <option value={vendor.id}>{vendor.name}</option>
         {/each}
       </Select>
@@ -235,11 +242,11 @@
     </div>
   {/if}
   <div class="flex gap-2">
-    <Button on:click={save} disabled={saving || !form.model.trim()}>
+    <Button onclick={save} disabled={saving || !form.model.trim()}>
       {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
     </Button>
     {#if editingId}
-      <Button color="alternative" on:click={() => resetForm()}>Cancel</Button>
+      <Button color="alternative" onclick={() => resetForm()}>Cancel</Button>
     {/if}
   </div>
 </div>

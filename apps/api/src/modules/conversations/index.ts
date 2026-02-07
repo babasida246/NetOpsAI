@@ -1,5 +1,6 @@
 export * from './conversations.schema.js'
 export * from './conversations.repository.js'
 export * from './conversations.routes.js'
+export * from './conversations.module.js'
 export * from './memory.service.js'
 export * from './context-optimizer.service.js'

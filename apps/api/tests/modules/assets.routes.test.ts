@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { assetsRoutes } from '../../src/routes/v1/assets.routes.js'
+import { assetsRoutes } from '../../src/routes/v1/assets/assets.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { AssetRecord, AssetAssignmentRecord } from '@contracts/shared'
 import type { AssetService } from '@application/core'
@@ -48,8 +48,28 @@ describe('assets routes', () => {
         app.addHook('onRequest', requestIdHook)
         app.setErrorHandler(errorHandler)
 
+        const statusTotals = {
+            in_stock: 5,
+            in_use: 2,
+            in_repair: 1,
+            retired: 0,
+            disposed: 3,
+            lost: 4
+        } as const
+
         assetService = {
-            searchAssets: vi.fn().mockResolvedValue({ items: [asset], total: 1, page: 1, limit: 20 }),
+            searchAssets: vi.fn().mockImplementation(async (filters: any) => {
+                const status = filters?.status as keyof typeof statusTotals | undefined
+                if (status && status in statusTotals) {
+                    return {
+                        items: [],
+                        total: statusTotals[status],
+                        page: 1,
+                        limit: filters?.limit ?? 20
+                    }
+                }
+                return { items: [asset], total: 1, page: 1, limit: filters?.limit ?? 20 }
+            }),
             exportAssetsCsvData: vi.fn().mockResolvedValue([asset]),
             createAsset: vi.fn().mockResolvedValue(asset),
             getAssetDetail: vi.fn().mockResolvedValue({ asset, assignments: [assignment], maintenance: [] }),
@@ -219,5 +239,27 @@ describe('assets routes', () => {
 
         expect(response.statusCode).toBe(200)
         expect(response.headers['content-type']).toContain('text/csv')
+    })
+
+    it('returns status counts', async () => {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/v1/assets/status-counts',
+            headers: viewerHeaders
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = response.json()
+        expect(body.data).toEqual({
+            in_stock: 5,
+            in_use: 2,
+            in_repair: 1,
+            retired: 0,
+            disposed: 3,
+            lost: 4
+        })
+
+        expect(assetService.searchAssets).toHaveBeenCalledTimes(6)
+        expect(assetService.searchAssets).toHaveBeenCalledWith({ status: 'in_stock', page: 1, limit: 1 })
     })
 })

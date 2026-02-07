@@ -7,7 +7,7 @@ describe('CiSchemaRepo', () => {
         const query = vi.fn().mockResolvedValueOnce({
             rows: [{
                 id: 'def-1',
-                version_id: 'v1',
+                ci_type_version_id: 'v1',
                 key: 'ipAddress',
                 label: 'IP Address',
                 field_type: 'ip',

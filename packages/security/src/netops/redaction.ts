@@ -18,8 +18,8 @@ const SENSITIVE_PATTERNS: Array<{ pattern: RegExp; replacement: string; name: st
     { pattern: /snmp-server\s+community\s+([^\s]+)/gi, replacement: 'snmp-server community ***REDACTED***', name: 'snmp_community' },
 
     // SSH/API keys
-    { pattern: /ssh-rsa\s+[A-Za-z0-9+\/=]+/gi, replacement: 'ssh-rsa ***REDACTED***', name: 'ssh_key' },
-    { pattern: /ssh-ed25519\s+[A-Za-z0-9+\/=]+/gi, replacement: 'ssh-ed25519 ***REDACTED***', name: 'ssh_key' },
+    { pattern: /ssh-rsa\s+[A-Za-z0-9+/=]+/gi, replacement: 'ssh-rsa ***REDACTED***', name: 'ssh_key' },
+    { pattern: /ssh-ed25519\s+[A-Za-z0-9+/=]+/gi, replacement: 'ssh-ed25519 ***REDACTED***', name: 'ssh_key' },
     { pattern: /api[_-]?key\s*[=:]\s*['""]?([^'""!\s]+)['""]?/gi, replacement: 'api_key=***REDACTED***', name: 'api_key' },
     { pattern: /token\s*[=:]\s*['""]?([^'""!\s]+)['""]?/gi, replacement: 'token=***REDACTED***', name: 'token' },
 
@@ -169,7 +169,7 @@ function looksLikeSecret(value: string): boolean {
     const hasUpper = /[A-Z]/.test(value)
     const hasLower = /[a-z]/.test(value)
     const hasDigit = /\d/.test(value)
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(value)
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(value)
 
     const complexity = [hasUpper, hasLower, hasDigit, hasSpecial].filter(Boolean).length
 

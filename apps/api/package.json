@@ -10,7 +10,10 @@
         "start": "node dist/main.js",
         "test": "vitest run",
         "test:watch": "vitest",
+        "test:unit": "vitest run src/modules",
+        "test:integration": "vitest run src/tests/e2e",
         "test:coverage": "vitest run --coverage",
+        "test:all": "vitest run && vitest run src/tests/e2e",
         "lint": "eslint src --ext .ts",
         "typecheck": "tsc --noEmit"
     },

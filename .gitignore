@@ -11,6 +11,8 @@ coverage/
 # Build artifacts
 *.tsbuildinfo
 .nyc_output/
+build/
+.svelte-kit/
 
 # Docker volumes (if created locally)
 postgres_data/
@@ -24,9 +26,10 @@ docker/nginx/ssl/*.key
 
 # Logs directory
 logs/
+*.err.log
+*.out.log
 
-# Backups
-*.sql
+# Backups and SQL dumps
 *.sql.gz
 *.rdb
 backups/
@@ -46,15 +49,16 @@ test-results/
 test-results.json/
 .auth/
 *.timestamp-*.mjs
+test-*.txt
+*-test-output.txt
 
 # Temporary files
 *.http
 *.bak
 *-log.txt
-test-*.txt
-run-tests.ps1
+*.tmp
 
-# Archive reports (keep in archive folder)
+# Documentation to ignore (keep only essential)
 *_REPORT.md
 *_SUMMARY.md
 *_PLAN.md
@@ -63,4 +67,20 @@ run-tests.ps1
 *_IMPLEMENTATION.md
 *_REFERENCE.md
 *_GUIDE.md
+*_SESSION.md
+*_TESTING*.md
 TEST_*.md
+DOCKER_*.md
+PLAYWRIGHT_*.md
+WEB_UI_*.md
+API_*.md
+
+# Archive folder
+archive/
+
+# Build scripts (temporary)
+build-docker-prebuild.ps1
+cleanup-docker.ps1
+monitor-logs.js
+test-setup.mjs
+run-tests.ps1

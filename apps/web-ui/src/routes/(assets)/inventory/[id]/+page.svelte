@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { Alert, Button, Card, Input, Label, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Badge } from 'flowbite-svelte';
+  import { page } from '$app/state';
+  import { Alert, Button, Card, Input, Label, Spinner, Badge } from 'flowbite-svelte';
   import { Scan, CheckCircle, XCircle, ArrowLeft } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { _, isLoading } from '$lib/i18n';
@@ -11,6 +11,7 @@
     type InventorySession,
     type InventoryItem 
   } from '$lib/api/assetMgmt';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let session = $state<InventorySession | null>(null);
   let items = $state<InventoryItem[]>([]);
@@ -19,9 +20,9 @@
   let scanCode = $state('');
   let scanning = $state(false);
 
-  const sessionId = $derived($page.params.id);
+  const sessionId = $derived(page.params.id);
 
-  const statusColors = {
+  const statusColors: Record<string, 'dark' | 'blue' | 'green' | 'red'> = {
     draft: 'dark',
     in_progress: 'blue',
     closed: 'green',
@@ -74,6 +75,25 @@
     }
   }
 
+  const columns = [
+    { key: 'assetId' as const, label: $isLoading ? 'Asset Code' : $_('assets.assetTag'), sortable: true, filterable: true, render: (row: InventoryItem) => `<span class="font-medium">${row.assetId || '-'}</span>` },
+    { 
+      key: 'status' as const, 
+      label: $isLoading ? 'Status' : $_('assets.status'), 
+      sortable: true, 
+      filterable: true,
+      render: (row: InventoryItem) => {
+        if (row.status === 'found') {
+          return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path></svg>${$isLoading ? 'Found' : $_('inventory.status.found')}</span>`;
+        } else if (row.status === 'missing') {
+          return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"><svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><line x1="15" y1="9" x2="9" y2="15" stroke-width="2"></line><line x1="9" y1="9" x2="15" y2="15" stroke-width="2"></line></svg>${$isLoading ? 'Missing' : $_('inventory.status.missing')}</span>`;
+        }
+        return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">${$isLoading ? 'Unexpected' : $_('inventory.status.unexpected')}</span>`;
+      }
+    },
+    { key: 'scannedAt' as const, label: $isLoading ? 'Scanned At' : $_('inventory.scannedAt'), sortable: true, render: (row: InventoryItem) => `<span class="text-sm text-gray-500 dark:text-gray-400">${row.scannedAt ? new Date(row.scannedAt).toLocaleString() : '-'}</span>` }
+  ];
+
   $effect(() => {
     void loadSession();
   });
@@ -99,7 +119,7 @@
             {$isLoading ? session.status.replace('_', ' ') : $_(`inventory.status.${session.status}`)}
           </Badge>
           {#if session.status === 'in_progress' || session.status === 'draft'}
-            <Button size="sm" color="green" on:click={closeSession}>
+            <Button size="sm" color="green" onclick={closeSession}>
               {$isLoading ? 'Close Session' : $_('inventory.closeSession')}
             </Button>
           {/if}
@@ -114,7 +134,7 @@
     </div>
 
     {#if error}
-      <Alert color="red" class="mb-4" dismissable on:close={() => error = ''}>{error}</Alert>
+      <Alert color="red" class="mb-4" dismissable onclose={() => error = ''}>{error}</Alert>
     {/if}
 
     <Card class="mb-6">
@@ -145,32 +165,13 @@
             {$isLoading ? `Scanned Items (${items.length})` : $_('inventory.scannedItems', { values: { count: items.length } })}
           </h2>
         </div>
-        <Table>
-          <TableHead>
-            <TableHeadCell>{$isLoading ? 'Asset Code' : $_('assets.assetTag')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Status' : $_('assets.status')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Scanned At' : $_('inventory.scannedAt')}</TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#each items as item}
-              <TableBodyRow>
-                <TableBodyCell class="font-medium">{item.assetCode}</TableBodyCell>
-                <TableBodyCell>
-                  {#if item.status === 'found'}
-                    <Badge color="green"><CheckCircle class="w-3 h-3 mr-1 inline" /> {$isLoading ? 'Found' : $_('inventory.status.found')}</Badge>
-                  {:else if item.status === 'missing'}
-                    <Badge color="red"><XCircle class="w-3 h-3 mr-1 inline" /> {$isLoading ? 'Missing' : $_('inventory.status.missing')}</Badge>
-                  {:else}
-                    <Badge color="yellow">{$isLoading ? 'Unexpected' : $_('inventory.status.unexpected')}</Badge>
-                  {/if}
-                </TableBodyCell>
-                <TableBodyCell class="text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(item.scannedAt).toLocaleString()}
-                </TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          </TableBody>
-        </Table>
+        <DataTable
+          data={items}
+          {columns}
+          rowKey="id"
+          selectable={false}
+          loading={false}
+        />
       </Card>
     {:else}
       <Card class="text-center py-12 text-gray-500">

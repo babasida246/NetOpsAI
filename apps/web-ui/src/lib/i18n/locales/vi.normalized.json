@@ -20,7 +20,9 @@
     "core": "Lõi",
     "operations": "Vận hành",
     "reports": "Báo cáo",
-    "assetManagement": "Quản lý tài sản"
+    "assetManagement": "Quản lý tài sản",
+    "main": "Chính",
+    "navigation": "Điều hướng"
   },
   "common": {
     "success": "Thành công",
@@ -769,6 +771,7 @@
     "title": "Công cụ & Tiện ích",
     "subtitle": "Các trợ giúp nhanh cho sơ đồ, khắc phục sự cố mạng và truy cập SSH",
     "sections": "Phần",
+    "configGenerator": "Tạo cấu hình",
     "mermaid": "Mermaid",
     "fieldKit": "Bộ dụng cụ trường",
     "sshTerminal": "Terminal SSH",
@@ -849,6 +852,25 @@
   "admin": {
     "title": "Người dùng quản trị",
     "subtitle": "Quản lý tài khoản, vai trò và trạng thái truy cập",
+    "sectionLabel": "Mục",
+    "sections": {
+      "quickWins": "Quick Wins",
+      "coreAdmin": "Core Admin",
+      "stats": "Thống kê",
+      "models": "Models",
+      "security": "Bảo mật",
+      "ops": "Ops",
+      "ux": "UX"
+    },
+    "sectionDescriptions": {
+      "quickWins": "Sức khỏe, người dùng, audit",
+      "coreAdmin": "Vai trò, phiên, giả lập",
+      "stats": "Thông tin sử dụng & chi phí",
+      "models": "Nhà cung cấp, quản trị, điều phối",
+      "security": "MFA, SSO, tuân thủ",
+      "ops": "Metrics, cờ tính năng, thông báo",
+      "ux": "Tìm kiếm & hoạt động"
+    },
     "addUser": "Thêm người dùng",
     "closeForm": "Đóng",
     "email": "Email",
@@ -1190,5 +1212,102 @@
     "previous": "Trước",
     "next": "Tiếp theo",
     "prev": "Trước"
+  },
+  "qlts": {
+    "title": "Quản lý tài sản",
+    "common": {
+      "all": "Tất cả",
+      "docDate": "Ngày chứng từ",
+      "orgUnit": "Đơn vị",
+      "note": "Ghi chú",
+      "lineNo": "STT",
+      "modelName": "Tên mô hình",
+      "assetName": "Tên tài sản",
+      "quantity": "Số lượng",
+      "unit": "Đơn vị tính",
+      "estimatedCost": "Giá dự kiến",
+      "originalCost": "Nguyên giá",
+      "total": "Tổng cộng",
+      "addLine": "Thêm dòng",
+      "saveDraft": "Lưu nháp",
+      "saveAndSubmit": "Lưu & Gửi duyệt",
+      "serialNumber": "Số serial",
+      "location": "Vị trí",
+      "custodian": "Người quản lý"
+    },
+    "status": {
+      "draft": "Nháp",
+      "submitted": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "rejected": "Từ chối",
+      "posted": "Đã ghi sổ",
+      "cancelled": "Đã hủy"
+    },
+    "priority": {
+      "critical": "Khẩn cấp",
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp"
+    },
+    "increaseType": {
+      "purchase": "Mua sắm",
+      "donation": "Được tặng",
+      "transfer_in": "Điều chuyển đến",
+      "found": "Kiểm kê thừa",
+      "other": "Khác"
+    },
+    "inventory": {
+      "currentStock": "Tồn kho hiện tại",
+      "minStock": "Tồn kho tối thiểu",
+      "avgDaily": "Tiêu thụ TB/ngày",
+      "daysUntilStockout": "Số ngày hết hàng"
+    },
+    "purchasePlan": {
+      "title": "Kế hoạch mua sắm",
+      "suggestedQuantity": "SL đề xuất",
+      "addToPlan": "Thêm vào kế hoạch",
+      "dashboard": {
+        "title": "Kế hoạch mua sắm",
+        "createNew": "Tạo kế hoạch mới",
+        "filters": "Bộ lọc",
+        "priority": "Mức độ ưu tiên",
+        "category": "Danh mục",
+        "noSuggestions": "Không có đề xuất mua sắm nào",
+        "recentPlans": "Kế hoạch gần đây",
+        "loadingPlans": "Đang tải danh sách kế hoạch..."
+      },
+      "form": {
+        "createTitle": "Tạo kế hoạch mua sắm",
+        "basicInfo": "Thông tin cơ bản",
+        "fiscalYear": "Năm tài chính",
+        "requiredByDate": "Yêu cầu đến ngày",
+        "purpose": "Mục đích",
+        "lineItems": "Chi tiết kế hoạch"
+      }
+    },
+    "assetIncrease": {
+      "title": "Chứng từ tăng tài sản",
+      "form": {
+        "createTitle": "Tạo chứng từ tăng tài sản",
+        "basicInfo": "Thông tin chung",
+        "increaseType": "Loại tăng",
+        "invoiceNo": "Số hóa đơn",
+        "invoiceDate": "Ngày hóa đơn",
+        "purchasePlanRef": "Kế hoạch mua sắm",
+        "assetLines": "Chi tiết tài sản"
+      }
+    },
+    "approval": {
+      "title": "Phê duyệt",
+      "approve": "Phê duyệt",
+      "reject": "Từ chối",
+      "pending": "Chờ duyệt",
+      "history": "Lịch sử phê duyệt",
+      "step": "Bước {{step}}",
+      "approver": "Người duyệt",
+      "decision": "Quyết định",
+      "decisionAt": "Thời gian",
+      "note": "Ghi chú"
+    }
   }
 }

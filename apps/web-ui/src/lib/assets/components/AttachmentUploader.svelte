@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { Alert, Button } from 'flowbite-svelte';
   import { uploadAttachment } from '$lib/api/assetMgmt';
 
-  let { assetId = '' } = $props<{ assetId?: string }>();
-
-  const dispatch = createEventDispatcher<{ uploaded: void }>();
+  let { assetId = '', onuploaded } = $props<{ assetId?: string; onuploaded?: () => void }>();
 
   let file: File | null = $state(null);
   let uploading = $state(false);
@@ -18,7 +15,7 @@
       error = '';
       await uploadAttachment(assetId, file);
       file = null;
-      dispatch('uploaded');
+      onuploaded?.();
     } catch (err) {
       error = err instanceof Error ? err.message : 'Upload failed';
     } finally {
@@ -35,7 +32,7 @@
     type="file"
     onchange={(event) => file = (event.target as HTMLInputElement).files?.[0] ?? null}
   />
-  <Button size="xs" on:click={handleUpload} disabled={!file || uploading}>
+  <Button size="xs" onclick={handleUpload} disabled={!file || uploading}>
     {uploading ? 'Uploading...' : 'Upload'}
   </Button>
 </div>

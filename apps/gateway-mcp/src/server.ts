@@ -42,4 +42,8 @@ async function main() {
     process.on('SIGINT', shutdown)
 }
 
-main().catch(console.error)
+main().catch((error) => {
+    console.error('Failed to start MCP server:', error.message)
+    console.error('Stack:', error.stack)
+    process.exit(1)
+})

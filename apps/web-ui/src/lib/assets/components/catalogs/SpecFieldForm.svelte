@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Input, Label, Select, Textarea } from 'flowbite-svelte';
   import type { SpecFieldType } from '$lib/api/assetCatalogs';
@@ -109,7 +109,7 @@
     </div>
     <div>
       <Label class="mb-2">{$isLoading ? 'Type' : $_('assets.type')}</Label>
-      <Select name="fieldType" bind:value={draft.fieldType} on:change={handleFieldTypeChange}>
+      <Select name="fieldType" bind:value={draft.fieldType} onchange={handleFieldTypeChange}>
         {#each fieldTypes as field}
           <option value={field.value}>{field.label}</option>
         {/each}

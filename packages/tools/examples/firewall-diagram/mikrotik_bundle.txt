@@ -1,0 +1,23 @@
+/ip firewall filter
+add chain=input action=accept connection-state=established,related comment="Allow established/related"
+add chain=input action=drop connection-state=invalid comment="Drop invalid"
+add chain=input action=accept protocol=tcp dst-port=22 src-address=10.0.0.0/24 comment="Allow SSH from MGMT"
+add chain=input action=accept protocol=icmp comment="Allow ICMP"
+add chain=input action=drop in-interface-list=WAN comment="Drop WAN to router"
+add chain=forward action=fasttrack-connection connection-state=established,related comment="FastTrack established"
+add chain=forward action=accept connection-state=established,related comment="Allow established/related"
+add chain=forward action=drop connection-state=invalid comment="Drop invalid"
+add chain=forward action=accept src-address-list=STAFF dst-address-list=SERVERS protocol=tcp dst-port=443 comment="Staff to servers HTTPS"
+add disabled=yes chain=forward action=accept src-address-list=GUEST dst-address-list=SERVERS protocol=tcp dst-port=445 comment="(disabled) Guest SMB to servers"
+add chain=forward action=drop comment="Default drop"
+
+/ip firewall nat
+add chain=srcnat action=masquerade out-interface-list=WAN comment="SNAT masquerade"
+add chain=dstnat action=dst-nat protocol=tcp dst-port=443 in-interface-list=WAN to-addresses=10.10.20.10 to-ports=443 comment="DNAT web"
+
+/ip firewall address-list
+add list=MGMT address=10.0.0.0/24 comment="Mgmt subnet"
+add list=STAFF address=10.10.10.0/24 comment="Staff subnet"
+add list=GUEST address=10.10.30.0/24 comment="Guest subnet"
+add list=SERVERS address=10.10.20.0/24 comment="Servers subnet"
+

@@ -1,0 +1,37 @@
+{
+  "device": {
+    "model": "CCR2004-1G-12S+2XS",
+    "routerOsMajor": 7,
+    "routerOsVersion": "7.12.1"
+  },
+  "role": "edge-internet",
+  "hostname": "HOSP-GW-01",
+  "environment": "prod",
+  "interfaces": [
+    { "name": "ether1", "purpose": "wan", "comment": "ISP uplink" },
+    { "name": "ether2", "purpose": "trunk", "comment": "LAN trunk", "trunkVlanIds": [10, 20] }
+  ],
+  "vlans": [
+    { "id": 10, "name": "mgmt", "subnet": "10.0.10.0/24", "gateway": "10.0.10.1", "group": "MGMT" },
+    { "id": 20, "name": "staff", "subnet": "10.0.20.0/24", "gateway": "10.0.20.1", "group": "STAFF", "dhcp": { "enabled": true } }
+  ],
+  "internet": {
+    "wanInterface": "ether1",
+    "publicType": "static",
+    "address": "203.0.113.2/30",
+    "gateway": "203.0.113.1",
+    "dnsServers": ["10.0.10.53", "1.1.1.1"],
+    "defaultRoute": true
+  },
+  "securityProfile": { "preset": "hospital-secure" },
+  "management": {
+    "mgmtSubnet": "10.0.0.0/16",
+    "allowedSubnets": ["10.0.0.0/16"],
+    "ssh": { "allowPassword": true, "port": 22 },
+    "dnsAllowRemoteRequests": true,
+    "timezone": "Asia/Ho_Chi_Minh",
+    "ntpServers": ["162.159.200.1", "162.159.200.123"],
+    "syslog": { "remote": "10.0.10.10", "topics": ["info", "warning", "error"] }
+  },
+  "notes": "example: hospital-secure + syslog + prod risk signals"
+}

@@ -2,8 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "types": ["node"]
+    "rootDir": "./src",
+    "composite": true,
+    "declarationMap": false,
+    "sourceMap": false
   },
+  "references": [
+    { "path": "../domain" },
+    { "path": "../contracts" }
+  ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

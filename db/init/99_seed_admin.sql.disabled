@@ -1,0 +1,73 @@
+-- ============================================================================
+-- 99_seed_admin.sql - Create Default Admin Account (OPTIONAL - DISABLED)
+-- ============================================================================
+-- This script creates the default admin user for TechCorp Vietnam.
+-- DISABLED BY DEFAULT - First admin will be created during setup process
+-- 
+-- To enable default admin, uncomment the INSERT and DO blocks below
+-- The password hash is for 'TechCorp@2024' - change this in production!
+-- 
+-- To generate a new hash, use bcrypt with cost 10:
+--   node -e "console.log(require('bcrypt').hashSync('YourPassword', 10))"
+-- ============================================================================
+
+-- Create admin user if not exists (COMMENTED OUT - USE SETUP WIZARD INSTEAD)
+/*
+INSERT INTO public.users
+    (
+    id,
+    email,
+    name,
+    username,
+    password_hash,
+    role,
+    status,
+    is_active,
+    tier,
+    created_at,
+    updated_at
+    )
+SELECT
+    'a0000001-0000-0000-0000-000000000001'
+::uuid,
+    'admin@techcorp.vn',
+    'System Administrator',
+    'admin',
+    -- bcrypt hash for 'TechCorp@2024' with cost 10
+    '$2b$10$7Jicj0mXPfnaAqg2h8/PwOOXwO5g.YCXdD7N3F5EaI80PRXnTItNmy',
+    'admin',
+    'active',
+    true,
+    'enterprise',
+    now
+(),
+    now
+()
+WHERE NOT EXISTS
+(
+    SELECT 1
+FROM public.users
+WHERE email = 'admin@techcorp.vn'
+);
+
+-- Output message
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1
+    FROM public.users
+    WHERE email = 'admin@techcorp.vn') THEN
+        RAISE NOTICE 'Admin user ready: admin@techcorp.vn (password: TechCorp@2024)';
+END
+IF;
+END $$;
+*/
+
+-- Notice about setup wizard
+DO $
+$
+BEGIN
+    RAISE NOTICE '====================================================================';
+    RAISE NOTICE 'No default admin account created.';
+    RAISE NOTICE 'Please use the Setup Wizard at /setup to create your first admin.';
+    RAISE NOTICE '====================================================================';
+END $$;

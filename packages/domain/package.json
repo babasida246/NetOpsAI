@@ -5,9 +5,10 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts --clean",
+        "build": "tsc --project tsconfig.json",
         "dev": "tsup src/index.ts --format esm --dts --watch",
-        "test": "vitest run"
+        "test": "vitest run",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "@types/node": "^20.0.0",

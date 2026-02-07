@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { Alert, Button, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Select, Spinner } from 'flowbite-svelte';
   import { Plus } from 'lucide-svelte';
   import { goto } from '$app/navigation';
   import { _, isLoading } from '$lib/i18n';
   import { listStockDocuments, type StockDocumentRecord } from '$lib/api/warehouse';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let documents = $state<StockDocumentRecord[]>([]);
   let loading = $state(true);
@@ -38,6 +39,17 @@
     } finally {
       loading = false;
     }
+  }
+
+  const columns = [
+    { key: 'code' as const, label: $isLoading ? 'Code' : $_('common.code'), sortable: true, filterable: true, render: (row: StockDocumentRecord) => `<span class="font-medium">${row.code}</span>` },
+    { key: 'docType' as const, label: $isLoading ? 'Type' : $_('common.type'), sortable: true, filterable: true },
+    { key: 'status' as const, label: $isLoading ? 'Status' : $_('assets.status'), sortable: true, filterable: true },
+    { key: 'docDate' as const, label: $isLoading ? 'Date' : $_('common.date'), sortable: true, filterable: true }
+  ];
+
+  async function handleRowClick(row: StockDocumentRecord) {
+    goto(`/warehouse/documents/${row.id}`);
   }
 
   $effect(() => {
@@ -104,40 +116,11 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Code' : $_('common.code')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Type' : $_('common.type')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Status' : $_('assets.status')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Date' : $_('common.date')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? '' : $_('common.actions')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if documents.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="5" class="text-center text-slate-500">{$isLoading ? 'No documents found.' : $_('warehouse.noDocuments')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each documents as doc}
-              <TableBodyRow>
-                <TableBodyCell class="font-medium">{doc.code}</TableBodyCell>
-                <TableBodyCell>{doc.docType}</TableBodyCell>
-                <TableBodyCell>{doc.status}</TableBodyCell>
-                <TableBodyCell>{doc.docDate}</TableBodyCell>
-                <TableBodyCell class="text-right">
-                  <Button size="xs" color="alternative" onclick={() => goto(`/warehouse/documents/${doc.id}`)}>{$isLoading ? 'View' : $_('common.view')}</Button>
-                </TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
-  {/if}
+  <DataTable
+    data={documents}
+    {columns}
+    rowKey="id"
+    selectable={false}
+    {loading}
+  />
 </div>

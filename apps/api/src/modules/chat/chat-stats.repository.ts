@@ -140,13 +140,13 @@ export class ChatStatsRepository {
         const result = await this.db.query<any>(
             `SELECT 
                 conversation_id,
-                model,
-                provider,
+                model_id as model,
+                provider_id as provider,
                 prompt_tokens,
                 completion_tokens,
                 total_tokens,
-                cost,
-                message_count,
+                cost_estimate as cost,
+                1 as message_count,
                 created_at::date as date
             FROM conversation_token_usage
             WHERE conversation_id = $1
@@ -171,13 +171,13 @@ export class ChatStatsRepository {
         let query = `
             SELECT 
                 user_id,
-                date,
-                model,
-                provider,
+                period_start as date,
+                model_id as model,
+                provider_id as provider,
                 total_tokens,
                 total_cost,
-                message_count,
-                conversation_count
+                total_requests as message_count,
+                1 as conversation_count
             FROM user_token_stats
             WHERE user_id = $1`
 
@@ -185,18 +185,18 @@ export class ChatStatsRepository {
         let paramIndex = 2
 
         if (startDate) {
-            query += ` AND date >= $${paramIndex}`
+            query += ` AND period_start >= $${paramIndex}`
             params.push(startDate)
             paramIndex++
         }
 
         if (endDate) {
-            query += ` AND date <= $${paramIndex}`
+            query += ` AND period_start <= $${paramIndex}`
             params.push(endDate)
             paramIndex++
         }
 
-        query += ` ORDER BY date DESC, model`
+        query += ` ORDER BY period_start DESC, model_id`
 
         const result = await this.db.query<any>(query, params)
 
@@ -221,12 +221,12 @@ export class ChatStatsRepository {
         const targetDate = date || new Date()
         const result = await this.db.query<any>(
             `SELECT 
-                SUM(total_tokens) as total_tokens,
-                SUM(total_cost) as total_cost,
-                SUM(message_count) as total_messages,
-                COUNT(DISTINCT model) as models_used
+                COALESCE(SUM(total_tokens), 0) as total_tokens,
+                COALESCE(SUM(total_cost), 0) as total_cost,
+                COALESCE(SUM(total_requests), 0) as total_messages,
+                COUNT(DISTINCT model_id) as models_used
             FROM user_token_stats
-            WHERE user_id = $1 AND date = $2`,
+            WHERE user_id = $1 AND period_start = $2::date AND period_type = 'daily'`,
             [userId, targetDate.toISOString().split('T')[0]]
         )
 
@@ -542,7 +542,7 @@ export class ChatStatsRepository {
         date: string
     }>> {
         const result = await this.db.query<any>(
-            `SELECT conversation_id, model, provider, total_tokens, cost, message_count, created_at
+            `SELECT conversation_id, model_id as model, provider_id as provider, total_tokens, cost_estimate as cost, 1 as message_count, created_at
              FROM conversation_token_usage
              ORDER BY created_at DESC
              LIMIT $1`,

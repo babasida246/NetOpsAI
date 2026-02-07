@@ -1,7 +1,8 @@
 ﻿<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { Alert, Button, Input, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Select, Spinner } from 'flowbite-svelte';
   import { addServiceMember, getServiceDetail, listCis, removeServiceMember, updateService, type CiRecord, type CmdbServiceMember, type CmdbServiceRecord } from '$lib/api/cmdb';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let { serviceId } = $props<{ serviceId: string | null }>();
 
@@ -100,6 +101,17 @@
     }
   }
 
+  async function handleDeleteMember(rows: CmdbServiceMember[]) {
+    for (const row of rows) {
+      await removeMember(row.id);
+    }
+  }
+
+  const membersColumns = [
+    { key: 'ciId' as const, label: 'CI', sortable: true, filterable: true },
+    { key: 'role' as const, label: $isLoading ? 'Role' : $_('cmdb.role'), sortable: true, filterable: true, render: (row: CmdbServiceMember) => row.role ?? '-' }
+  ];
+
   $effect(() => {
     if (serviceId) {
       void loadDetail();
@@ -178,30 +190,13 @@
       </div>
 
       <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-        <Table>
-          <TableHead>
-            <TableHeadCell>CI</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Role' : $_('cmdb.role')}</TableHeadCell>
-            <TableHeadCell></TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#if members.length === 0}
-              <TableBodyRow>
-                <TableBodyCell colspan="3" class="text-center text-slate-500">No members.</TableBodyCell>
-              </TableBodyRow>
-            {:else}
-              {#each members as member}
-                <TableBodyRow>
-                  <TableBodyCell>{member.ciId}</TableBodyCell>
-                  <TableBodyCell>{member.role ?? '-'}</TableBodyCell>
-                  <TableBodyCell class="text-right">
-                    <Button size="xs" color="red" onclick={() => removeMember(member.id)}>Remove</Button>
-                  </TableBodyCell>
-                </TableBodyRow>
-              {/each}
-            {/if}
-          </TableBody>
-        </Table>
+        <DataTable
+          data={members}
+          columns={membersColumns}
+          rowKey="id"
+          selectable={false}
+          onDelete={handleDeleteMember}
+        />
       </div>
     </div>
   </div>

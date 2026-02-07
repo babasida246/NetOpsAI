@@ -89,8 +89,9 @@ describe('LanguageSwitcher Component', () => {
     });
 
     it('should have accessible label', () => {
-        const { container } = render(LanguageSwitcher);
-        const label = container.querySelector('label');
-        expect(label).toBeTruthy();
+        const { getByRole } = render(LanguageSwitcher);
+        const select = getByRole('combobox');
+        // Component uses aria-label for accessibility
+        expect(select.getAttribute('aria-label') || select.getAttribute('title')).toBeTruthy();
     });
 });

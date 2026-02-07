@@ -221,19 +221,23 @@ describe('AdminRepository', () => {
 
     describe('createAuditLog', () => {
         it('should create an audit log entry', async () => {
-             (mockPool.query as any).mockResolvedValue({
-                rows: [{
-                    id: 'audit-log-id',
-                    user_id: testAdmin.id,
-                    action: 'create',
-                    resource: 'users',
-                    resource_id: testUser.id,
-                    details: { email: testUser.email },
-                    ip_address: '192.168.1.1',
-                    user_agent: 'Mozilla/5.0',
-                    created_at: new Date()
-                }]
-            })
+             (mockPool.query as any)
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // resource_id column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // ip_address column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // user_agent column
+                .mockResolvedValueOnce({
+                    rows: [{
+                        id: 'audit-log-id',
+                        user_id: testAdmin.id,
+                        action: 'create',
+                        resource: 'users',
+                        resource_id: testUser.id,
+                        details: { email: testUser.email },
+                        ip_address: '192.168.1.1',
+                        user_agent: 'Mozilla/5.0',
+                        created_at: new Date()
+                    }]
+                })
 
             const log = await adminRepo.createAuditLog({
                 userId: testAdmin.id,
@@ -254,6 +258,9 @@ describe('AdminRepository', () => {
     describe('findAuditLogs', () => {
         it('should return paginated audit logs', async () => {
              (mockPool.query as any)
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // resource_id column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // ip_address column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // user_agent column
                 .mockResolvedValueOnce({ rows: [{ count: '50' }] })
                 .mockResolvedValueOnce({
                     rows: [
@@ -294,6 +301,9 @@ describe('AdminRepository', () => {
 
         it('should filter by action', async () => {
              (mockPool.query as any)
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // resource_id column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // ip_address column
+                .mockResolvedValueOnce({ rows: [{ exists: true }] }) // user_agent column
                 .mockResolvedValueOnce({ rows: [{ count: '10' }] })
                 .mockResolvedValueOnce({
                     rows: [{

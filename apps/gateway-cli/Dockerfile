@@ -15,7 +15,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/gateway-mcp/package.json apps/gateway-mcp/
 COPY apps/gateway-cli/package.json apps/gateway-cli/
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
 
 COPY packages/ packages/
 COPY apps/gateway-cli/ apps/gateway-cli/
@@ -60,7 +60,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/packages/tools/package.json packa
 COPY --from=builder --chown=nodejs:nodejs /app/apps/gateway-cli/dist apps/gateway-cli/dist/
 COPY --from=builder --chown=nodejs:nodejs /app/apps/gateway-cli/package.json apps/gateway-cli/
 
-RUN pnpm install --frozen-lockfile --prod
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --prod
 
 USER nodejs
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Fastify from 'fastify'
-import { stockDocumentRoutes } from '../../src/routes/v1/stock-documents.routes.js'
+import { stockDocumentRoutes } from '../../src/routes/v1/warehouse/stock-documents.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { StockDocumentService } from '@application/core'
 import type { StockDocumentDetail, StockDocumentLineRecord, StockDocumentRecord, StockMovementRecord } from '@contracts/shared'

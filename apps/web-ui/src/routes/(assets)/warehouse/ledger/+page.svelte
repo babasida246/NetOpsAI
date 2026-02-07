@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Alert, Button, Input, Select, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Select, Spinner } from 'flowbite-svelte';
   import { RefreshCw } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
   import { listSpareParts, listStockMovements, listWarehouses, type SparePartRecord, type StockMovementRecord, type WarehouseRecord } from '$lib/api/warehouse';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let warehouses = $state<WarehouseRecord[]>([]);
   let parts = $state<SparePartRecord[]>([]);
@@ -60,6 +61,15 @@
     return match ? `${match.name} (${match.code})` : id;
   }
 
+  const columns = [
+    { key: 'createdAt' as const, label: $isLoading ? 'Date' : $_('common.date'), sortable: true, filterable: true, render: (row: StockMovementRecord) => new Date(row.createdAt).toLocaleString() },
+    { key: 'warehouseId' as const, label: $isLoading ? 'Warehouse' : $_('warehouse.warehouse'), sortable: true, filterable: true, render: (row: StockMovementRecord) => warehouseLabel(row.warehouseId) },
+    { key: 'partId' as const, label: $isLoading ? 'Part' : $_('warehouse.part'), sortable: true, filterable: true, render: (row: StockMovementRecord) => partLabel(row.partId) },
+    { key: 'movementType' as const, label: $isLoading ? 'Type' : $_('common.type'), sortable: true, filterable: true },
+    { key: 'qty' as const, label: $isLoading ? 'Qty' : $_('warehouse.quantity'), sortable: true, render: (row: StockMovementRecord) => `<span class="text-right">${row.qty}</span>` },
+    { key: 'unitCost' as const, label: $isLoading ? 'Unit Cost' : $_('warehouse.unitCost'), sortable: true, render: (row: StockMovementRecord) => `<span class="text-right">${row.unitCost ?? '-'}</span>` }
+  ];
+
   $effect(() => {
     void loadCatalogs();
     void loadLedger(1);
@@ -111,42 +121,11 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Date' : $_('common.date')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Warehouse' : $_('warehouse.warehouse')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Part' : $_('warehouse.part')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Type' : $_('common.type')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Qty' : $_('warehouse.quantity')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Unit Cost' : $_('warehouse.unitCost')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if movements.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="6" class="text-center text-slate-500">
-                {$isLoading ? 'No movements.' : $_('warehouse.noLedgerMovements')}
-              </TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each movements as movement}
-              <TableBodyRow>
-                <TableBodyCell>{new Date(movement.createdAt).toLocaleString()}</TableBodyCell>
-                <TableBodyCell>{warehouseLabel(movement.warehouseId)}</TableBodyCell>
-                <TableBodyCell>{partLabel(movement.partId)}</TableBodyCell>
-                <TableBodyCell>{movement.movementType}</TableBodyCell>
-                <TableBodyCell class="text-right">{movement.qty}</TableBodyCell>
-                <TableBodyCell class="text-right">{movement.unitCost ?? '-'}</TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
-  {/if}
+  <DataTable
+    data={movements}
+    {columns}
+    rowKey="id"
+    selectable={false}
+    {loading}
+  />
 </div>

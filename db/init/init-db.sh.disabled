@@ -1,0 +1,66 @@
+#!/bin/bash
+# ============================================================================
+# init-db.sh - Database Initialization Script
+# ============================================================================
+# Runs all SQL files in order and creates the default admin user
+# ============================================================================
+
+set -e
+
+# Database connection settings (use environment variables)
+PGHOST="${POSTGRES_HOST:-localhost}"
+PGPORT="${POSTGRES_PORT:-5432}"
+PGDATABASE="${POSTGRES_DB:-netops}"
+PGUSER="${POSTGRES_USER:-postgres}"
+PGPASSWORD="${POSTGRES_PASSWORD:-}"
+
+export PGPASSWORD
+
+echo "=== NetOps Gateway Database Initialization ==="
+echo "Host: $PGHOST:$PGPORT"
+echo "Database: $PGDATABASE"
+echo "User: $PGUSER"
+echo ""
+
+# PostgreSQL is already ready (this script runs as part of entrypoint init)
+echo "PostgreSQL init scripts starting..."
+echo ""
+
+# Run SQL files in order
+SCRIPT_DIR="$(dirname "$0")"
+
+for sql_file in "$SCRIPT_DIR"/*.sql; do
+    if [ -f "$sql_file" ]; then
+        filename=$(basename "$sql_file")
+        echo "Running: $filename"
+        
+        # For the admin seed script, pass environment variables
+        if [ "$filename" = "99_seed_admin.sql" ]; then
+            # Hash the password using bcrypt (requires pgcrypto or pre-hashed value)
+            ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
+            ADMIN_NAME="${ADMIN_NAME:-Default Admin}"
+            ADMIN_PASSWORD="${ADMIN_PASSWORD:-ChangeMe123!}"
+            
+            # Generate bcrypt hash using Node.js (if available) or use pre-hashed fallback
+            if command -v node > /dev/null 2>&1; then
+                ADMIN_PASSWORD_HASH=$(node -e "const bcrypt = require('bcrypt'); console.log(bcrypt.hashSync('$ADMIN_PASSWORD', 12));" 2>/dev/null || echo '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.sZ.BqhQn5t5F3m')
+            else
+                # Fallback: use pre-defined hash for 'ChangeMe123!'
+                ADMIN_PASSWORD_HASH='$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.sZ.BqhQn5t5F3m'
+            fi
+            
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
+                -c "SET app.admin_email = '$ADMIN_EMAIL';" \
+                -c "SET app.admin_name = '$ADMIN_NAME';" \
+                -c "SET app.admin_password_hash = '$ADMIN_PASSWORD_HASH';" \
+                -f "$sql_file"
+        else
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -f "$sql_file"
+        fi
+        
+        echo "Done: $filename"
+        echo ""
+    fi
+done
+
+echo "=== Database initialization complete! ==="

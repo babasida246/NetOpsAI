@@ -29,6 +29,16 @@ class FakeRelTypes implements IRelTypeRepo {
     }
     async list(): Promise<RelationshipTypeRecord[]> { return [this.relType] }
     async getById(_id: string): Promise<RelationshipTypeRecord | null> { return this.relType }
+    async update(_id: string, patch: Partial<{
+        code: string
+        name: string
+        reverseName: string | null
+        allowedFromTypeId: string | null
+        allowedToTypeId: string | null
+    }>): Promise<RelationshipTypeRecord | null> {
+        return { ...this.relType, ...patch }
+    }
+    async delete(_id: string): Promise<boolean> { return true }
 }
 
 class FakeRels implements IRelRepo {

@@ -1,5 +1,5 @@
 // Test setup for i18n tests
-import { init } from './index';
+// Note: The index module already calls init() on import, so we just need to import it
+import './index';
 
-// Initialize i18n for tests
-init();
+// i18n is initialized automatically when the module is imported

@@ -1,5 +1,4 @@
-﻿<script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+<script lang="ts">
 	import { _, isLoading } from '$lib/i18n';
 	import { lotsAPI } from '$lib/api/inventory';
 	import type { InventoryLot } from '$lib/types/inventory';
@@ -9,16 +8,16 @@
 		warehouseId = null,
 		selectedLots = $bindable<string[]>([]),
 		requiredQuantity = 0,
-		fefoMode = true
+		fefoMode = true,
+		onselect
 	} = $props<{
 		itemId: string;
 		warehouseId?: string | null;
 		selectedLots?: string[];
 		requiredQuantity?: number;
 		fefoMode?: boolean;
+		onselect?: (lots: string[]) => void;
 	}>();
-
-	const dispatch = createEventDispatcher<{ select: string[] }>();
 
 	let lots = $state<InventoryLot[]>([]);
 	let loading = $state(false);
@@ -55,11 +54,11 @@
 
 	function toggleLot(lotId: string) {
 		if (selectedLots.includes(lotId)) {
-			selectedLots = selectedLots.filter(id => id !== lotId);
+			selectedLots = selectedLots.filter((id: string) => id !== lotId);
 		} else {
 			selectedLots = [...selectedLots, lotId];
 		}
-		dispatch('select', selectedLots);
+		onselect?.(selectedLots);
 	}
 
 	function isExpired(lot: InventoryLot): boolean {
@@ -104,7 +103,7 @@
 				<button
 					type="button"
 					class="w-full text-left p-3 rounded-lg border {selected ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'} transition"
-					on:click={() => toggleLot(lot.id)}
+					onclick={() => toggleLot(lot.id)}
 					disabled={expired}
 				>
 					<div class="flex items-start justify-between">

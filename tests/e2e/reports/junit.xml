@@ -1,0 +1,92 @@
+<testsuites id="" name="" tests="12" failures="1" skipped="0" errors="0" time="54.91351100000001">
+<testsuite name="setup\setup-page.spec.ts" timestamp="2026-01-30T14:06:14.952Z" hostname="chromium" tests="12" failures="1" skipped="0" time="20.451" errors="0">
+<testcase name="Setup Page - UI &amp; Functionality Tests › should load setup page without errors" classname="setup\setup-page.spec.ts" time="1.119">
+<failure message="setup-page.spec.ts:35:3 should load setup page without errors" type="FAILURE">
+<![CDATA[  [chromium] › setup\setup-page.spec.ts:35:3 › Setup Page - UI & Functionality Tests › should load setup page without errors 
+
+    Error: expect(received).toHaveLength(expected)
+
+    Expected length: 0
+    Received length: 1
+    Received array:  ["Page Error: Cannot read properties of undefined (reading 'version')"]
+
+      46 |         );
+      47 |         
+    > 48 |         expect(criticalErrors).toHaveLength(0);
+         |                                ^
+      49 |         
+      50 |         // Page should be visible
+      51 |         await expect(page.locator('body')).toBeVisible();
+        at E:\GitHub\MCP server\tests\e2e\specs\setup\setup-page.spec.ts:48:32
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+]]>
+</failure>
+<system-out>
+<![CDATA[
+=== Console Errors ===
+ERROR: Page Error: Cannot read properties of undefined (reading 'version')
+
+=== Console Warnings ===
+
+=== Console Logs ===
+
+[[ATTACHMENT|..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\video.webm]]
+
+[[ATTACHMENT|..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\error-context.md]]
+
+[[ATTACHMENT|..\artifacts\setup-setup-page-Setup-Pag-9ee2f-d-setup-page-without-errors-chromium\trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should display checking status initially" classname="setup\setup-page.spec.ts" time="0.508">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should check setup status API" classname="setup\setup-page.spec.ts" time="0.474">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should display setup wizard when setup is incomplete" classname="setup\setup-page.spec.ts" time="0.966">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should not have critical accessibility issues" classname="setup\setup-page.spec.ts" time="0.949">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should handle setup status check failure gracefully" classname="setup\setup-page.spec.ts" time="1.069">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should display proper page title" classname="setup\setup-page.spec.ts" time="0.975">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should have responsive design" classname="setup\setup-page.spec.ts" time="2.7">
+</testcase>
+<testcase name="Setup Page - UI &amp; Functionality Tests › should not have memory leaks (check for excessive console logs)" classname="setup\setup-page.spec.ts" time="2.901">
+</testcase>
+<testcase name="Setup Page - Network &amp; Performance › should load within acceptable time" classname="setup\setup-page.spec.ts" time="0.891">
+<system-out>
+<![CDATA[Page load time: 683ms
+]]>
+</system-out>
+</testcase>
+<testcase name="Setup Page - Network &amp; Performance › should not make excessive API calls" classname="setup\setup-page.spec.ts" time="2.918">
+<system-out>
+<![CDATA[API calls made: [33m2[39m
+Unique API calls: [ [32m'http://localhost:3003/api/v1/setup/status'[39m ]
+]]>
+</system-out>
+</testcase>
+<testcase name="Setup Page - Network &amp; Performance › should handle slow network gracefully" classname="setup\setup-page.spec.ts" time="4.981">
+</testcase>
+</testsuite>
+</testsuites>

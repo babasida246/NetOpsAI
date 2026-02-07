@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Alert, Button, Input, Modal, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Modal } from 'flowbite-svelte';
   import { Plus, Search } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
-  import { createSparePart, listSpareParts, updateSparePart, type SparePartRecord } from '$lib/api/warehouse';
+  import { createSparePart, deleteSparePart, listSpareParts, updateSparePart, type SparePartRecord } from '$lib/api/warehouse';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let parts = $state<SparePartRecord[]>([]);
   let loading = $state(true);
@@ -93,6 +94,26 @@
     }
   }
 
+  async function handleEdit(part: SparePartRecord, changes: Partial<SparePartRecord>) {
+    await updateSparePart(part.id, {
+      partCode: changes.partCode,
+      name: changes.name,
+      category: changes.category,
+      uom: changes.uom,
+      manufacturer: changes.manufacturer,
+      model: changes.model,
+      minLevel: changes.minLevel
+    });
+    await loadParts(meta.page);
+  }
+
+  async function handleDelete(rows: SparePartRecord[]) {
+    for (const row of rows) {
+      await deleteSparePart(row.id);
+    }
+    await loadParts(meta.page);
+  }
+
   $effect(() => {
     void loadParts(1);
   });
@@ -122,44 +143,25 @@
     <Alert color="red">{error}</Alert>
   {/if}
 
-  {#if loading}
-    <div class="flex justify-center py-10">
-      <Spinner size="8" />
-    </div>
-  {:else}
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      <Table>
-        <TableHead>
-          <TableHeadCell>{$isLoading ? 'Code' : $_('common.code')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'Category' : $_('assets.category')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? 'UOM' : $_('warehouse.uom')}</TableHeadCell>
-          <TableHeadCell class="text-right">{$isLoading ? 'Min' : $_('warehouse.minLevel')}</TableHeadCell>
-          <TableHeadCell>{$isLoading ? '' : $_('common.actions')}</TableHeadCell>
-        </TableHead>
-        <TableBody>
-          {#if parts.length === 0}
-            <TableBodyRow>
-              <TableBodyCell colspan="6" class="text-center text-slate-500">{$isLoading ? 'No parts found.' : $_('warehouse.noParts')}</TableBodyCell>
-            </TableBodyRow>
-          {:else}
-            {#each parts as part}
-              <TableBodyRow>
-                <TableBodyCell class="font-medium">{part.partCode}</TableBodyCell>
-                <TableBodyCell>{part.name}</TableBodyCell>
-                <TableBodyCell>{part.category ?? '-'}</TableBodyCell>
-                <TableBodyCell>{part.uom ?? '-'}</TableBodyCell>
-                <TableBodyCell class="text-right">{part.minLevel ?? 0}</TableBodyCell>
-                <TableBodyCell class="text-right">
-                  <Button size="xs" color="alternative" onclick={() => openEdit(part)}>{$isLoading ? 'Edit' : $_('common.edit')}</Button>
-                </TableBodyCell>
-              </TableBodyRow>
-            {/each}
-          {/if}
-        </TableBody>
-      </Table>
-    </div>
+  <DataTable
+    data={parts}
+    columns={[
+      { key: 'partCode', label: $isLoading ? 'Code' : $_('common.code'), sortable: true, filterable: true, editable: true, width: 'w-40' },
+      { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true },
+      { key: 'category', label: $isLoading ? 'Category' : $_('assets.category'), sortable: true, filterable: true, editable: true, render: (val) => val ?? '-' },
+      { key: 'uom', label: $isLoading ? 'UOM' : $_('warehouse.uom'), sortable: true, filterable: true, editable: true, width: 'w-24', render: (val) => val ?? '-' },
+      { key: 'manufacturer', label: $isLoading ? 'Manufacturer' : $_('warehouse.manufacturer'), sortable: true, filterable: true, editable: true, render: (val) => val ?? '-' },
+      { key: 'model', label: $isLoading ? 'Model' : $_('assets.model'), sortable: true, filterable: true, editable: true, render: (val) => val ?? '-' },
+      { key: 'minLevel', label: $isLoading ? 'Min' : $_('warehouse.minLevel'), sortable: true, filterable: false, editable: true, width: 'w-20' }
+    ]}
+    selectable={true}
+    rowKey="id"
+    loading={loading}
+    onEdit={handleEdit}
+    onDelete={handleDelete}
+  />
 
+  {#if !loading && parts.length > 0}
     <div class="flex items-center justify-between text-sm text-slate-500">
       <span>{$isLoading ? 'Page' : $_('table.page')} {meta.page}</span>
       <div class="flex gap-2">
@@ -179,9 +181,11 @@
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">
-      {editing ? ($isLoading ? 'Edit Part' : $_('warehouse.editPart')) : ($isLoading ? 'New Part' : $_('warehouse.newPart'))}
-    </h3>
+  
+      <h3 class="text-lg font-semibold">
+        {editing ? ($isLoading ? 'Edit Part' : $_('warehouse.editPart')) : ($isLoading ? 'New Part' : $_('warehouse.newPart'))}
+      </h3>
+    
   </svelte:fragment>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div>
@@ -214,11 +218,14 @@
     </div>
   </div>
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
-      <Button disabled={saving || !partCode || !name} onclick={savePart}>
-        {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Save' : $_('common.save'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showModal = false}>{$isLoading ? 'Cancel' : $_('common.cancel')}</Button>
+        <Button disabled={saving || !partCode || !name} onclick={savePart}>
+          {saving ? ($isLoading ? 'Saving...' : $_('common.saving')) : ($isLoading ? 'Save' : $_('common.save'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

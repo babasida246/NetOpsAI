@@ -21,7 +21,7 @@ type CategoryRow = { id: string; name: string; created_at: Date }
 type ModelRow = {
     id: string
     category_id: string | null
-    spec_version_id: string | null
+    category_spec_version_id: string | null
     vendor_id: string | null
     brand: string | null
     model: string
@@ -67,7 +67,7 @@ const mapCategory = (row: CategoryRow): AssetCategoryRecord => ({
 const mapModel = (row: ModelRow): AssetModelRecord => ({
     id: row.id,
     categoryId: row.category_id,
-    specVersionId: row.spec_version_id,
+    specVersionId: row.category_spec_version_id,
     vendorId: row.vendor_id,
     brand: row.brand,
     model: row.model,
@@ -95,7 +95,7 @@ export class CatalogRepo implements ICatalogRepo {
 
     async listModels(): Promise<AssetModelRecord[]> {
         const result = await this.pg.query<ModelRow>(
-            'SELECT id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models ORDER BY model ASC'
+            'SELECT id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models ORDER BY model ASC'
         )
         return result.rows.map(mapModel)
     }
@@ -116,7 +116,7 @@ export class CatalogRepo implements ICatalogRepo {
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
         const result = await this.pg.query<ModelRow>(
-            `SELECT id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at
+            `SELECT id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at
              FROM asset_models
              ${whereClause}
              ORDER BY model ASC`,
@@ -132,7 +132,7 @@ export class CatalogRepo implements ICatalogRepo {
 
     async getModelById(id: string): Promise<AssetModelRecord | null> {
         const result = await this.pg.query<ModelRow>(
-            'SELECT id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models WHERE id = $1',
+            'SELECT id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models WHERE id = $1',
             [id]
         )
         return result.rows[0] ? mapModel(result.rows[0]) : null
@@ -195,7 +195,7 @@ export class CatalogRepo implements ICatalogRepo {
 
     async createModel(input: AssetModelCreateInput): Promise<AssetModelRecord> {
         const result = await this.pg.query<ModelRow>(
-            'INSERT INTO asset_models (category_id, spec_version_id, vendor_id, brand, model, spec) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at',
+            'INSERT INTO asset_models (category_id, category_spec_version_id, vendor_id, brand, model, spec) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at',
             [input.categoryId ?? null, input.specVersionId ?? null, input.vendorId ?? null, input.brand ?? null, input.model, input.spec ?? {}]
         )
         return mapModel(result.rows[0])
@@ -204,7 +204,7 @@ export class CatalogRepo implements ICatalogRepo {
     async updateModel(id: string, patch: AssetModelUpdatePatch): Promise<AssetModelRecord | null> {
         const updates = buildUpdates(patch as Record<string, unknown>, [
             ['categoryId', 'category_id'],
-            ['specVersionId', 'spec_version_id'],
+            ['specVersionId', 'category_spec_version_id'],
             ['vendorId', 'vendor_id'],
             ['brand', 'brand'],
             ['model', 'model'],
@@ -212,7 +212,7 @@ export class CatalogRepo implements ICatalogRepo {
         ])
         if (updates.length === 0) {
             const existing = await this.pg.query<ModelRow>(
-                'SELECT id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models WHERE id = $1',
+                'SELECT id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at FROM asset_models WHERE id = $1',
                 [id]
             )
             return existing.rows[0] ? mapModel(existing.rows[0]) : null
@@ -222,7 +222,7 @@ export class CatalogRepo implements ICatalogRepo {
         params.push(id)
         const result = await this.pg.query<ModelRow>(
             `UPDATE asset_models SET ${setClause} WHERE id = $${params.length}
-             RETURNING id, category_id, spec_version_id, vendor_id, brand, model, spec, created_at`,
+             RETURNING id, category_id, category_spec_version_id, vendor_id, brand, model, spec, created_at`,
             params
         )
         return result.rows[0] ? mapModel(result.rows[0]) : null

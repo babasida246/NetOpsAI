@@ -1,9 +1,10 @@
-﻿<script lang="ts">
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { Alert, Button, Input, Modal, Spinner, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell } from 'flowbite-svelte';
+  import { Alert, Button, Input, Modal } from 'flowbite-svelte';
   import { Plus, Search } from 'lucide-svelte';
-  import { createService, listServices, type CmdbServiceRecord } from '$lib/api/cmdb';
+  import { createService, deleteService, listServices, updateService, type CmdbServiceRecord } from '$lib/api/cmdb';
   import CmdbServiceDetail from './CmdbServiceDetail.svelte';
+  import DataTable from '$lib/components/DataTable.svelte';
 
   let services = $state<CmdbServiceRecord[]>([]);
   let loading = $state(true);
@@ -64,6 +65,30 @@
     }
   }
 
+  async function handleEdit(service: CmdbServiceRecord, changes: Partial<CmdbServiceRecord>) {
+    try {
+      await updateService(service.id, {
+        code: changes.code,
+        name: changes.name,
+        criticality: changes.criticality
+      });
+      await loadServices(meta.page);
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Failed to update service';
+    }
+  }
+
+  async function handleDelete(rows: CmdbServiceRecord[]) {
+    try {
+      for (const row of rows) {
+        await deleteService(row.id);
+      }
+      await loadServices(meta.page);
+    } catch (err) {
+      error = err instanceof Error ? err.message : 'Failed to delete service';
+    }
+  }
+
   $effect(() => {
     void loadServices(1);
   });
@@ -92,38 +117,18 @@
   {/if}
 
   <div class="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
-      {#if loading}
-        <div class="flex justify-center py-10">
-          <Spinner size="8" />
-        </div>
-      {:else}
-        <Table>
-          <TableHead>
-            <TableHeadCell>{$isLoading ? 'Code' : $_('cmdb.code')}</TableHeadCell>
-            <TableHeadCell>{$isLoading ? 'Name' : $_('common.name')}</TableHeadCell>
-          </TableHead>
-          <TableBody>
-            {#if services.length === 0}
-              <TableBodyRow>
-                <TableBodyCell colspan="2" class="text-center text-slate-500">{$isLoading ? 'No services found.' : $_('cmdb.noServices')}</TableBodyCell>
-              </TableBodyRow>
-            {:else}
-              {#each services as service}
-                <TableBodyRow class={selectedServiceId === service.id ? 'bg-blue-50 dark:bg-blue-900/20' : ''}>
-                  <TableBodyCell class="font-medium">
-                    <button class="text-left w-full" onclick={() => selectedServiceId = service.id}>
-                      {service.code}
-                    </button>
-                  </TableBodyCell>
-                  <TableBodyCell>{service.name}</TableBodyCell>
-                </TableBodyRow>
-              {/each}
-            {/if}
-          </TableBody>
-        </Table>
-      {/if}
-    </div>
+    <DataTable
+      data={services}
+      columns={[
+        { key: 'code', label: $isLoading ? 'Code' : $_('cmdb.code'), sortable: true, filterable: true, editable: true, width: 'w-32' },
+        { key: 'name', label: $isLoading ? 'Name' : $_('common.name'), sortable: true, filterable: true, editable: true }
+      ]}
+      selectable={true}
+      rowKey="id"
+      loading={loading}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
 
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4">
       <CmdbServiceDetail serviceId={selectedServiceId} />
@@ -133,7 +138,9 @@
 
 <Modal bind:open={showModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-lg font-semibold">{$isLoading ? 'New Service' : $_('cmdb.newService')}</h3>
+  
+      <h3 class="text-lg font-semibold">{$isLoading ? 'New Service' : $_('cmdb.newService')}</h3>
+    
   </svelte:fragment>
   <div class="space-y-3">
     <div>
@@ -150,11 +157,14 @@
     </div>
   </div>
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" onclick={() => showModal = false}>Cancel</Button>
-      <Button disabled={saving || !code || !name} onclick={saveService}>
-        {saving ? 'Saving...' : 'Create'}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showModal = false}>Cancel</Button>
+        <Button disabled={saving || !code || !name} onclick={saveService}>
+          {saving ? 'Saving...' : 'Create'}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

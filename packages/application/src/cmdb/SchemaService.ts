@@ -119,6 +119,7 @@ export class SchemaService {
         const warnings: SpecCompatibilityWarning[] = []
         const limit = 100
         let page = 1
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const result = await this.cis.list({ typeId, page, limit })
             for (const ci of result.items) {

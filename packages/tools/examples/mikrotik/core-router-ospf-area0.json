@@ -1,0 +1,35 @@
+{
+  "device": {
+    "model": "CCR2004-1G-12S+2XS",
+    "routerOsMajor": 7,
+    "routerOsVersion": "7.12.1"
+  },
+  "role": "core-router",
+  "hostname": "CORE-OSPF-01",
+  "environment": "staging",
+  "interfaces": [
+    { "name": "ether1", "purpose": "trunk", "comment": "Uplink trunk", "trunkVlanIds": [10, 20] },
+    { "name": "ether2", "purpose": "trunk", "comment": "Downlink trunk", "trunkVlanIds": [10, 20] }
+  ],
+  "vlans": [
+    { "id": 10, "name": "mgmt", "subnet": "10.10.0.0/24", "gateway": "10.10.0.1", "group": "MGMT" },
+    { "id": 20, "name": "staff", "subnet": "10.20.0.0/24", "gateway": "10.20.0.1", "group": "STAFF" }
+  ],
+  "routing": {
+    "ospf": {
+      "enabled": true,
+      "routerId": "10.10.0.1",
+      "area": "0.0.0.0",
+      "networks": ["10.10.0.0/24", "10.20.0.0/24"],
+      "passiveInterfaces": ["vlan10-mgmt"]
+    }
+  },
+  "securityProfile": { "preset": "standard-secure" },
+  "management": {
+    "mgmtSubnet": "10.10.0.0/24",
+    "allowedSubnets": ["10.10.0.0/24"],
+    "ssh": { "allowPassword": false },
+    "ntpServers": ["162.159.200.1", "162.159.200.123"]
+  },
+  "notes": "example: core-router + OSPF area 0"
+}

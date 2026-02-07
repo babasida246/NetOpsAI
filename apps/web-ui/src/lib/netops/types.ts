@@ -160,6 +160,7 @@ export interface LintFinding {
 export interface ChangeRequest {
     id: string;
     title: string;
+    description?: string;
     status: ChangeStatus;
     intent_type: string;
     params: Record<string, unknown>;

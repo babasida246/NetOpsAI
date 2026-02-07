@@ -1,4 +1,4 @@
-﻿<script lang="ts">
+<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
   import { Input, Label, Select, Textarea } from 'flowbite-svelte';
   import type { CategorySpecDef, SpecFieldType } from '$lib/api/assetCatalogs';
@@ -129,7 +129,7 @@
         <Input
           value={getStringValue(def.key)}
           disabled={def.isReadonly}
-          on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+          oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
         />
       {:else if def.fieldType === 'number'}
         <Input
@@ -139,7 +139,7 @@
           max={def.maxValue ?? undefined}
           step={def.stepValue ?? undefined}
           disabled={def.isReadonly}
-          on:input={(event) => {
+          oninput={(event) => {
             const value = (event.currentTarget as HTMLInputElement).value;
             if (!value) {
               setValue(def.key, undefined);
@@ -164,7 +164,7 @@
         <Select
           value={getStringValue(def.key)}
           disabled={def.isReadonly}
-          on:change={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}
+          onchange={(event) => setValue(def.key, (event.currentTarget as HTMLSelectElement).value)}
         >
           <option value="">{$isLoading ? 'Select option' : $_('assets.placeholders.selectOption')}</option>
           {#each def.enumValues ?? [] as option}
@@ -191,14 +191,14 @@
           type="date"
           value={getStringValue(def.key)}
           disabled={def.isReadonly}
-          on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+          oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
         />
       {:else if ['ip', 'mac', 'hostname', 'cidr', 'regex'].includes(def.fieldType)}
         <Input
           value={getStringValue(def.key)}
-          placeholder={placeholderByType[def.fieldType] ?? ''}
+          placeholder={(def.fieldType in placeholderByType ? placeholderByType[def.fieldType as keyof typeof placeholderByType] : '') ?? ''}
           disabled={def.isReadonly}
-          on:input={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
+          oninput={(event) => setValue(def.key, (event.currentTarget as HTMLInputElement).value)}
         />
       {:else if def.fieldType === 'port'}
         <Input
@@ -208,7 +208,7 @@
           max={def.maxValue ?? 65535}
           step={def.stepValue ?? 1}
           disabled={def.isReadonly}
-          on:input={(event) => {
+          oninput={(event) => {
             const value = (event.currentTarget as HTMLInputElement).value;
             if (!value) {
               setValue(def.key, undefined);
@@ -224,7 +224,7 @@
           value={getJsonDraftValue(def.key)}
           placeholder={placeholderByType.json}
           disabled={def.isReadonly}
-          on:input={(event) => setJsonValue(def.key, (event.currentTarget as HTMLTextAreaElement).value)}
+          oninput={(event) => setJsonValue(def.key, (event.currentTarget as HTMLTextAreaElement).value)}
         />
       {/if}
 

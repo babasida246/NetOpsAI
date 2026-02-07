@@ -66,6 +66,7 @@ export class ZabbixClient {
                 'Content-Type': 'application/json-rpc',
             },
             ...(config.verifySsl === false && {
+                // eslint-disable-next-line @typescript-eslint/no-var-requires
                 httpsAgent: new (require('https').Agent)({
                     rejectUnauthorized: false,
                 }),

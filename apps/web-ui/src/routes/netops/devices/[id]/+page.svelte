@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
   import { Button, Tabs, TabItem, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, Alert, Spinner, Modal, Label, Select } from 'flowbite-svelte';
   import { ArrowLeft, Download, Play, AlertCircle, FileText } from 'lucide-svelte';
   import { _, isLoading } from '$lib/i18n';
@@ -9,7 +9,7 @@
   import JsonViewer from '$lib/netops/components/JsonViewer.svelte';
   import { formatDate, formatRelativeTime } from '$lib/netops/utils/format';
   
-  let deviceId = $derived($page.params.id);
+  let deviceId = $derived(page.params.id);
   
   let device: Device | null = $state(null);
   let configs: ConfigVersion[] = $state([]);
@@ -164,15 +164,15 @@
         </div>
         
         <div class="flex gap-2">
-          <Button on:click={handlePullConfig} disabled={pulling}>
+          <Button onclick={handlePullConfig} disabled={pulling}>
             <Download class="w-4 h-4 mr-2" />
             {pulling ? ($isLoading ? 'Pulling...' : $_('netops.deviceDetail.actions.pulling')) : ($isLoading ? 'Pull Config' : $_('netops.deviceDetail.actions.pullConfig'))}
           </Button>
-          <Button color="alternative" on:click={handleCollectFacts} disabled={collecting}>
+          <Button color="alternative" onclick={handleCollectFacts} disabled={collecting}>
             <Play class="w-4 h-4 mr-2" />
             {collecting ? ($isLoading ? 'Collecting...' : $_('netops.deviceDetail.actions.collecting')) : ($isLoading ? 'Collect Facts' : $_('netops.deviceDetail.actions.collectFacts'))}
           </Button>
-          <Button color="alternative" on:click={() => showLintModal = true}>
+          <Button color="alternative" onclick={() => showLintModal = true}>
             <AlertCircle class="w-4 h-4 mr-2" />
             {$isLoading ? 'Run Lint' : $_('netops.deviceDetail.actions.runLint')}
           </Button>
@@ -243,7 +243,9 @@
 <!-- Lint Modal -->
 <Modal bind:open={showLintModal}>
   <svelte:fragment slot="header">
-    <h3 class="text-xl font-semibold">{$isLoading ? 'Run Lint Check' : $_('netops.deviceDetail.lint.title')}</h3>
+  
+      <h3 class="text-xl font-semibold">{$isLoading ? 'Run Lint Check' : $_('netops.deviceDetail.lint.title')}</h3>
+    
   </svelte:fragment>
   
   {#if lintError}
@@ -271,14 +273,17 @@
   </div>
   
   <svelte:fragment slot="footer">
-    <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showLintModal = false}>{$isLoading ? 'Cancel' : $_('netops.deviceDetail.lint.actions.cancel')}</Button>
-      <Button 
-        on:click={handleRunLint} 
-        disabled={linting || !selectedRulepackId || configs.length === 0}
-      >
-        {linting ? ($isLoading ? 'Running...' : $_('netops.deviceDetail.lint.actions.running')) : ($isLoading ? 'Run Lint' : $_('netops.deviceDetail.lint.actions.run'))}
-      </Button>
-    </div>
+  
+      <div class="flex justify-end gap-2">
+        <Button color="alternative" onclick={() => showLintModal = false}>{$isLoading ? 'Cancel' : $_('netops.deviceDetail.lint.actions.cancel')}</Button>
+        <Button 
+          onclick={handleRunLint} 
+          disabled={linting || !selectedRulepackId || configs.length === 0}
+        >
+          {linting ? ($isLoading ? 'Running...' : $_('netops.deviceDetail.lint.actions.running')) : ($isLoading ? 'Run Lint' : $_('netops.deviceDetail.lint.actions.run'))}
+        </Button>
+      </div>
+    
   </svelte:fragment>
 </Modal>
+

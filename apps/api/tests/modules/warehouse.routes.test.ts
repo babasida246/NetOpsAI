@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Fastify from 'fastify'
-import { warehouseRoutes } from '../../src/routes/v1/warehouse.routes.js'
+import { warehouseRoutes } from '../../src/routes/v1/warehouse/warehouse.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { StockService, WarehouseCatalogService } from '@application/core'
 import type { SparePartRecord, StockViewRecord, WarehouseRecord } from '@contracts/shared'

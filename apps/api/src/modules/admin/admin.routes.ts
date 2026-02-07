@@ -24,6 +24,16 @@ export async function adminRoutes(
     adminRepo: AdminRepository,
     authService: AuthService
 ): Promise<void> {
+    const safeAuditLog = async (
+        request: FastifyRequest,
+        payload: Parameters<AdminRepository['createAuditLog']>[0]
+    ) => {
+        try {
+            await adminRepo.createAuditLog(payload)
+        } catch (error) {
+            request.log.error({ error }, 'Failed to write audit log')
+        }
+    }
     // Admin authentication hook - requires admin or super_admin role
     const authenticateAdmin = async (request: FastifyRequest) => {
         const authHeader = request.headers.authorization
@@ -38,7 +48,7 @@ export async function adminRoutes(
             throw new ForbiddenError('Admin access required')
         }
 
-        request.user = payload
+        request.user = { ...payload, id: payload.sub }
     }
 
     // Super admin only hook
@@ -61,7 +71,7 @@ export async function adminRoutes(
         const meta = calculatePagination(query.page, query.limit, total)
 
         // Log audit
-        await adminRepo.createAuditLog({
+        await safeAuditLog(request, {
             userId: request.user!.sub,
             action: 'list',
             resource: 'users',
@@ -82,7 +92,7 @@ export async function adminRoutes(
             const user = await adminRepo.createUser(data)
 
             // Log audit
-            await adminRepo.createAuditLog({
+            await safeAuditLog(request, {
                 userId: request.user!.sub,
                 action: 'create',
                 resource: 'users',
@@ -129,7 +139,7 @@ export async function adminRoutes(
         }
 
         // Log audit
-        await adminRepo.createAuditLog({
+        await safeAuditLog(request, {
             userId: request.user!.sub,
             action: 'update',
             resource: 'users',
@@ -160,7 +170,7 @@ export async function adminRoutes(
         }
 
         // Log audit
-        await adminRepo.createAuditLog({
+        await safeAuditLog(request, {
             userId: request.user!.sub,
             action: 'delete',
             resource: 'users',
@@ -186,7 +196,7 @@ export async function adminRoutes(
         }
 
         // Log audit
-        await adminRepo.createAuditLog({
+        await safeAuditLog(request, {
             userId: request.user!.sub,
             action: 'reset_password',
             resource: 'users',
@@ -219,6 +229,38 @@ export async function adminRoutes(
         const meta = calculatePagination(query.page, query.limit, total)
 
         return reply.status(200).send({ data, meta })
+    })
+
+    // ==================== Unified Audit (Drivers/Docs) ====================
+
+    // GET /audit - Unified audit endpoint (compatible with drivers/docs spec)
+    fastify.get('/audit', {
+        preHandler: authenticateAdmin
+    }, async (request, reply) => {
+        const raw = request.query as Record<string, unknown>
+        const query = listAuditLogsQuerySchema.parse({
+            ...raw,
+            userId: (raw.userId ?? raw.actor) as any,
+            startDate: (raw.startDate ?? raw.from) as any,
+            endDate: (raw.endDate ?? raw.to) as any
+        })
+
+        const { data, total } = await adminRepo.findAuditLogs(query)
+        const meta = calculatePagination(query.page, query.limit, total)
+        return reply.status(200).send({ data, meta })
+    })
+
+    // GET /audit/:id - Audit detail
+    fastify.get('/audit/:id', {
+        preHandler: authenticateAdmin
+    }, async (request, reply) => {
+        const paramsSchema = z.object({ id: z.string().uuid() })
+        const { id } = paramsSchema.parse(request.params)
+        const entry = await adminRepo.findAuditLogById(id)
+        if (!entry) {
+            throw new NotFoundError('Audit entry not found')
+        }
+        return reply.status(200).send({ data: entry })
     })
 }
 

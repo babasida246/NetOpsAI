@@ -1,4 +1,7 @@
 import type {
+    AssetCategoryCreateInput,
+    AssetCategoryRecord,
+    AssetModelCreateInput,
     CategorySpecDefInput,
     CategorySpecDefRecord,
     CatalogsResult,
@@ -8,7 +11,9 @@ import type {
     ICategorySpecVersionRepo,
     LocationCreateInput,
     LocationRecord,
-    AssetModelRecord
+    AssetModelRecord,
+    VendorCreateInput,
+    VendorRecord
 } from '@contracts/shared'
 
 export class FakeCatalogRepo implements ICatalogRepo {
@@ -27,9 +32,9 @@ export class FakeCatalogRepo implements ICatalogRepo {
     }
     async getLocationById(id: string) { return this.locations.find(loc => loc.id === id) ?? null }
     async getModelById(id: string) { return this.models.find(model => model.id === id) ?? null }
-    async createVendor() { throw new Error('Not implemented') }
-    async updateVendor() { throw new Error('Not implemented') }
-    async deleteVendor() { throw new Error('Not implemented') }
+    async createVendor(input: VendorCreateInput): Promise<VendorRecord> { throw new Error('Not implemented') }
+    async updateVendor(id: string, patch: Partial<VendorCreateInput>): Promise<VendorRecord | null> { throw new Error('Not implemented') }
+    async deleteVendor(id: string): Promise<boolean> { throw new Error('Not implemented') }
     async createCategory(input: { name: string }) {
         const record = { id: `cat-${this.categories.length + 1}`, name: input.name, createdAt: new Date() }
         this.categories.push(record)
@@ -38,8 +43,8 @@ export class FakeCatalogRepo implements ICatalogRepo {
     seedCategory(record: { id: string; name: string; createdAt?: Date }) {
         this.categories.push({ id: record.id, name: record.name, createdAt: record.createdAt ?? new Date() })
     }
-    async updateCategory() { throw new Error('Not implemented') }
-    async deleteCategory() { throw new Error('Not implemented') }
+    async updateCategory(id: string, patch: Partial<AssetCategoryCreateInput>): Promise<AssetCategoryRecord | null> { throw new Error('Not implemented') }
+    async deleteCategory(id: string): Promise<boolean> { throw new Error('Not implemented') }
     async createModel(input: { model: string }) {
         const record: AssetModelRecord = { id: `m-${this.models.length + 1}`, model: input.model, spec: {}, createdAt: new Date() }
         this.models.push(record)
@@ -48,8 +53,8 @@ export class FakeCatalogRepo implements ICatalogRepo {
     seedModel(record: AssetModelRecord) {
         this.models.push(record)
     }
-    async updateModel() { throw new Error('Not implemented') }
-    async deleteModel() { throw new Error('Not implemented') }
+    async updateModel(id: string, patch: Partial<AssetModelCreateInput>): Promise<AssetModelRecord | null> { throw new Error('Not implemented') }
+    async deleteModel(id: string): Promise<boolean> { throw new Error('Not implemented') }
     async createLocation(input: LocationCreateInput) {
         const record: LocationRecord = {
             id: `loc-${this.locations.length + 1}`,
@@ -67,7 +72,7 @@ export class FakeCatalogRepo implements ICatalogRepo {
         this.locations = this.locations.map(loc => loc.id === id ? { ...loc, ...patch, parentId: patch.parentId ?? loc.parentId } : loc)
         return this.locations.find(loc => loc.id === id) ?? null
     }
-    async deleteLocation() { throw new Error('Not implemented') }
+    async deleteLocation(id: string): Promise<boolean> { throw new Error('Not implemented') }
 }
 
 export class FakeCache implements ICacheRepo {

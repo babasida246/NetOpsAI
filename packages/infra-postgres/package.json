@@ -4,8 +4,14 @@
     "type": "module",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
-        "build": "tsup src/index.ts --format esm --dts --clean",
+        "build": "tsc src/index.ts --outDir dist --declaration --module NodeNext --target ES2022",
         "dev": "tsup src/index.ts --format esm --dts --watch",
         "test": "vitest run",
         "migrate": "node dist/migrate.js"

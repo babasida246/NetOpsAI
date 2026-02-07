@@ -40,6 +40,33 @@ export class RelationshipService implements GraphProvider {
         return created
     }
 
+    async updateRelationshipType(
+        id: string,
+        patch: Partial<{
+            code: string
+            name: string
+            reverseName: string | null
+            allowedFromTypeId: string | null
+            allowedToTypeId: string | null
+        }>,
+        ctx: CmdbContext
+    ): Promise<RelationshipTypeRecord> {
+        const existing = await this.relTypes.getById(id)
+        if (!existing) throw AppError.notFound('Relationship type not found')
+        const updated = await this.relTypes.update(id, patch)
+        if (!updated) throw AppError.notFound('Relationship type not found')
+        await this.appendEvent('REL_TYPE_UPDATED', updated.id, { code: updated.code }, ctx)
+        return updated
+    }
+
+    async deleteRelationshipType(id: string, ctx: CmdbContext): Promise<void> {
+        const existing = await this.relTypes.getById(id)
+        if (!existing) throw AppError.notFound('Relationship type not found')
+        const deleted = await this.relTypes.delete(id)
+        if (!deleted) throw AppError.notFound('Relationship type not found')
+        await this.appendEvent('REL_TYPE_DELETED', existing.id, { code: existing.code }, ctx)
+    }
+
     async createRelationship(
         input: { relTypeId: string; fromCiId: string; toCiId: string; sinceDate?: string | null; note?: string | null },
         ctx: CmdbContext
@@ -92,6 +119,107 @@ export class RelationshipService implements GraphProvider {
         }
 
         return { nodes: Array.from(nodes.values()), edges: Array.from(edges.values()) }
+    }
+
+    async getFullGraph(depth = 2, direction: RelationshipDirection = 'both'): Promise<CiGraph> {
+        // Get all active CIs
+        const allCisPage = await this.cis.list({ status: 'active', limit: 1000 })
+        const allCis = allCisPage.items
+
+        // Get all relationships between them
+        const allRels = await this.rels.list()
+
+        // Filter relationships based on direction if needed
+        const edges = direction === 'both' ? allRels : allRels.filter(rel => {
+            // For directed graphs, could filter by relationship type direction
+            // For now, include all
+            return true
+        })
+
+        // Create node map from CIs that have relationships
+        const ciIds = new Set<string>()
+        edges.forEach(rel => {
+            ciIds.add(rel.fromCiId)
+            ciIds.add(rel.toCiId)
+        })
+
+        const nodes = allCis.filter((ci: CiRecord) => ciIds.has(ci.id))
+
+        return { nodes, edges }
+    }
+
+    async getDependencyPath(ciId: string, direction: 'upstream' | 'downstream' = 'downstream'): Promise<{ path: CiRecord[]; chain: string[] }> {
+        const start = await this.cis.getById(ciId)
+        if (!start) throw AppError.notFound('CI not found')
+
+        const path: CiRecord[] = [start]
+        const chain: string[] = [start.ciCode]
+        const visited = new Set<string>([start.id])
+        let frontier = [start.id]
+        let depth = 0
+        const maxDepth = 5
+
+        while (frontier.length > 0 && depth < maxDepth) {
+            const next: string[] = []
+            for (const currentId of frontier) {
+                const relationships = await this.rels.listByCi(currentId)
+                for (const rel of relationships) {
+                    const neighbor = this.resolveNeighbor(rel, currentId, direction === 'downstream' ? 'downstream' : 'upstream')
+                    if (!neighbor || visited.has(neighbor)) continue
+
+                    visited.add(neighbor)
+                    const node = await this.cis.getById(neighbor)
+                    if (node) {
+                        path.push(node)
+                        chain.push(node.ciCode)
+                        next.push(neighbor)
+                        break // Follow first path only for chain visualization
+                    }
+                }
+            }
+            frontier = next
+            depth++
+        }
+
+        return { path, chain }
+    }
+
+    async getImpactAnalysis(ciId: string): Promise<{ affected: CiRecord[]; count: number; depth: number }> {
+        const start = await this.cis.getById(ciId)
+        if (!start) throw AppError.notFound('CI not found')
+
+        const affected = new Set<string>()
+        const visited = new Set<string>([start.id])
+        let frontier = [start.id]
+        let depth = 0
+
+        // BFS for all downstream dependents
+        while (frontier.length > 0) {
+            const next: string[] = []
+            for (const currentId of frontier) {
+                const relationships = await this.rels.listByCi(currentId)
+                for (const rel of relationships) {
+                    // Get the node that depends on current node
+                    const dependent = rel.toCiId === currentId ? rel.fromCiId : rel.toCiId
+                    if (!visited.has(dependent)) {
+                        visited.add(dependent)
+                        affected.add(dependent)
+                        next.push(dependent)
+                    }
+                }
+            }
+            frontier = next
+            depth++
+        }
+
+        // Fetch affected CI details
+        const affectedCis: CiRecord[] = []
+        for (const ciId of affected) {
+            const ci = await this.cis.getById(ciId)
+            if (ci) affectedCis.push(ci)
+        }
+
+        return { affected: affectedCis, count: affected.size, depth }
     }
 
     private resolveNeighbor(

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import Fastify from 'fastify'
-import { maintenanceRoutes } from '../../src/routes/v1/maintenance.routes.js'
+import { maintenanceRoutes } from '../../src/routes/v1/maintenance/maintenance.routes.js'
 import { errorHandler, requestIdHook } from '../../src/shared/middleware/index.js'
 import type { MaintenanceService } from '@application/core'
 import type { MaintenanceTicketRecord } from '@contracts/shared'

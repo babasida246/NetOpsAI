@@ -1,6 +1,6 @@
 ﻿<script lang="ts">
   import { _, isLoading } from '$lib/i18n';
-  import { page } from '$app/stores';
+  import { page } from '$app/state';
 
   let { children } = $props();
 
@@ -14,7 +14,7 @@
   ];
 
   function isActive(href: string) {
-    return $page.url.pathname.startsWith(href);
+    return page.url.pathname.startsWith(href);
   }
 </script>
 
