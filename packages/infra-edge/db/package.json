@@ -1,0 +1,25 @@
+{
+    "name": "@infra-edge/db",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc src/index.ts --outDir dist --declaration --module NodeNext --target ES2022",
+        "dev": "tsup src/index.ts --format esm --dts --watch"
+    },
+    "dependencies": {
+        "pg": "^8.16.3"
+    },
+    "devDependencies": {
+        "@types/pg": "^8.10.9",
+        "tsup": "^8.0.0",
+        "typescript": "^5.3.0"
+    }
+}

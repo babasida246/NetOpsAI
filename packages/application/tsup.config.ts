@@ -6,6 +6,7 @@ export default defineConfig({
     target: 'es2022',
     clean: true,
     dts: true,
+    tsconfig: 'tsconfig.build.json',
     sourcemap: false,
     minify: false,
     splitting: false,

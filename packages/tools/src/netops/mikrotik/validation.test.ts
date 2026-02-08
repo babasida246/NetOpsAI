@@ -79,7 +79,7 @@ describe('mikrotik config validation', () => {
     it('warns when DNS remote requests are enabled without firewall protection', () => {
         const config = `
             /ip dns set allow-remote-requests=yes
-            /ip firewall filter add chain=input action=accept comment=\"unrelated\"
+            /ip firewall filter add chain=input action=accept comment="unrelated"
         `
         const report = validateRouterOsConfig(config, '7.12.1')
         expect(report.warnings.some((e) => e.id === 'dns.remoteRequests.unprotected')).toBe(true)

@@ -353,7 +353,7 @@ export class ScheduledReportStorage {
 
         let removedCount = 0
         for (const [key, value] of this.reports) {
-            if (value.timestamp < cutoffTime) {
+            if (value.timestamp <= cutoffTime) {
                 this.reports.delete(key)
                 removedCount++
             }

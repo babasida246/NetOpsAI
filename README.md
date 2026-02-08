@@ -68,6 +68,16 @@ docker-compose up -d
 docker-compose logs -f gateway-api
 ```
 
+### 3b. Start Edge Stack
+
+```bash
+# Edge data services (Postgres + Redis)
+docker compose -f docker-compose.edge.data.yml up -d
+
+# Edge apps (edge-api + web-edge)
+docker compose -f docker-compose.edge.app.yml up -d
+```
+
 ### 4. Start Development Mode
 
 ```bash

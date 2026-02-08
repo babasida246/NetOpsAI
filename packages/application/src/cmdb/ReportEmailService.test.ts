@@ -385,7 +385,7 @@ describe('CMDB Reports - Email Delivery', () => {
     })
 
     describe('Event Emissions', () => {
-        it('emits events for subscription lifecycle', (done) => {
+        it('emits events for subscription lifecycle', async () => {
             const events: string[] = []
 
             emailService.on('subscription-created', () => events.push('created'))
@@ -396,12 +396,11 @@ describe('CMDB Reports - Email Delivery', () => {
             emailService.updateSubscription(sub.id, { frequency: 'weekly' })
             emailService.unsubscribeUser(sub.id)
 
-            setTimeout(() => {
-                expect(events).toContain('created')
-                expect(events).toContain('updated')
-                expect(events).toContain('deleted')
-                done()
-            }, 100)
+            await new Promise((resolve) => setTimeout(resolve, 100))
+
+            expect(events).toContain('created')
+            expect(events).toContain('updated')
+            expect(events).toContain('deleted')
         })
     })
 })

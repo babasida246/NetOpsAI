@@ -7,13 +7,14 @@
     "scripts": {
         "build": "tsc --project tsconfig.json",
         "dev": "tsup src/index.ts --format esm --dts --watch",
-        "test": "echo 'No tests for contracts package yet'",
+        "test": "vitest run",
         "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "@domain/core": "workspace:*"
     },
     "devDependencies": {
+        "ajv": "^8.17.1",
         "@types/node": "^20.0.0",
         "typescript": "^5.3.0",
         "tsup": "^8.0.0",

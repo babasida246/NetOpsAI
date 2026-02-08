@@ -52,8 +52,11 @@ export class CiInventoryReportService {
 
     async generateCiInventoryReport(): Promise<CiInventoryReport> {
         const allCisPage = await this.ciRepo.list({ limit: 10000 })
-        const allCis = allCisPage.items
-        const allRelationships = await this.relRepo.list()
+        const allCisRaw = Array.isArray(allCisPage) ? allCisPage : allCisPage.items ?? []
+        const allRelationshipsRaw = await this.relRepo.list()
+
+        const allCis = allCisRaw.map((ci) => normalizeCi(ci))
+        const allRelationships = allRelationshipsRaw.map((rel) => normalizeRelationship(rel))
 
         // Get all CI types for name lookup
         const ciTypeNames = new Map<string, string>()
@@ -74,7 +77,7 @@ export class CiInventoryReportService {
         // Count by environment
         const environmentCounts = new Map<string, number>()
         allCis.forEach((ci: CiRecord) => {
-            const env = ci.environment || 'unknown'
+            const env = (ci.environment as string) || 'unknown'
             environmentCounts.set(env, (environmentCounts.get(env) || 0) + 1)
         })
         const countByEnvironment = Array.from(environmentCounts.entries()).map(([env, count]) => ({
@@ -170,5 +173,30 @@ export class CiInventoryReportService {
             }
         })
         return issues
+    }
+}
+
+function normalizeCi(input: CiRecord | Record<string, unknown>): CiRecord {
+    const raw = input as Record<string, any>
+    return {
+        id: raw.id,
+        typeId: raw.typeId ?? raw.ci_type_id,
+        name: raw.name,
+        ciCode: raw.ciCode ?? raw.ci_code,
+        status: raw.status,
+        environment: (raw.environment ?? raw.metadata?.environment ?? 'unknown') as CiRecord['environment'],
+        assetId: raw.assetId ?? raw.asset_id ?? null,
+        locationId: raw.locationId ?? raw.location_id ?? null,
+        ownerTeam: raw.ownerTeam ?? raw.owner_team ?? null,
+        notes: raw.notes ?? null,
+        createdAt: raw.createdAt ?? raw.created_at ?? new Date(0),
+        updatedAt: raw.updatedAt ?? raw.updated_at ?? new Date(0)
+    }
+}
+
+function normalizeRelationship(input: Record<string, any>): { fromCiId: string; toCiId: string } {
+    return {
+        fromCiId: input.fromCiId ?? input.from_ci_id,
+        toCiId: input.toCiId ?? input.to_ci_id
     }
 }

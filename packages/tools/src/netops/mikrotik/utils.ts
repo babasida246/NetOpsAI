@@ -89,7 +89,7 @@ export function calcDhcpPool(cidr: string): { poolStart: string; poolEnd: string
 }
 
 export function escapeRouterOsComment(value: string): string {
-    return value.replace(/\"/g, "'").trim()
+    return value.replace(/"/g, "'").trim()
 }
 
 export function formatSection(title: string, lines: string[]): string {

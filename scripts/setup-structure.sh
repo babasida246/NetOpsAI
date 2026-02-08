@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Apps
-mkdir -p apps/api/src/{routes/{v1,v2,workflows,admin},middleware,adapters,websocket}
+mkdir -p apps/cloud-api/src/{routes/{v1,v2,workflows,admin},middleware,adapters,websocket}
+mkdir -p apps/edge-api/src/{routes,connectors,runner,security}
 mkdir -p apps/gateway-mcp/src/{handlers,transport}
 mkdir -p apps/gateway-cli/src/{commands,utils}
 

@@ -88,6 +88,10 @@ class FakeVersionRepo implements ICiTypeVersionRepo {
 
 class FakeDefRepo implements ICiSchemaRepo {
     defs: CiAttrDefRecord[] = []
+    constructor(
+        private types: ICiTypeRepo,
+        private versions: ICiTypeVersionRepo
+    ) { }
     async listByVersion(versionId: string): Promise<CiAttrDefRecord[]> {
         return this.defs.filter(def => def.versionId === versionId)
     }
@@ -120,7 +124,7 @@ class FakeDefRepo implements ICiSchemaRepo {
     async update(_id: string, _patch: CiAttrDefUpdatePatch): Promise<CiAttrDefRecord | null> { return null }
     async softDelete(_id: string): Promise<boolean> { return true }
     async withTransaction<T>(handler: (context: { types: ICiTypeRepo; versions: ICiTypeVersionRepo; defs: ICiSchemaRepo }) => Promise<T>): Promise<T> {
-        return handler({ types: new FakeTypeRepo(), versions: new FakeVersionRepo(), defs: this })
+        return handler({ types: this.types, versions: this.versions, defs: this })
     }
 }
 
@@ -161,7 +165,7 @@ describe('SchemaService', () => {
     it('publishes versions and returns warnings', async () => {
         const types = new FakeTypeRepo()
         const versions = new FakeVersionRepo()
-        const defs = new FakeDefRepo()
+        const defs = new FakeDefRepo(types, versions)
         const cis = new FakeCiRepo()
         const attrValues = new FakeAttrValues()
         const ops = new FakeOpsEvents()

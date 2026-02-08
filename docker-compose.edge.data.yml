@@ -1,0 +1,96 @@
+services:
+  edge-postgres:
+    image: postgres:latest
+    container_name: netopsai-edge-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${EDGE_POSTGRES_DB:-netopsai_edge}
+      POSTGRES_USER: ${EDGE_POSTGRES_USER:-edge}
+      POSTGRES_PASSWORD: ${EDGE_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - edge_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${EDGE_POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${EDGE_POSTGRES_USER:-edge}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - netopsai-edge
+
+  edge-redis:
+    image: redis:latest
+    container_name: netopsai-edge-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${EDGE_REDIS_PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - edge_redis_data:/data
+    ports:
+      - "127.0.0.1:${EDGE_REDIS_PORT:-6380}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - netopsai-edge
+
+  # Edge pgAdmin - PostgreSQL Management GUI
+  edge-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: netopsai-edge-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${EDGE_PGADMIN_DEFAULT_EMAIL:-edge-admin@netopsai.com}
+      PGADMIN_DEFAULT_PASSWORD: ${EDGE_PGADMIN_DEFAULT_PASSWORD:-edge123}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      POSTGRES_USER: ${EDGE_POSTGRES_USER:-edge}
+      POSTGRES_PASSWORD: ${EDGE_POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:${EDGE_PGADMIN_PORT:-5051}:80"
+    volumes:
+      - edge_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - netopsai-edge
+    depends_on:
+      edge-postgres:
+        condition: service_healthy
+    labels:
+      - "com.NetOpsAI.edge.service=pgadmin"
+      - "com.NetOpsAI.edge.description=Edge PostgreSQL Administration"
+
+  # Edge RedisInsight - Redis Management GUI  
+  edge-redisinsight:
+    build:
+      context: ./docker/redisinsight
+    image: netopsai-redisinsight:latest
+    container_name: netopsai-edge-redisinsight
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${EDGE_REDIS_PASSWORD}
+    volumes:
+      - edge_redisinsight_data:/data
+    ports:
+      - "127.0.0.1:${EDGE_REDISINSIGHT_PORT:-5541}:5540"
+    networks:
+      - netopsai-edge
+    depends_on:
+      edge-redis:
+        condition: service_healthy
+    labels:
+      - "com.NetOpsAI.edge.service=redisinsight"
+      - "com.NetOpsAI.edge.description=Edge Redis Administration"
+
+volumes:
+  edge_postgres_data:
+  edge_redis_data:
+  edge_pgadmin_data:
+  edge_redisinsight_data:
+
+networks:
+  netopsai-edge:
+    name: netopsai-edge
+    driver: bridge

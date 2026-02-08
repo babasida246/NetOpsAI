@@ -237,7 +237,7 @@ export const pushMikrotikConfigSshTool: ToolDefinition = {
         }
 
         // NOTE: We intentionally do not open a real SSH connection in this repository yet.
-        // The platform currently ships with an HTTP-based SSH proxy mock under apps/api/src/modules/netops/ssh.store.ts.
+        // The platform currently ships with an HTTP-based SSH proxy mock under apps/cloud-api/src/modules/netops/ssh.store.ts.
         // A future phase should replace this stub with a real SSH executor (ssh2) and WebSocket streaming.
         logs.push({
             timestamp: nowIso(),

@@ -1,0 +1,164 @@
+services:
+  # Cloud Data Services
+  postgres:
+    image: postgres:latest
+    container_name: netopsai-cloud-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-netopsai_cloud}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-netopsai_cloud}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - netopsai-cloud
+
+  redis:
+    image: redis:latest
+    container_name: netopsai-cloud-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis} --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - netopsai-cloud
+
+  # Cloud App Services  
+  cloud-api:
+    build:
+      context: .
+      dockerfile: apps/cloud-api/Dockerfile
+    container_name: netopsai-cloud-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-netopsai_cloud}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis}@redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-test-access-secret-change-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-test-refresh-secret-change-in-production}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      LICENSE_SIGNING_PRIVATE_KEY: ${LICENSE_SIGNING_PRIVATE_KEY:-test-license-private-key}
+      LICENSE_SIGNING_PUBLIC_KEY: ${LICENSE_SIGNING_PUBLIC_KEY:-test-license-public-key}
+      EDGE_JOB_SIGNING_PRIVATE_KEY: ${EDGE_JOB_SIGNING_PRIVATE_KEY:-test-edge-job-private-key}
+      EDGE_JOB_SIGNING_PUBLIC_KEY: ${EDGE_JOB_SIGNING_PUBLIC_KEY:-test-edge-job-public-key}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - netopsai-cloud
+
+  web-cloud:
+    build:
+      context: .
+      dockerfile: apps/web-cloud/Dockerfile
+    container_name: netopsai-web-cloud
+    restart: unless-stopped
+    depends_on:
+      cloud-api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      BACKEND_BASE_URL: ${BACKEND_BASE_URL:-http://netopsai-cloud-api:3000}
+      PUBLIC_BACKEND_BASE_URL: ${PUBLIC_BACKEND_BASE_URL:-http://localhost:3000}
+    ports:
+      - "${WEB_CLOUD_PORT:-3001}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - netopsai-cloud
+
+  # Cloud pgAdmin - PostgreSQL Management GUI
+  cloud-pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: netopsai-cloud-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@netopsai.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${CLOUD_PGADMIN_PORT:-5050}:80"
+    volumes:
+      - cloud_pgadmin_data:/var/lib/pgadmin
+    networks:
+      - netopsai-cloud
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "com.NetOpsAI.cloud.service=pgadmin"
+      - "com.NetOpsAI.cloud.description=Cloud PostgreSQL Administration"
+
+  # Cloud RedisInsight - Redis Management GUI  
+  cloud-redisinsight:
+    build:
+      context: ./docker/redisinsight
+    image: netopsai-redisinsight:latest
+    container_name: netopsai-cloud-redisinsight
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis}
+    volumes:
+      - cloud_redisinsight_data:/data
+    ports:
+      - "${CLOUD_REDISINSIGHT_PORT:-5540}:5540"
+    networks:
+      - netopsai-cloud
+    depends_on:
+      redis:
+        condition: service_healthy
+    labels:
+      - "com.NetOpsAI.cloud.service=redisinsight"
+      - "com.NetOpsAI.cloud.description=Cloud Redis Administration"
+
+volumes:
+  postgres_data:
+  redis_data:
+  cloud_pgadmin_data:
+  cloud_redisinsight_data:
+
+networks:
+  netopsai-cloud:
+    name: netopsai-cloud
+    driver: bridge

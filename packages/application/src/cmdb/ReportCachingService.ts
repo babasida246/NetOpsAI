@@ -48,9 +48,10 @@ export class ReportCachingService {
             })
 
             await this.redis.connect()
+            await this.redis.ping()
         } catch (error) {
             console.error('Failed to initialize Redis:', error)
-            this.enabled = false
+            await this.disableCache(error)
         }
     }
 
@@ -77,6 +78,7 @@ export class ReportCachingService {
             return null
         } catch (error) {
             console.error(`Cache get error for key ${key}:`, error)
+            await this.disableCache(error)
             return null
         }
     }
@@ -92,6 +94,7 @@ export class ReportCachingService {
             await this.redis.setEx(key, ttlValue, JSON.stringify(value))
         } catch (error) {
             console.error(`Cache set error for key ${key}:`, error)
+            await this.disableCache(error)
         }
     }
 
@@ -105,6 +108,7 @@ export class ReportCachingService {
             await this.redis.del(key)
         } catch (error) {
             console.error(`Cache delete error for key ${key}:`, error)
+            await this.disableCache(error)
         }
     }
 
@@ -121,6 +125,7 @@ export class ReportCachingService {
             }
         } catch (error) {
             console.error(`Cache clear prefix error for ${prefix}:`, error)
+            await this.disableCache(error)
         }
     }
 
@@ -129,6 +134,25 @@ export class ReportCachingService {
      */
     isEnabled(): boolean {
         return this.enabled && this.redis !== null
+    }
+
+    private async disableCache(error: unknown): Promise<void> {
+        if (!this.isAuthError(error)) return
+        this.enabled = false
+        if (this.redis) {
+            try {
+                await this.redis.disconnect()
+            } catch (disconnectError) {
+                console.error('Failed to disconnect Redis:', disconnectError)
+            }
+        }
+        this.redis = null
+    }
+
+    private isAuthError(error: unknown): boolean {
+        if (!(error instanceof Error)) return false
+        const message = error.message.toLowerCase()
+        return message.includes('noauth') || message.includes('wrongpass')
     }
 }
 

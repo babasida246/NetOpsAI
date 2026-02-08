@@ -1,0 +1,23 @@
+# Development Dockerfile for hot-reload
+FROM node:20-alpine
+
+# Align with workspace pnpm (v10) to avoid lockfile compatibility errors
+RUN npm install -g pnpm@10
+
+WORKDIR /app
+
+# Copy workspace config
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY tsconfig.base.json ./
+
+# Install all dependencies
+COPY packages ./packages
+COPY apps/web-edge/package.json ./apps/web-edge/
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+EXPOSE 5173
+
+WORKDIR /app/apps/web-edge
+
+CMD ["pnpm", "dev", "--host"]
