@@ -1,0 +1,21 @@
+# Build outputs
+dist/
+build/
+.svelte-kit/
+
+# Test reports
+playwright-report/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Generated JS files from build
+server.js
+
+# Temporary files
+.temp/
+.cache/
+
+# Node modules
+node_modules/

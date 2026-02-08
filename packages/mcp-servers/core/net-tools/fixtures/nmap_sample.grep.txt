@@ -1,0 +1,5 @@
+# Nmap 7.94 scan initiated
+Host: 10.0.0.2 (core-sw-2) Status: Up
+Host: 10.0.0.2 (core-sw-2) Ports: 22/open/tcp//ssh///, 80/open/tcp//http///
+Host: 10.0.0.100 () Status: Up
+Host: 10.0.0.100 () Ports: 22/open/tcp//ssh///

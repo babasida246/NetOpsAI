@@ -1,0 +1,50 @@
+{
+    "$id": "nettools.snmp_walk.output",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "rows",
+        "meta"
+    ],
+    "properties": {
+        "rows": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "oid",
+                    "value"
+                ],
+                "properties": {
+                    "oid": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "oidGroup",
+                "durationMs",
+                "rowCount"
+            ],
+            "properties": {
+                "oidGroup": {
+                    "type": "string"
+                },
+                "durationMs": {
+                    "type": "integer"
+                },
+                "rowCount": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

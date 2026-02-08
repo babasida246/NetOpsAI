@@ -152,7 +152,15 @@ const mikrotikPushSchema: JSONSchema = {
         dryRun: { type: 'boolean', default: true },
         environment: { type: 'string', enum: ['dev', 'staging', 'prod'], default: 'dev' },
         ticketId: { type: 'string' },
-        timeoutMs: { type: 'number', minimum: 1000, maximum: 300000, default: 60000 }
+        timeoutMs: { type: 'number', minimum: 1000, maximum: 300000, default: 60000 },
+        riskLevel: { type: 'string', enum: ['R0_READ', 'R1_SAFE_WRITE', 'R2_CHANGE', 'R3_DANGEROUS'], default: 'R0_READ' },
+        reason: { type: 'string' },
+        changeRequestId: { type: 'string' },
+        rollbackPlan: { type: 'string' },
+        precheck: { type: 'array', items: { type: 'string' } },
+        postcheck: { type: 'array', items: { type: 'string' } },
+        maintenanceWindowId: { type: 'string' },
+        breakGlass: { type: 'boolean', default: false }
     }
 }
 
@@ -237,7 +245,7 @@ export const pushMikrotikConfigSshTool: ToolDefinition = {
         }
 
         // NOTE: We intentionally do not open a real SSH connection in this repository yet.
-        // The platform currently ships with an HTTP-based SSH proxy mock under apps/api/src/modules/netops/ssh.store.ts.
+        // The platform currently ships with an HTTP-based SSH proxy mock under apps/cloud-api/src/modules/netops/ssh.store.ts.
         // A future phase should replace this stub with a real SSH executor (ssh2) and WebSocket streaming.
         logs.push({
             timestamp: nowIso(),

@@ -1,0 +1,36 @@
+{
+    "$id": "nettools.topology_discover.output",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "summary"
+    ],
+    "properties": {
+        "summary": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "nodesUpserted",
+                "portsUpserted",
+                "edgesUpserted"
+            ],
+            "properties": {
+                "nodesUpserted": {
+                    "type": "integer"
+                },
+                "portsUpserted": {
+                    "type": "integer"
+                },
+                "edgesUpserted": {
+                    "type": "integer"
+                }
+            }
+        },
+        "warnings": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    }
+}

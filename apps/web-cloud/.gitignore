@@ -1,0 +1,27 @@
+# Add to .gitignore
+
+# Dependencies
+node_modules/
+
+# SvelteKit
+.svelte-kit/
+build/
+dist/
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

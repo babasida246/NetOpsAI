@@ -74,7 +74,7 @@ services:
   gateway-api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: apps/cloud-api/Dockerfile
     container_name: netopsai-gateway-api
     restart: unless-stopped
     depends_on:
@@ -164,6 +164,24 @@ services:
         limits:
           cpus: '1'
           memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Nettools sidecar (nmap/snmp/ssh)
+  nettools:
+    build:
+      context: .
+      dockerfile: docker/nettools/Dockerfile
+    container_name: netopsai-nettools
+    restart: unless-stopped
+    networks:
+      - netopsai-gateway-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
         reservations:
           cpus: '0.25'
           memory: 256M

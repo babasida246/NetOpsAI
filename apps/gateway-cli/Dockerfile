@@ -11,7 +11,7 @@ COPY tsconfig.base.json ./
 # Copy all package.json files
 COPY packages/*/package.json packages/
 COPY packages/mcp-servers/core/*/package.json packages/mcp-servers/core/
-COPY apps/api/package.json apps/api/
+COPY apps/cloud-api/package.json apps/cloud-api/
 COPY apps/gateway-mcp/package.json apps/gateway-mcp/
 COPY apps/gateway-cli/package.json apps/gateway-cli/
 

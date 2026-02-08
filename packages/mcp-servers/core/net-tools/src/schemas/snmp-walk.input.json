@@ -1,0 +1,55 @@
+{
+    "$id": "nettools.snmp_walk.input",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "target",
+        "version",
+        "credentialRef",
+        "oidGroup"
+    ],
+    "properties": {
+        "target": {
+            "type": "string",
+            "minLength": 1
+        },
+        "version": {
+            "type": "string",
+            "enum": [
+                "2c",
+                "3"
+            ]
+        },
+        "credentialRef": {
+            "type": "string",
+            "minLength": 1
+        },
+        "oidGroup": {
+            "type": "string",
+            "enum": [
+                "IF_MIB",
+                "BRIDGE_MIB",
+                "LLDP_MIB",
+                "IP_MIB_ARP"
+            ]
+        },
+        "timeoutSec": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "default": 2
+        },
+        "retries": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2,
+            "default": 1
+        },
+        "maxRows": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 20000,
+            "default": 5000
+        }
+    }
+}

@@ -1,0 +1,1 @@
+ 0  address=10.0.0.2 mac-address=AA:BB:CC:DD:EE:03 identity=core-sw-2 interface=ether1 platform=MikroTik

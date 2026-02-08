@@ -1,0 +1,17 @@
+services:
+  edge-data:
+    image: alpine:3.20
+    container_name: netopsai-edge-data
+    command: ["sh", "-c", "sleep 365d"]
+    volumes:
+      - edge_data:/data
+    networks:
+      - netopsai-edge
+
+volumes:
+  edge_data:
+
+networks:
+  netopsai-edge:
+    name: netopsai-edge
+    driver: bridge

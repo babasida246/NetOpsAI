@@ -1,0 +1,81 @@
+{
+    "$id": "nettools.nmap_scan_safe.input",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "target",
+        "profile"
+    ],
+    "properties": {
+        "target": {
+            "type": "string",
+            "minLength": 1
+        },
+        "profile": {
+            "type": "string",
+            "enum": [
+                "top_ports",
+                "ports_list"
+            ]
+        },
+        "topPorts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+        },
+        "ports": {
+            "type": "string",
+            "pattern": "^\\d+(,\\d+)*$",
+            "maxLength": 400
+        },
+        "maxHosts": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1024,
+            "default": 256
+        },
+        "resolveDns": {
+            "type": "boolean",
+            "default": false
+        },
+        "timing": {
+            "type": "string",
+            "enum": [
+                "T2",
+                "T3"
+            ],
+            "default": "T3"
+        }
+    },
+    "allOf": [
+        {
+            "if": {
+                "properties": {
+                    "profile": {
+                        "const": "top_ports"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "topPorts"
+                ]
+            }
+        },
+        {
+            "if": {
+                "properties": {
+                    "profile": {
+                        "const": "ports_list"
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "ports"
+                ]
+            }
+        }
+    ]
+}

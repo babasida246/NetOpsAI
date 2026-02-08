@@ -1,0 +1,47 @@
+{
+    "$id": "nettools.topology_discover.input",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "seedDevices"
+    ],
+    "properties": {
+        "seedDevices": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1
+        },
+        "includeNmap": {
+            "type": "boolean",
+            "default": false
+        },
+        "nmapTargets": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "snmpTargets": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "mode": {
+            "type": "string",
+            "enum": [
+                "fast",
+                "full"
+            ],
+            "default": "fast"
+        },
+        "site": {
+            "type": "string"
+        },
+        "zone": {
+            "type": "string"
+        }
+    }
+}

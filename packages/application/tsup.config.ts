@@ -5,6 +5,7 @@ export default defineConfig({
     format: ['esm'],
     target: 'es2022',
     clean: true,
+    tsconfig: 'tsconfig.build.json',
     dts: true,
     sourcemap: false,
     minify: false,

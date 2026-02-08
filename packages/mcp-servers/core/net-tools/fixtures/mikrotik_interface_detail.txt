@@ -1,0 +1,3 @@
+ 0  name=ether1 mac-address=AA:BB:CC:DD:EE:11 type=ether mtu=1500 speed=1000000000
+ 1  name=ether2 mac-address=AA:BB:CC:DD:EE:12 type=ether mtu=1500 speed=1000000000
+ 2  name=ether3 mac-address=AA:BB:CC:DD:EE:13 type=ether mtu=1500 speed=1000000000

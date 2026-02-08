@@ -1,0 +1,37 @@
+{
+    "$id": "nettools.device_cli_collect.output",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "deviceId",
+        "datasetType",
+        "items",
+        "meta"
+    ],
+    "properties": {
+        "deviceId": {
+            "type": "string"
+        },
+        "datasetType": {
+            "type": "string"
+        },
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        },
+        "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "durationMs"
+            ],
+            "properties": {
+                "durationMs": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

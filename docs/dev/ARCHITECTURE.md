@@ -114,7 +114,7 @@ apps/web-ui/
 
 **Directory Structure:**
 ```
-apps/api/
+apps/cloud-api/
 ├── src/
 │   ├── core/             # Core setup
 │   │   ├── app.ts        # Fastify app
@@ -408,7 +408,7 @@ services:
     image: redis:7
 
   gateway-api:
-    build: ./apps/api
+       build: ./apps/cloud-api
     depends_on: [db, redis]
 
   gateway-mcp:

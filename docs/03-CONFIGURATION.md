@@ -102,7 +102,7 @@ services:
   gateway-api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: apps/cloud-api/Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}

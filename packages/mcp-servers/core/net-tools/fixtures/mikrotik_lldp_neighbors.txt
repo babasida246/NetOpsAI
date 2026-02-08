@@ -1,0 +1,1 @@
+ 0  interface=ether1 remote-system-name=core-sw-2 remote-port-id=ether1 remote-chassis-id=AA:BB:CC:DD:EE:03

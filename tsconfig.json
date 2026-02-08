@@ -13,7 +13,8 @@
     { "path": "./packages/observability" },
     { "path": "./packages/security" },
     { "path": "./packages/testing" },
-    { "path": "./apps/api" },
+    { "path": "./apps/cloud-api" },
+    { "path": "./apps/edge-api" },
     { "path": "./apps/gateway-cli" },
     { "path": "./apps/gateway-mcp" }
   ],

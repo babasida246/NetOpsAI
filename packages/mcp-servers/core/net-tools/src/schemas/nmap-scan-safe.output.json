@@ -1,0 +1,62 @@
+{
+    "$id": "nettools.nmap_scan_safe.output",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "hosts",
+        "meta"
+    ],
+    "properties": {
+        "hosts": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "ip",
+                    "up",
+                    "openTcpPorts"
+                ],
+                "properties": {
+                    "ip": {
+                        "type": "string"
+                    },
+                    "hostname": {
+                        "type": "string"
+                    },
+                    "up": {
+                        "type": "boolean"
+                    },
+                    "openTcpPorts": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            }
+        },
+        "meta": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "durationMs",
+                "profile"
+            ],
+            "properties": {
+                "durationMs": {
+                    "type": "integer"
+                },
+                "profile": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "string"
+                },
+                "topPorts": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

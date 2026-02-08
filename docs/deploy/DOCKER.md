@@ -118,7 +118,7 @@ services:
   gateway-api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: apps/cloud-api/Dockerfile
     restart: unless-stopped
     environment:
       NODE_ENV: production

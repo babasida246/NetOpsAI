@@ -1,0 +1,54 @@
+services:
+  cloud-api:
+    build:
+      context: .
+      dockerfile: apps/cloud-api/Dockerfile
+    container_name: netopsai-cloud-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-netopsai_gateway}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      LICENSE_SIGNING_PRIVATE_KEY: ${LICENSE_SIGNING_PRIVATE_KEY}
+      LICENSE_SIGNING_PUBLIC_KEY: ${LICENSE_SIGNING_PUBLIC_KEY}
+      EDGE_JOB_SIGNING_PRIVATE_KEY: ${EDGE_JOB_SIGNING_PRIVATE_KEY}
+      EDGE_JOB_SIGNING_PUBLIC_KEY: ${EDGE_JOB_SIGNING_PUBLIC_KEY}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - netopsai-cloud
+
+  web-cloud:
+    build:
+      context: .
+      dockerfile: apps/web-cloud/Dockerfile
+    container_name: netopsai-web-cloud
+    restart: unless-stopped
+    depends_on:
+      - cloud-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      BACKEND_BASE_URL: ${CLOUD_WEB_BACKEND_BASE_URL:-http://cloud-api:3000}
+    ports:
+      - "${WEB_CLOUD_PORT:-5173}:3000"
+    networks:
+      - netopsai-cloud
+
+networks:
+  netopsai-cloud:
+    name: netopsai-cloud
+    driver: bridge

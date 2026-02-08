@@ -1,0 +1,2 @@
+ 0  mac-address=AA:BB:CC:DD:EE:01 on-interface=ether1 bridge=bridge1 vlan-id=10
+ 1  mac-address=AA:BB:CC:DD:EE:02 on-interface=ether2 bridge=bridge1 vlan-id=20

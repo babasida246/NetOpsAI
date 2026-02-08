@@ -36,7 +36,7 @@ git remote add upstream https://github.com/ORIGINAL_OWNER/it-service-hub.git
 pnpm install
 
 # Copy environment files
-cp apps/api/.env.example apps/api/.env
+cp apps/cloud-api/.env.example apps/cloud-api/.env
 cp apps/web-ui/.env.example apps/web-ui/.env
 
 # Start services

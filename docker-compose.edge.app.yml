@@ -1,0 +1,50 @@
+services:
+  edge-api:
+    build:
+      context: .
+      dockerfile: apps/edge-api/Dockerfile
+    container_name: netopsai-edge-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      EDGE_BIND_HOST: ${EDGE_BIND_HOST:-0.0.0.0}
+      EDGE_PORT: ${EDGE_PORT:-3002}
+      CLOUD_BASE_URL: ${CLOUD_BASE_URL}
+      EDGE_LOCAL_VAULT_KEY: ${EDGE_LOCAL_VAULT_KEY}
+      EDGE_JOB_SIGNING_PUBLIC_KEY: ${EDGE_JOB_SIGNING_PUBLIC_KEY}
+      EDGE_TARGET_ALLOWLIST: ${EDGE_TARGET_ALLOWLIST:-}
+      EDGE_CONNECTORS_ALLOWED: ${EDGE_CONNECTORS_ALLOWED:-ssh,snmp,zabbix,syslog}
+      EDGE_MAX_CONCURRENCY: ${EDGE_MAX_CONCURRENCY:-3}
+      EDGE_JOB_TIMEOUT_MS: ${EDGE_JOB_TIMEOUT_MS:-60000}
+      EDGE_DATA_DIR: ${EDGE_DATA_DIR:-/app/data}
+    ports:
+      - "127.0.0.1:${EDGE_PORT:-3002}:3002"
+    volumes:
+      - edge_data:/app/data
+    networks:
+      - netopsai-edge
+
+  web-edge:
+    build:
+      context: .
+      dockerfile: apps/web-edge/Dockerfile
+    container_name: netopsai-web-edge
+    restart: unless-stopped
+    depends_on:
+      - edge-api
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      BACKEND_BASE_URL: ${EDGE_WEB_BACKEND_BASE_URL:-http://edge-api:3002}
+    ports:
+      - "127.0.0.1:${WEB_EDGE_PORT:-5174}:3000"
+    networks:
+      - netopsai-edge
+
+volumes:
+  edge_data:
+
+networks:
+  netopsai-edge:
+    name: netopsai-edge
+    driver: bridge
