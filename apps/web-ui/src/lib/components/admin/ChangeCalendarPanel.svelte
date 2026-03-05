@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Alert, Badge, Button, Card, Input, Label, Select } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { governanceApi, type MaintenanceWindow } from '$lib/netops/api/governanceApi';
 
   let windows = $state<MaintenanceWindow[]>([]);
@@ -35,34 +36,34 @@
 <Card class="space-y-3">
   <div class="flex items-center justify-between">
     <div>
-      <h3 class="text-base font-semibold text-slate-900 dark:text-white">Change Calendar</h3>
-      <p class="text-sm text-slate-500">Schedule maintenance windows to control change timing.</p>
+      <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('changeCal.title')}</h3>
+      <p class="text-sm text-slate-500">{$_('changeCal.subtitle')}</p>
     </div>
-    <Badge color="blue">Ops</Badge>
+    <Badge color="blue">{$_('changeCal.opsBadge')}</Badge>
   </div>
 
   <div class="grid lg:grid-cols-2 gap-3">
     <div class="space-y-2">
-      <Label>Title</Label>
-      <Input bind:value={title} placeholder="Monthly maintenance" />
-      <Label>Environment</Label>
+      <Label>{$_('changeCal.titleLabel')}</Label>
+      <Input bind:value={title} placeholder={$_('changeCal.titlePlaceholder')} />
+      <Label>{$_('changeCal.environment')}</Label>
       <Select bind:value={environment}>
-        <option value="all">All</option>
-        <option value="dev">Dev</option>
-        <option value="staging">Staging</option>
-        <option value="prod">Prod</option>
+        <option value="all">{$_('common.all')}</option>
+        <option value="dev">{$_('common.envDev')}</option>
+        <option value="staging">{$_('common.envStaging')}</option>
+        <option value="prod">{$_('common.envProd')}</option>
       </Select>
     </div>
     <div class="space-y-2">
-      <Label>Start</Label>
+      <Label>{$_('changeCal.start')}</Label>
       <Input type="datetime-local" bind:value={startAt} />
-      <Label>End</Label>
+      <Label>{$_('changeCal.end')}</Label>
       <Input type="datetime-local" bind:value={endAt} />
     </div>
   </div>
 
   <div class="flex items-center gap-2">
-    <Button size="sm" onclick={createWindow} disabled={!title.trim() || !startAt || !endAt}>Create window</Button>
+    <Button size="sm" onclick={createWindow} disabled={!title.trim() || !startAt || !endAt}>{$_('changeCal.createWindow')}</Button>
     {#if status}
       <span class="text-xs text-slate-500">{status}</span>
     {/if}
@@ -70,7 +71,7 @@
 
   <div class="space-y-2">
     {#if windows.length === 0}
-      <p class="text-sm text-slate-500">No maintenance windows scheduled.</p>
+      <p class="text-sm text-slate-500">{$_('changeCal.noWindows')}</p>
     {:else}
       {#each windows as window}
         <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">

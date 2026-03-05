@@ -55,6 +55,7 @@
     Snippet,
     VisualizerData
   } from '$lib/tools/field/types';
+  import { _, isLoading } from '$lib/i18n';
 
   const props = $props<{ devices?: Device[]; sshPolicy: SshCommandPolicy }>();
 
@@ -569,21 +570,21 @@
   <Card class="space-y-3">
     <div class="flex items-start justify-between gap-3 flex-wrap">
       <div>
-        <p class="text-xs uppercase tracking-wide text-blue-600 font-semibold">Field Kit</p>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Field Operations Console</h2>
+        <p class="text-xs uppercase tracking-wide text-blue-600 font-semibold">{$_('tools.fieldKit.badge')}</p>
+        <h2 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.title')}</h2>
         <p class="text-sm text-slate-500">
-          RBAC, policy, and audit enforced. No direct CLI bypass.
+          {$_('tools.fieldKit.subtitle')}
         </p>
       </div>
-      <Badge color="blue">Controlled</Badge>
+      <Badge color="blue">{$_('tools.fieldKit.controlled')}</Badge>
     </div>
 
     <div class="grid lg:grid-cols-3 gap-3">
       <div>
-        <Label>Device</Label>
+        <Label>{$_('tools.fieldKit.device')}</Label>
         <Select bind:value={fieldDeviceId}>
           {#if devices.length === 0}
-            <option value="">No devices available</option>
+            <option value="">{$_('tools.fieldKit.noDevices')}</option>
           {:else}
             {#each devices as device}
               <option value={device.id}>{device.name} · {device.mgmt_ip}</option>
@@ -592,15 +593,15 @@
         </Select>
       </div>
       <div>
-        <Label>Environment</Label>
+        <Label>{$_('tools.fieldKit.environment')}</Label>
         <Select value={sshPolicy.environment} disabled>
-          <option value="dev">Dev</option>
-          <option value="staging">Staging</option>
-          <option value="prod">Prod</option>
+          <option value="dev">{$_('common.envDev')}</option>
+          <option value="staging">{$_('common.envStaging')}</option>
+          <option value="prod">{$_('common.envProd')}</option>
         </Select>
       </div>
       <div>
-        <Label>Ticket (optional)</Label>
+        <Label>{$_('tools.fieldKit.ticket')}</Label>
         <Input bind:value={fieldTicket} placeholder="INC-2026-001" />
       </div>
     </div>
@@ -608,15 +609,15 @@
     <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500">
       <div class="flex items-center gap-2">
         <ShieldCheck class="w-4 h-4 text-emerald-500" />
-        Policy enforced
+        {$_('tools.fieldKit.policyEnforced')}
       </div>
       <div class="flex items-center gap-2">
         <FileText class="w-4 h-4 text-indigo-500" />
-        Audit always on
+        {$_('tools.fieldKit.auditAlwaysOn')}
       </div>
       <div class="flex items-center gap-2">
         <CloudOff class="w-4 h-4 text-slate-500" />
-        Offline mode disables execution
+        {$_('tools.fieldKit.offlineDisables')}
       </div>
     </div>
   </Card>
@@ -639,11 +640,11 @@
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Device Quick Check</h3>
-              <p class="text-sm text-slate-500">Read-only checklist. Commands are locked.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.quickCheck')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.quickCheckDesc')}</p>
             </div>
             <Button size="sm" onclick={handleQuickCheck} disabled={quickCheckLoading || !fieldDevice}>
-              {quickCheckLoading ? 'Running...' : 'Run Check'}
+              {quickCheckLoading ? $_('tools.fieldKit.running') : $_('tools.fieldKit.runCheck')}
             </Button>
           </div>
 
@@ -674,28 +675,28 @@
               {/each}
             </div>
           {:else}
-            <p class="text-sm text-slate-500">No quick check run yet.</p>
+            <p class="text-sm text-slate-500">{$_('tools.fieldKit.noQuickCheck')}</p>
           {/if}
         </Card>
       {:else if activeFieldSection === 'playbook'}
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Auto-generated Playbook</h3>
-              <p class="text-sm text-slate-500">Guided troubleshooting with vendor-specific steps.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.playbook')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.playbookDesc')}</p>
             </div>
             <div class="flex gap-2">
               <Select bind:value={playbookScenario}>
-                <option value="loss">Loss of connectivity</option>
-                <option value="loop">Loop detected</option>
-                <option value="packet-loss">Packet loss</option>
-                <option value="slow">Slow network</option>
+                <option value="loss">{$_('tools.fieldKit.scenarioLoss')}</option>
+                <option value="loop">{$_('tools.fieldKit.scenarioLoop')}</option>
+                <option value="packet-loss">{$_('tools.fieldKit.scenarioPacketLoss')}</option>
+                <option value="slow">{$_('tools.fieldKit.scenarioSlow')}</option>
               </Select>
               <Button size="sm" onclick={handleGeneratePlaybook} disabled={playbookLoading || !fieldDevice}>
-                {playbookLoading ? 'Generating...' : 'Generate'}
+                {playbookLoading ? $_('tools.fieldKit.generating') : $_('tools.fieldKit.generate')}
               </Button>
               {#if playbookRun}
-                <Button size="sm" color="light" onclick={runPlaybookAll}>Run all</Button>
+                <Button size="sm" color="light" onclick={runPlaybookAll}>{$_('tools.fieldKit.runAll')}</Button>
               {/if}
             </div>
           </div>
@@ -711,7 +712,7 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="text-sm font-semibold">{step.title}</div>
-                      <div class="text-xs text-slate-500">Commands: {step.commands.length}</div>
+                      <div class="text-xs text-slate-500">{$_('tools.fieldKit.commands')}: {step.commands.length}</div>
                     </div>
                     <div class="flex items-center gap-2">
                       {#if step.status === 'done'}
@@ -726,7 +727,7 @@
                         onclick={() => runPlaybookStep(index)}
                         disabled={!canRunPlaybookStep(index) || step.status === 'done'}
                       >
-                        Run step
+                        {$_('tools.fieldKit.runStep')}
                       </Button>
                     </div>
                   </div>
@@ -734,29 +735,29 @@
 {step.commands.map((cmd) => cmd.command).join('\n')}
                   </pre>
                   {#if step.output}
-                    <div class="text-xs text-slate-500 mt-2">Output:</div>
+                    <div class="text-xs text-slate-500 mt-2">{$_('tools.fieldKit.output')}:</div>
                     <pre class="text-xs bg-slate-100 dark:bg-slate-900/60 rounded-md p-2 whitespace-pre-wrap">{step.output.join('\n')}</pre>
                   {/if}
                 </div>
               {/each}
             </div>
           {:else}
-            <p class="text-sm text-slate-500">Generate a playbook to start.</p>
+            <p class="text-sm text-slate-500">{$_('tools.fieldKit.generatePlaybookHint')}</p>
           {/if}
         </Card>
       {:else if activeFieldSection === 'snippets'}
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Live Command Snippets</h3>
-              <p class="text-sm text-slate-500">Standardized snippets with policy enforcement.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.snippets')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.snippetsDesc')}</p>
             </div>
             <div class="flex gap-2">
-              <Input bind:value={snippetSearch} placeholder="Search snippet" />
+              <Input bind:value={snippetSearch} placeholder={$_('tools.fieldKit.searchSnippet')} />
               <Select bind:value={snippetVendor}>
-                <option value="all">All vendors</option>
-                <option value="cisco">Cisco IOS</option>
-                <option value="mikrotik">MikroTik</option>
+                <option value="all">{$_('tools.fieldKit.allVendors')}</option>
+                <option value="cisco">{$_('common.deviceCiscoIos')}</option>
+                <option value="mikrotik">{$_('common.deviceMikroTik')}</option>
               </Select>
             </div>
           </div>
@@ -779,7 +780,7 @@
                       <Clipboard class="w-4 h-4" />
                     </Button>
                     <Button size="xs" onclick={() => handleSnippetExecute(snippet)} disabled={!fieldDevice}>
-                      Execute
+                      {$_('tools.fieldKit.execute')}
                     </Button>
                   </div>
                 </div>
@@ -792,36 +793,36 @@
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">On-site Config Template</h3>
-              <p class="text-sm text-slate-500">Schema-driven deployment with baseline security.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.configTemplate')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.configTemplateDesc')}</p>
             </div>
             <div class="flex gap-2">
-              <Button size="sm" onclick={handleTemplateGenerate} disabled={!fieldDevice}>Generate CLI</Button>
-              <Button size="sm" color="light" onclick={handleTemplatePush} disabled={!templatePreview.length}>Push via SSH</Button>
+              <Button size="sm" onclick={handleTemplateGenerate} disabled={!fieldDevice}>{$_('tools.fieldKit.generateCli')}</Button>
+              <Button size="sm" color="light" onclick={handleTemplatePush} disabled={!templatePreview.length}>{$_('tools.fieldKit.pushSsh')}</Button>
             </div>
           </div>
 
           <div class="grid lg:grid-cols-2 gap-3">
             <div class="space-y-2">
-              <Label>Hostname</Label>
+              <Label>{$_('tools.fieldKit.hostname')}</Label>
               <Input bind:value={templateHostname} placeholder="FIELD-EDGE-01" />
-              <Label>Management IP</Label>
+              <Label>{$_('tools.fieldKit.mgmtIp')}</Label>
               <Input bind:value={templateMgmtIp} placeholder="10.0.0.10" />
-              <Label>Subnet Mask</Label>
+              <Label>{$_('tools.fieldKit.subnetMask')}</Label>
               <Input bind:value={templateMask} />
-              <Label>Default Gateway</Label>
+              <Label>{$_('tools.fieldKit.defaultGateway')}</Label>
               <Input bind:value={templateGateway} placeholder="10.0.0.1" />
             </div>
             <div class="space-y-2">
-              <Label>NTP servers (comma separated)</Label>
+              <Label>{$_('tools.fieldKit.ntpServers')}</Label>
               <Input bind:value={templateNtp} placeholder="1.pool.ntp.org,2.pool.ntp.org" />
-              <Label>DNS servers (comma separated)</Label>
+              <Label>{$_('tools.fieldKit.dnsServers')}</Label>
               <Input bind:value={templateDns} placeholder="8.8.8.8,1.1.1.1" />
-              <Label>Syslog server</Label>
+              <Label>{$_('tools.fieldKit.syslogServer')}</Label>
               <Input bind:value={templateSyslog} placeholder="10.0.0.50" />
               <div class="flex items-center gap-2 text-xs text-slate-500">
                 <ShieldCheck class="w-4 h-4" />
-                Baseline security enforced (SSH v2, no telnet).
+                {$_('tools.fieldKit.baselineSecurity')}
               </div>
             </div>
           </div>
@@ -831,25 +832,25 @@
           {/if}
 
           <pre class="text-xs bg-slate-900 text-slate-100 rounded-md p-3 whitespace-pre-wrap">
-{templatePreview.length ? templatePreview.join('\n') : 'Generate to preview CLI.'}
+{templatePreview.length ? templatePreview.join('\n') : $_('tools.fieldKit.generateToPreview')}
           </pre>
         </Card>
       {:else if activeFieldSection === 'visualizer'}
         <Card class="space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Interface & VLAN Visualizer</h3>
-              <p class="text-sm text-slate-500">CMDB + live status overview.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.visualizer')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.visualizerDesc')}</p>
             </div>
             <Button size="sm" color="light" onclick={handleVisualizerRefresh} disabled={!fieldDevice}>
-              {visualizerLoading ? 'Refreshing...' : 'Refresh'}
+              {visualizerLoading ? $_('tools.fieldKit.refreshing') : $_('common.refresh')}
             </Button>
           </div>
 
           {#if visualizerData}
             <div class="grid lg:grid-cols-2 gap-3">
               <div class="space-y-2">
-                <p class="text-xs uppercase text-slate-500">Ports</p>
+                <p class="text-xs uppercase text-slate-500">{$_('tools.fieldKit.ports')}</p>
                 {#each visualizerData.ports as port}
                   <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-2 flex items-center justify-between">
                     <div>
@@ -861,7 +862,7 @@
                 {/each}
               </div>
               <div class="space-y-2">
-                <p class="text-xs uppercase text-slate-500">VLANs</p>
+                <p class="text-xs uppercase text-slate-500">{$_('tools.fieldKit.vlans')}</p>
                 {#each visualizerData.vlans as vlan}
                   <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-2 flex items-center justify-between">
                     <div class="text-sm font-semibold">VLAN {vlan.id}</div>
@@ -871,20 +872,20 @@
               </div>
             </div>
           {:else}
-            <p class="text-sm text-slate-500">No visualizer data yet.</p>
+            <p class="text-sm text-slate-500">{$_('tools.fieldKit.noVisualizerData')}</p>
           {/if}
         </Card>
       {:else if activeFieldSection === 'snapshot'}
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Incident Snapshot</h3>
-              <p class="text-sm text-slate-500">Capture config, diff, quick check, and logs.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.snapshot')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.snapshotDesc')}</p>
             </div>
-            <Button size="sm" onclick={handleCaptureSnapshot} disabled={!fieldDevice}>Capture State</Button>
+            <Button size="sm" onclick={handleCaptureSnapshot} disabled={!fieldDevice}>{$_('tools.fieldKit.captureState')}</Button>
           </div>
 
-          <Textarea rows={3} bind:value={snapshotNotes} placeholder="Notes for this snapshot" />
+          <Textarea rows={3} bind:value={snapshotNotes} placeholder={$_('tools.fieldKit.snapshotNotes')} />
 
           {#if snapshotStatus}
             <Alert color="blue">{snapshotStatus}</Alert>
@@ -892,7 +893,7 @@
 
           <div class="space-y-2">
             {#if snapshots.length === 0}
-              <p class="text-sm text-slate-500">No snapshots yet.</p>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.noSnapshots')}</p>
             {:else}
               {#each snapshots as snap}
                 <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
@@ -901,7 +902,7 @@
                       <div class="text-sm font-semibold">{snap.summary}</div>
                       <div class="text-xs text-slate-500">{new Date(snap.createdAt).toLocaleString()}</div>
                     </div>
-                    <Button size="xs" color="light" onclick={() => downloadJson(`snapshot-${snap.id}.json`, snap)}>Export</Button>
+                    <Button size="xs" color="light" onclick={() => downloadJson(`snapshot-${snap.id}.json`, snap)}>{$_('common.export')}</Button>
                   </div>
                 </div>
               {/each}
@@ -912,10 +913,10 @@
         <Card class="space-y-3">
           <div class="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Connectivity Assistant</h3>
-              <p class="text-sm text-slate-500">End-to-end hop checks with timestamps.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.connectivity')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.connectivityDesc')}</p>
             </div>
-            <Button size="sm" onclick={handleConnectivityGenerate} disabled={!fieldDevice}>Generate Plan</Button>
+            <Button size="sm" onclick={handleConnectivityGenerate} disabled={!fieldDevice}>{$_('tools.fieldKit.generatePlan')}</Button>
           </div>
 
           {#if connectivityStatus}
@@ -929,10 +930,10 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <div class="text-sm font-semibold">{hop.label}</div>
-                      <div class="text-xs text-slate-500">Commands: {hop.commands.length}</div>
+                      <div class="text-xs text-slate-500">{$_('tools.fieldKit.commands')}: {hop.commands.length}</div>
                     </div>
                     <Button size="xs" onclick={() => runConnectivityHop(index)} disabled={hop.status === 'done'}>
-                      Run
+                      {$_('tools.fieldKit.run')}
                     </Button>
                   </div>
                   <pre class="mt-2 text-xs bg-slate-900 text-slate-100 rounded-md p-2 whitespace-pre-wrap">
@@ -945,20 +946,20 @@
               {/each}
             </div>
           {:else}
-            <p class="text-sm text-slate-500">Generate a plan to start checks.</p>
+            <p class="text-sm text-slate-500">{$_('tools.fieldKit.generatePlanHint')}</p>
           {/if}
         </Card>
       {:else if activeFieldSection === 'notes'}
         <Card class="space-y-3">
           <div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Field Notes & Handover</h3>
-            <p class="text-sm text-slate-500">Capture onsite notes with audit trail.</p>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.notes')}</h3>
+            <p class="text-sm text-slate-500">{$_('tools.fieldKit.notesDesc')}</p>
           </div>
 
-          <Textarea rows={3} bind:value={noteMessage} placeholder="Describe work done, observations, next steps" />
-          <Input bind:value={noteAttachment} placeholder="Attachments (comma-separated file names)" />
+          <Textarea rows={3} bind:value={noteMessage} placeholder={$_('tools.fieldKit.noteMessagePlaceholder')} />
+          <Input bind:value={noteAttachment} placeholder={$_('tools.fieldKit.noteAttachmentPlaceholder')} />
           <div class="flex gap-2">
-            <Button size="sm" onclick={handleAddNote} disabled={!noteMessage.trim() || !fieldDevice}>Save Note</Button>
+            <Button size="sm" onclick={handleAddNote} disabled={!noteMessage.trim() || !fieldDevice}>{$_('tools.fieldKit.saveNote')}</Button>
             {#if noteStatus}
               <span class="text-xs text-slate-500">{noteStatus}</span>
             {/if}
@@ -966,7 +967,7 @@
 
           <div class="space-y-2">
             {#if notes.length === 0}
-              <p class="text-sm text-slate-500">No notes yet.</p>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.noNotes')}</p>
             {:else}
               {#each notes as note}
                 <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
@@ -990,28 +991,28 @@
           <div class="flex items-center gap-2">
             <CloudOff class="w-4 h-4 text-slate-500" />
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Offline Mode</h3>
-              <p class="text-sm text-slate-500">Read-only access to cached playbooks and checklists.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.offlineMode')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.offlineModeDesc')}</p>
             </div>
           </div>
 
           <div class="flex items-center gap-2">
             <Checkbox bind:checked={offlineMode} />
-            <span class="text-sm">Enable offline mode (blocks execution & push)</span>
+            <span class="text-sm">{$_('tools.fieldKit.enableOffline')}</span>
           </div>
 
           <Alert color="yellow">
-            Offline mode disables SSH execution and config push. Use for low-connectivity sites.
+            {$_('tools.fieldKit.offlineAlert')}
           </Alert>
 
           <div class="grid lg:grid-cols-2 gap-3">
             <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <p class="text-sm font-semibold">Cached playbooks</p>
-              <p class="text-xs text-slate-500">{playbookHistory.length} recent playbooks cached</p>
+              <p class="text-sm font-semibold">{$_('tools.fieldKit.cachedPlaybooks')}</p>
+              <p class="text-xs text-slate-500">{$_('tools.fieldKit.cachedPlaybooksCount', { values: { count: playbookHistory.length } })}</p>
             </div>
             <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
-              <p class="text-sm font-semibold">Cached snippets</p>
-              <p class="text-xs text-slate-500">{snippets.length} snippets available</p>
+              <p class="text-sm font-semibold">{$_('tools.fieldKit.cachedSnippets')}</p>
+              <p class="text-xs text-slate-500">{$_('tools.fieldKit.cachedSnippetsCount', { values: { count: snippets.length } })}</p>
             </div>
           </div>
         </Card>
@@ -1020,20 +1021,20 @@
           <div class="flex items-center gap-2">
             <ShieldAlert class="w-4 h-4 text-red-500" />
             <div>
-              <h3 class="text-base font-semibold text-slate-900 dark:text-white">Safety Guard & Approvals</h3>
-              <p class="text-sm text-slate-500">High-risk actions require confirmation and approval.</p>
+              <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('tools.fieldKit.safetyGuard')}</h3>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.safetyGuardDesc')}</p>
             </div>
           </div>
 
           <div class="grid lg:grid-cols-2 gap-3">
             <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3 space-y-2">
-              <div class="text-sm font-semibold">Command policy</div>
+              <div class="text-sm font-semibold">{$_('tools.fieldKit.commandPolicy')}</div>
               <div class="text-xs text-slate-500">Allowlist: {sshPolicy.allowList.length || 'none'}</div>
               <div class="text-xs text-slate-500">Denylist: {sshPolicy.denyList.length || 'none'}</div>
               <div class="text-xs text-slate-500">Dangerous: {sshPolicy.dangerousList.length || 'none'}</div>
             </div>
             <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3 space-y-2">
-              <div class="text-sm font-semibold">Approval gate</div>
+              <div class="text-sm font-semibold">{$_('tools.fieldKit.approvalGate')}</div>
               <div class="text-xs text-slate-500">Critical device: {isCriticalDevice() ? 'Yes' : 'No'}</div>
               <div class="text-xs text-slate-500">Environment: {sshPolicy.environment.toUpperCase()}</div>
               <div class="text-xs text-slate-500">Approval required: {requiresApproval() ? 'Yes' : 'No'}</div>
@@ -1041,9 +1042,9 @@
           </div>
 
           <div class="space-y-2">
-            <Label>Request approval</Label>
-            <Textarea rows={2} bind:value={approvalReason} placeholder="Reason for high-risk action" />
-            <Button size="sm" onclick={handleApprovalRequest} disabled={!approvalReason.trim() || !fieldDevice}>Request approval</Button>
+            <Label>{$_('tools.fieldKit.requestApproval')}</Label>
+            <Textarea rows={2} bind:value={approvalReason} placeholder={$_('tools.fieldKit.approvalReasonPlaceholder')} />
+            <Button size="sm" onclick={handleApprovalRequest} disabled={!approvalReason.trim() || !fieldDevice}>{$_('tools.fieldKit.requestApproval')}</Button>
             {#if approvalStatus}
               <Alert color="blue">{approvalStatus}</Alert>
             {/if}
@@ -1051,7 +1052,7 @@
 
           <div class="space-y-2">
             {#if approvals.length === 0}
-              <p class="text-sm text-slate-500">No approvals yet.</p>
+              <p class="text-sm text-slate-500">{$_('tools.fieldKit.noApprovals')}</p>
             {:else}
               {#each approvals as approval}
                 <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-2">

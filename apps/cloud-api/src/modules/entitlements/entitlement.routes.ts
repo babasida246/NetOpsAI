@@ -2,22 +2,14 @@ import type { FastifyInstance, FastifyRequest } from 'fastify'
 import type { EntitlementService } from './entitlement.service.js'
 import { UnauthorizedError } from '../../shared/errors/http-errors.js'
 
-interface AuthenticatedRequest extends FastifyRequest {
-    user?: {
-        id: string
-        role: string
-        tenantId?: string
-    }
-}
-
-const requireRole = (roles: string[]) => async (request: AuthenticatedRequest) => {
+const requireRole = (roles: string[]) => async (request: FastifyRequest) => {
     const role = request.user?.role
     if (!role || !roles.includes(role)) {
         throw new UnauthorizedError('Insufficient permissions')
     }
 }
 
-const requireTenant = (request: AuthenticatedRequest): string => {
+const requireTenant = (request: FastifyRequest): string => {
     const tenantId = request.user?.tenantId
     if (!tenantId) {
         throw new UnauthorizedError('Tenant context missing')
@@ -37,7 +29,7 @@ export async function entitlementRoutes(
                 tags: ['License'],
                 summary: 'Get license status and entitlements'
             }
-        }, async (request: AuthenticatedRequest) => {
+        }, async (request: FastifyRequest) => {
             const tenantId = requireTenant(request)
             return service.getSnapshot(tenantId)
         })
@@ -48,7 +40,7 @@ export async function entitlementRoutes(
                 summary: 'Refresh entitlement token'
             },
             preHandler: [requireRole(['admin', 'super_admin'])]
-        }, async (request: AuthenticatedRequest) => {
+        }, async (request: FastifyRequest) => {
             const tenantId = requireTenant(request)
             return service.refreshToken(tenantId, request.user?.id)
         })
@@ -59,7 +51,7 @@ export async function entitlementRoutes(
                 summary: 'Rebind entitlement token'
             },
             preHandler: [requireRole(['admin', 'super_admin'])]
-        }, async (request: AuthenticatedRequest) => {
+        }, async (request: FastifyRequest) => {
             const tenantId = requireTenant(request)
             return service.refreshToken(tenantId, request.user?.id)
         })

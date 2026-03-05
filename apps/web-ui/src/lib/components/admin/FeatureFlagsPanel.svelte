@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { readLocal, writeLocal } from '$lib/admin/storage'
 
     type FeatureFlag = {
@@ -36,10 +37,10 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Feature Flags</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('featureFlags.title')}</h3>
             <p class="text-sm text-slate-500">Control rollout safely by toggling admin features.</p>
         </div>
-        <Button size="sm" color="light" onclick={resetFlags}>Reset to defaults</Button>
+        <Button size="sm" color="light" onclick={resetFlags}>{$_('featureFlags.resetToDefaults')}</Button>
     </div>
 
     <div class="mt-4 grid gap-3">

@@ -231,11 +231,6 @@ describe('Auth Module', () => {
 
     describe('GET /api/v1/auth/me', () => {
         it('should return current user info when authenticated', async () => {
-            // Mock the authenticate decorator
-            ctx.app.decorate('authenticate', async function (request: any) {
-                request.user = { sub: fixtures.user.id, role: 'user' }
-            })
-
             ctx.db.query.mockResolvedValueOnce({
                 rows: [fixtures.user]
             })
@@ -269,10 +264,6 @@ describe('Auth Module', () => {
 
     describe('POST /api/v1/auth/logout', () => {
         it('should logout successfully when authenticated', async () => {
-            ctx.app.decorate('authenticate', async function (request: any) {
-                request.user = { sub: fixtures.user.id, role: 'user' }
-            })
-
             const response = await ctx.app.inject({
                 method: 'POST',
                 url: '/api/v1/auth/logout',
@@ -291,10 +282,6 @@ describe('Auth Module', () => {
 
     describe('POST /api/v1/auth/change-password', () => {
         it('should change password successfully', async () => {
-            ctx.app.decorate('authenticate', async function (request: any) {
-                request.user = { sub: fixtures.user.id, role: 'user' }
-            })
-
             // Mock user lookup
             ctx.db.query.mockResolvedValueOnce({
                 rows: [{

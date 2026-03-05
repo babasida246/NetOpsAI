@@ -2,6 +2,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { Button, Tabs, TabItem, Badge, Card } from 'flowbite-svelte';
+  import { _ } from '$lib/i18n';
   import { ArrowLeft } from 'lucide-svelte';
   import { getCiDetail, type CiDetail } from '$lib/api/cmdb';
   import CiRelationshipsTab from '$lib/cmdb/CiRelationshipsTab.svelte';
@@ -93,12 +94,12 @@
       <TabItem 
         open={activeTab === 'overview'} 
         onclick={() => setTab('overview')} 
-        title="Overview"
+        title={$_('ciDetail.overview')}
       >
         <div class="space-y-6">
           <!-- Basic Info Card -->
           <Card>
-            <h3 class="mb-4 text-lg font-semibold">Basic Information</h3>
+            <h3 class="mb-4 text-lg font-semibold">{$_('ciDetail.basicInfo')}</h3>
             <dl class="grid grid-cols-2 gap-4">
               <div>
                 <dt class="text-sm font-medium text-gray-500">CI Code</dt>
@@ -149,7 +150,7 @@
           <!-- Attributes Card -->
           {#if ciDetail.attributes.length > 0}
             <Card>
-              <h3 class="mb-4 text-lg font-semibold">Attributes</h3>
+              <h3 class="mb-4 text-lg font-semibold">{$_('ciDetail.attributes')}</h3>
               <dl class="grid grid-cols-2 gap-4">
                 {#each ciDetail.attributes as attr}
                   <div>
@@ -166,7 +167,7 @@
       <TabItem 
         open={activeTab === 'relationships'} 
         onclick={() => setTab('relationships')} 
-        title="Relationships"
+        title={$_('ciDetail.relationships')}
       >
         <CiRelationshipsTab ciId={ciDetail.ci.id} ciName={ciDetail.ci.name} />
       </TabItem>

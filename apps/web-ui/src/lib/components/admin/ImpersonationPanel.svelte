@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Select, Badge } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { listUsers, type AdminUser } from '$lib/api/admin'
     import { readLocal, writeLocal } from '$lib/admin/storage'
@@ -60,13 +61,13 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Impersonation</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('impersonation.title')}</h3>
             <p class="text-sm text-slate-500">
                 Support users by safely simulating their view. All actions must be audited.
             </p>
         </div>
         {#if impersonation}
-            <Badge color="yellow">Active impersonation</Badge>
+            <Badge color="yellow">{$_('impersonation.activeBadge')}</Badge>
         {/if}
     </div>
 
@@ -85,10 +86,10 @@
         </div>
         <div class="flex gap-2">
             <Button size="sm" onclick={startImpersonation} disabled={!selectedUser || !!impersonation}>
-                Start
+                {$_('impersonation.start')}
             </Button>
             <Button size="sm" color="light" onclick={stopImpersonation} disabled={!impersonation}>
-                Stop
+                {$_('impersonation.stop')}
             </Button>
         </div>
     </div>

@@ -116,8 +116,11 @@ export class ReportCachingService {
 
         try {
             const keys = await this.redis.keys(`${prefix}:*`)
-            if (keys.length > 0) {
-                await this.redis.del(keys)
+            const exact = await this.redis.get(prefix)
+            const keysToDelete = exact !== null ? [prefix, ...keys] : keys
+
+            if (keysToDelete.length > 0) {
+                await this.redis.del(keysToDelete)
             }
         } catch (error) {
             console.error(`Cache clear prefix error for ${prefix}:`, error)

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { listAuditLogs, type AuditLogEntry } from '$lib/api/admin'
     import { formatAdminError } from '$lib/admin/errors'
@@ -29,7 +30,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Admin Activity Feed</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('adminActivity.title')}</h3>
             <p class="text-sm text-slate-500">Timeline of recent admin actions for traceability.</p>
         </div>
         <Button size="sm" color="light" onclick={loadLogs} disabled={loading}>

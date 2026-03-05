@@ -27,7 +27,13 @@ import {
     StockReportRepo,
     WarehouseRepo,
     WarehouseUnitOfWork,
-    WorkflowRepo
+    WorkflowRepo,
+    // Feature repos
+    AutomationRuleRepo, AutomationLogRepo, NotificationRepo, ScheduledTaskRepo,
+    AnalyticsRepo, CostRecordRepo, PerformanceMetricRepo, DashboardConfigRepo,
+    DiscoveryRuleRepo, DiscoveryResultRepo, SmartTagRepo, ChangeAssessmentRepo,
+    IntegrationConnectorRepo, SyncRuleRepo, WebhookRepo,
+    RbacPermissionRepo, SecurityAuditRepo, ComplianceRepo
 } from '@infra/postgres'
 import {
     AssetService,
@@ -48,7 +54,13 @@ import {
     WorkflowService,
     CiInventoryReportService,
     RelationshipAnalyticsService,
-    AuditTrailService
+    AuditTrailService,
+    // Feature services
+    AutomationService,
+    AnalyticsService,
+    CmdbEnhancementService,
+    IntegrationService,
+    SecurityService
 } from '@application/core'
 import { assetsRoutes } from './assets.routes.js'
 import { catalogRoutes } from './catalogs.routes.js'
@@ -64,6 +76,12 @@ import { cmdbRoutes } from '../cmdb/cmdb.routes.js'
 import { warehouseRoutes } from '../warehouse/warehouse.routes.js'
 import { stockDocumentRoutes } from '../warehouse/stock-documents.routes.js'
 import { qltsRoutes } from '../../../modules/qlts/routes/index.js'
+// Feature route imports
+import { automationRoutes } from '../automation/automation.routes.js'
+import { analyticsRoutes } from '../analytics/analytics.routes.js'
+import { cmdbEnhancementRoutes } from '../cmdb/cmdb-enhancement.routes.js'
+import { integrationRoutes } from '../integrations/integrations.routes.js'
+import { securityRoutes } from '../security/security.routes.js'
 
 export interface AssetModuleDeps {
     pgClient: PgClient
@@ -104,6 +122,26 @@ export async function registerAssetModule(
     const relTypeRepo = new RelationshipTypeRepo(deps.pgClient)
     const relRepo = new RelationshipRepo(deps.pgClient)
     const cmdbServiceRepo = new CmdbServiceRepo(deps.pgClient)
+
+    // Feature repos
+    const automationRuleRepo = new AutomationRuleRepo(deps.pgClient)
+    const automationLogRepo = new AutomationLogRepo(deps.pgClient)
+    const notificationRepo = new NotificationRepo(deps.pgClient)
+    const scheduledTaskRepo = new ScheduledTaskRepo(deps.pgClient)
+    const analyticsRepo = new AnalyticsRepo(deps.pgClient)
+    const costRecordRepo = new CostRecordRepo(deps.pgClient)
+    const performanceMetricRepo = new PerformanceMetricRepo(deps.pgClient)
+    const dashboardConfigRepo = new DashboardConfigRepo(deps.pgClient)
+    const discoveryRuleRepo = new DiscoveryRuleRepo(deps.pgClient)
+    const discoveryResultRepo = new DiscoveryResultRepo(deps.pgClient)
+    const smartTagRepo = new SmartTagRepo(deps.pgClient)
+    const changeAssessmentRepo = new ChangeAssessmentRepo(deps.pgClient)
+    const integrationConnectorRepo = new IntegrationConnectorRepo(deps.pgClient)
+    const syncRuleRepo = new SyncRuleRepo(deps.pgClient)
+    const webhookRepo = new WebhookRepo(deps.pgClient)
+    const rbacPermissionRepo = new RbacPermissionRepo(deps.pgClient)
+    const securityAuditRepo = new SecurityAuditRepo(deps.pgClient)
+    const complianceRepo = new ComplianceRepo(deps.pgClient)
 
     const assetService = new AssetService(assetRepo, assignmentRepo, assetEventRepo, maintenanceRepo)
     const maintenanceService = new MaintenanceService(assetRepo, assignmentRepo, maintenanceRepo, assetEventRepo)
@@ -150,6 +188,13 @@ export async function registerAssetModule(
     const relationshipAnalyticsService = new RelationshipAnalyticsService(relRepo, ciRepo)
     const auditTrailService = new AuditTrailService(opsEventRepo)
 
+    // Feature services
+    const automationService = new AutomationService(automationRuleRepo, automationLogRepo, notificationRepo, scheduledTaskRepo)
+    const analyticsService = new AnalyticsService(analyticsRepo, costRecordRepo, performanceMetricRepo, dashboardConfigRepo)
+    const cmdbEnhancementService = new CmdbEnhancementService(discoveryRuleRepo, discoveryResultRepo, smartTagRepo, changeAssessmentRepo)
+    const integrationService = new IntegrationService(integrationConnectorRepo, syncRuleRepo, webhookRepo)
+    const securityService = new SecurityService(rbacPermissionRepo, securityAuditRepo, complianceRepo)
+
     await fastify.register(assetsRoutes, { prefix: '/api/v1', assetService, pgClient: deps.pgClient })
     await fastify.register(maintenanceRoutes, { prefix: '/api/v1', maintenanceService })
     await fastify.register(catalogRoutes, { prefix: '/api/v1', catalogService })
@@ -188,4 +233,11 @@ export async function registerAssetModule(
 
         await qltsApp.register(qltsRoutes, { prefix: '/api/v1/assets' })
     })
+
+    // Feature route registrations
+    await fastify.register(automationRoutes, { prefix: '/api/v1', automationService })
+    await fastify.register(analyticsRoutes, { prefix: '/api/v1', analyticsService })
+    await fastify.register(cmdbEnhancementRoutes, { prefix: '/api/v1', cmdbEnhancementService })
+    await fastify.register(integrationRoutes, { prefix: '/api/v1', integrationService })
+    await fastify.register(securityRoutes, { prefix: '/api/v1', securityService })
 }

@@ -52,6 +52,11 @@ test-results.json/
 test-*.txt
 *-test-output.txt
 
+# Analysis / audit output files (generated, not source)
+i18n-audit-report.json
+*-audit-report.json
+seed-gap-scan.md
+
 # Temporary files
 *.http
 *.bak

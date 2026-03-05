@@ -39,3 +39,23 @@ export { PurchasePlanRepo } from './repositories/PurchasePlanRepo.js'
 export { AssetIncreaseRepo } from './repositories/AssetIncreaseRepo.js'
 export { ApprovalRepo } from './repositories/ApprovalRepo.js'
 
+// Feature 1: Workflow Automation
+export { AutomationRuleRepo, AutomationLogRepo, NotificationRepo, ScheduledTaskRepo } from './repositories/AutomationRepo.js'
+export type { AutomationRule, AutomationLog, Notification, NotificationRule, ScheduledTask } from './repositories/AutomationRepo.js'
+
+// Feature 2: Analytics Dashboard
+export { AnalyticsRepo, CostRecordRepo, PerformanceMetricRepo, DashboardConfigRepo } from './repositories/AnalyticsRepo.js'
+export type { AnalyticsSnapshot, CostRecord, PerformanceMetric, DashboardConfig } from './repositories/AnalyticsRepo.js'
+
+// Feature 3: CMDB Enhancement
+export { DiscoveryRuleRepo, DiscoveryResultRepo, SmartTagRepo, ChangeAssessmentRepo } from './repositories/CmdbEnhancementRepo.js'
+export type { DiscoveryRule, DiscoveryResult, SmartTag, ChangeAssessment } from './repositories/CmdbEnhancementRepo.js'
+
+// Feature 4: Integration Hub
+export { IntegrationConnectorRepo, SyncRuleRepo, WebhookRepo } from './repositories/IntegrationRepo.js'
+export type { IntegrationConnector, SyncRule, SyncLog, Webhook } from './repositories/IntegrationRepo.js'
+
+// Feature 7: Security & Compliance
+export { RbacPermissionRepo, SecurityAuditRepo, ComplianceRepo } from './repositories/SecurityComplianceRepo.js'
+export type { RbacPermission, SecurityAuditLog, ComplianceFramework, ComplianceControl, ComplianceAssessment } from './repositories/SecurityComplianceRepo.js'
+

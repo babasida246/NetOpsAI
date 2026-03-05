@@ -8,8 +8,7 @@ SET
     current_stock_qty = 3,
     avg_daily_consumption = 0.5,
     avg_weekly_consumption = 3.5,
-    lead_time_days = 7,
-    updated_at = NOW()
+    lead_time_days = 7
 WHERE category_id IN (
     SELECT id FROM asset_categories WHERE name IN ('Laptop', 'Desktop')
 );
@@ -20,8 +19,7 @@ SET
     current_stock_qty = 2,
     avg_daily_consumption = 0.2,
     avg_weekly_consumption = 1.4,
-    lead_time_days = 10,
-    updated_at = NOW()
+    lead_time_days = 10
 WHERE category_id IN (
     SELECT id FROM asset_categories WHERE name IN ('Server', 'Firewall')
 );
@@ -432,5 +430,3 @@ BEGIN
         notes = EXCLUDED.notes,
         updated_at = NOW();
 END $$;
-
-COMMENT ON SCRIPT IS 'QLTS seed data: purchase plans, asset increase docs, and inventory tracking demo';

@@ -224,7 +224,7 @@
         <Input 
           id="rel-name" 
           bind:value={name} 
-          placeholder="Depends on"
+          placeholder={$_('relTypes.dependsOn')}
         />
         <p class="text-xs text-slate-500 mt-1">Display name (e.g., "Depends on")</p>
       </div>
@@ -237,7 +237,7 @@
       <Input 
         id="rel-reverse" 
         bind:value={reverseName} 
-        placeholder="Required by"
+        placeholder={$_('relTypes.requiredBy')}
       />
       <p class="text-xs text-slate-500 mt-1">Optional: How relationship appears from opposite direction</p>
     </div>
@@ -262,7 +262,7 @@
               <option value={ciType.id}>{ciType.name}</option>
             {/each}
           </select>
-          <p class="text-xs text-slate-500 mt-1">Leave empty to allow any type</p>
+          <p class="text-xs text-slate-500 mt-1">{$_('relTypes.leaveEmptyToAllowAny')}</p>
         </div>
         
         <div>
@@ -279,7 +279,7 @@
               <option value={ciType.id}>{ciType.name}</option>
             {/each}
           </select>
-          <p class="text-xs text-slate-500 mt-1">Leave empty to allow any type</p>
+          <p class="text-xs text-slate-500 mt-1">{$_('relTypes.leaveEmptyToAllowAny')}</p>
         </div>
       </div>
     </div>

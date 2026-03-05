@@ -5,6 +5,7 @@
  * with all plugins, middleware, and modules properly registered.
  */
 import Fastify, { type FastifyInstance } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
 import { randomUUID } from 'crypto'
 import multipart from '@fastify/multipart'
 import type { Pool } from 'pg'
@@ -35,6 +36,7 @@ import { IntegratedChatService } from '../modules/chat/integrated-chat.service.j
 import { integratedChatRoutes } from '../modules/chat/integrated-chat.routes.js'
 import { setupModule } from '../modules/setup/setup.module.js'
 import { AdminRepository, adminRoutes } from '../modules/admin/index.js'
+import { EntitlementRepository, EntitlementService, entitlementRoutes } from '../modules/entitlements/index.js'
 import { netopsRoutes } from '../modules/netops/index.js'
 import { toolsRoutes } from '../modules/tools/tools.routes.js'
 import { driversRoutes } from '../modules/drivers/index.js'
@@ -150,6 +152,39 @@ export async function createApp(deps: AppDependencies): Promise<FastifyInstance>
             refreshExpiresIn: env.JWT_REFRESH_EXPIRES_IN
         }
     )
+    const entitlementService = new EntitlementService(new EntitlementRepository(deps.db))
+
+    if (!fastify.hasDecorator('authenticate')) {
+        fastify.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
+            const authHeader = request.headers.authorization
+            if (!authHeader?.startsWith('Bearer ')) {
+                return reply.status(401).send({
+                    success: false,
+                    error: { code: 'AUTHENTICATION_ERROR', message: 'Missing or invalid authorization header' },
+                    meta: { timestamp: new Date().toISOString(), requestId: request.id }
+                })
+            }
+
+            const token = authHeader.substring(7)
+            try {
+                const payload = sharedAuthService.verifyAccessToken(token)
+                request.user = {
+                    id: payload.sub,
+                    sub: payload.sub,
+                    email: payload.email,
+                    role: payload.role,
+                    tenantId: payload.tenantId ?? null,
+                    permissions: []
+                }
+            } catch {
+                return reply.status(401).send({
+                    success: false,
+                    error: { code: 'AUTHENTICATION_ERROR', message: 'Invalid or expired token' },
+                    meta: { timestamp: new Date().toISOString(), requestId: request.id }
+                })
+            }
+        })
+    }
 
     try {
         console.log('🔧 Registering conversations module...')
@@ -199,11 +234,11 @@ export async function createApp(deps: AppDependencies): Promise<FastifyInstance>
     try {
         console.log('🔧 Registering tools module...')
         await fastify.register(async (toolsApp) => {
-            await toolsRoutes(toolsApp, sharedAuthService, deps.db)
+            await toolsRoutes(toolsApp, sharedAuthService, deps.db, entitlementService)
         }, { prefix: '/api' })
         // Register under /api/v1 for consistency with the rest of the platform.
         await fastify.register(async (toolsApp) => {
-            await toolsRoutes(toolsApp, sharedAuthService, deps.db)
+            await toolsRoutes(toolsApp, sharedAuthService, deps.db, entitlementService)
         }, { prefix: '/api/v1' })
         console.log('✅ Tools module registered successfully')
     } catch (error) {
@@ -214,11 +249,20 @@ export async function createApp(deps: AppDependencies): Promise<FastifyInstance>
     try {
         console.log('🔧 Registering netops module...')
         await fastify.register(async (netopsApp) => {
-            await netopsRoutes(netopsApp, deps.db, sharedAuthService)
+            await netopsRoutes(netopsApp, deps.db, sharedAuthService, entitlementService)
         }, { prefix: '/api/netops' })
         console.log('✅ NetOps module registered successfully')
     } catch (error) {
         console.error('❌ Failed to register netops module:', error)
+        throw error
+    }
+
+    try {
+        console.log('🔧 Registering entitlement module...')
+        await entitlementRoutes(fastify, entitlementService)
+        console.log('✅ Entitlement module registered successfully')
+    } catch (error) {
+        console.error('❌ Failed to register entitlement module:', error)
         throw error
     }
 

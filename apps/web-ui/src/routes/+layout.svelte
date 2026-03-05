@@ -18,6 +18,7 @@
     LayoutGrid,
     Layers,
     Bell,
+    Link,
     LogIn,
     LogOut,
     Menu,
@@ -30,7 +31,8 @@
     TrendingUp,
     User,
     Warehouse,
-    Wrench
+    Wrench,
+    Zap
   } from 'lucide-svelte';
 
   let { children } = $props();
@@ -143,7 +145,11 @@
     { href: '/maintenance', labelKey: 'nav.maintenance', icon: Wrench, requires: (caps) => caps.canManageAssets },
     { href: '/requests', labelKey: 'nav.requests', icon: GitPullRequest, requires: (caps) => caps.canManageAssets },
     { href: '/reports/assets', labelKey: 'nav.assetReports', icon: BarChart3, requires: (caps) => caps.canManageAssets },
-    { href: '/warehouse/reports', labelKey: 'nav.warehouseReports', icon: BarChart3, requires: (caps) => caps.canManageAssets }
+    { href: '/warehouse/reports', labelKey: 'nav.warehouseReports', icon: BarChart3, requires: (caps) => caps.canManageAssets },
+    { href: '/analytics', labelKey: 'nav.analytics', icon: TrendingUp, requires: (caps) => caps.canManageAssets },
+    { href: '/automation', labelKey: 'nav.automation', icon: Zap, requires: (caps) => caps.canManageAssets },
+    { href: '/integrations', labelKey: 'nav.integrations', icon: Link, requires: (caps) => caps.isAdmin },
+    { href: '/security', labelKey: 'nav.security', icon: Shield, requires: (caps) => caps.isAdmin }
   ];
 
   const netopsItems: NavItem[] = [

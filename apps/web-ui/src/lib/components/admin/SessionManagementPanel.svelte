@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Badge } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { getCurrentUser, logout } from '$lib/api/auth'
     import { formatAdminError } from '$lib/admin/errors'
@@ -53,7 +54,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Session Management</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('sessionMgmt.title')}</h3>
             <p class="text-sm text-slate-500">Review and revoke active login sessions.</p>
         </div>
         <Button size="sm" color="light" onclick={loadSession} disabled={loading}>
@@ -97,7 +98,7 @@
     </div>
 
     <div class="mt-4 flex flex-wrap items-center gap-2">
-        <Button size="sm" color="red" onclick={revokeCurrentSession}>Revoke current session</Button>
+        <Button size="sm" color="red" onclick={revokeCurrentSession}>{$_('sessionMgmt.revokeCurrentSession')}</Button>
         <Button size="sm" color="light" disabled>Revoke other sessions (backend required)</Button>
     </div>
 </Card>

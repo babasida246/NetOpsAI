@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Alert, Badge, Button, Card, Checkbox, Input, Label, Select, Textarea } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
   import { governanceApi, type GovernancePolicy } from '$lib/netops/api/governanceApi';
 
   let policies = $state<GovernancePolicy[]>([]);
@@ -39,40 +40,40 @@
 <Card class="space-y-4">
   <div class="flex items-center justify-between">
     <div>
-      <h3 class="text-base font-semibold text-slate-900 dark:text-white">Policy as Code</h3>
-      <p class="text-sm text-slate-500">Define allow/deny/dangerous rules per environment.</p>
+      <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('policyCode.title')}</h3>
+      <p class="text-sm text-slate-500">{$_('policyCode.subtitle')}</p>
     </div>
-    <Badge color="blue">Governance</Badge>
+    <Badge color="blue">{$_('policyCode.govBadge')}</Badge>
   </div>
 
   <div class="grid lg:grid-cols-2 gap-4">
     <div class="space-y-2">
-      <Label>Name</Label>
-      <Input bind:value={name} placeholder="Prod Guardrails" />
-      <Label>Environment</Label>
+      <Label>{$_('common.name')}</Label>
+      <Input bind:value={name} placeholder={$_('policyCode.namePlaceholder')} />
+      <Label>{$_('changeCal.environment')}</Label>
       <Select bind:value={environment}>
-        <option value="all">All</option>
-        <option value="dev">Dev</option>
-        <option value="staging">Staging</option>
-        <option value="prod">Prod</option>
+        <option value="all">{$_('common.all')}</option>
+        <option value="dev">{$_('common.envDev')}</option>
+        <option value="staging">{$_('common.envStaging')}</option>
+        <option value="prod">{$_('common.envProd')}</option>
       </Select>
       <div class="flex items-center gap-2">
         <Checkbox bind:checked={requireApproval} />
-        <span class="text-sm">Require approval for risky actions</span>
+        <span class="text-sm">{$_('policyCode.requireApproval')}</span>
       </div>
     </div>
     <div class="space-y-2">
-      <Label>Allowlist (one per line)</Label>
-      <Textarea rows={2} bind:value={allowList} placeholder="show\nprint" />
-      <Label>Denylist (one per line)</Label>
+      <Label>{$_('policyCode.allowlist')}</Label>
+      <Textarea rows={2} bind:value={allowList} placeholder={$_('policyCode.allowlistPlaceholder')} />
+      <Label>{$_('policyCode.denylist')}</Label>
       <Textarea rows={2} bind:value={denyList} />
-      <Label>Dangerous (one per line)</Label>
+      <Label>{$_('policyCode.dangerous')}</Label>
       <Textarea rows={2} bind:value={dangerousList} />
     </div>
   </div>
 
   <div class="flex items-center gap-2">
-    <Button size="sm" onclick={createPolicy} disabled={!name.trim()}>Create policy</Button>
+    <Button size="sm" onclick={createPolicy} disabled={!name.trim()}>{$_('policyCode.createPolicy')}</Button>
     {#if status}
       <span class="text-xs text-slate-500">{status}</span>
     {/if}
@@ -80,7 +81,7 @@
 
   <div class="space-y-2">
     {#if policies.length === 0}
-      <p class="text-sm text-slate-500">No policies configured.</p>
+      <p class="text-sm text-slate-500">{$_('policyCode.noPolicies')}</p>
     {:else}
       {#each policies as policy}
         <div class="border border-slate-200 dark:border-slate-800 rounded-lg p-3">
@@ -90,7 +91,7 @@
               <div class="text-xs text-slate-500">{policy.environment.toUpperCase()}</div>
             </div>
             <Badge color={policy.requireApproval ? 'yellow' : 'green'}>
-              {policy.requireApproval ? 'Approval' : 'Auto'}
+              {policy.requireApproval ? $_('policyCode.approval') : $_('policyCode.auto')}
             </Badge>
           </div>
           <div class="text-xs text-slate-500 mt-2">Allow: {policy.allowList.join(', ') || 'none'}</div>

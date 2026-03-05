@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Badge } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import {
         listProviders,
@@ -67,7 +68,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between gap-3 flex-wrap">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Provider Health Dashboard</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('providerHealth.title')}</h3>
             <p class="text-sm text-slate-500">Monitor provider stability, latency, and credits.</p>
         </div>
         <Button size="sm" color="light" onclick={loadProviders} disabled={loading}>

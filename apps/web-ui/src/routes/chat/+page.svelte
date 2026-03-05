@@ -287,7 +287,10 @@
 
     <div class="grid lg:grid-cols-[320px,1fr] gap-4 lg:gap-6">
       <!-- Conversations -->
-      <div class="bg-white/90 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div
+        data-testid="chat-conversations-panel"
+        class="bg-white/90 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm"
+      >
         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p class="text-xs text-slate-500">{$isLoading ? 'Conversations' : $_('chat.conversations')}</p>
@@ -303,7 +306,7 @@
               <Spinner size="8" />
             </div>
           {:else if conversations.length === 0}
-            <div class="p-6 text-center text-slate-500">
+            <div data-testid="chat-conversations-empty" class="p-6 text-center text-slate-500">
               {$isLoading ? 'No conversations yet' : $_('chat.noConversationsYet')}
             </div>
           {:else}

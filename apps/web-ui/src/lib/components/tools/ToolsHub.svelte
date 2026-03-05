@@ -1501,17 +1501,17 @@
               <div class="space-y-1">
                 <Label>{$_('netops.generator.vendor')}</Label>
                 <Select bind:value={vendor}>
-                  <option value="mikrotik">MikroTik</option>
-                  <option value="cisco">Cisco IOS</option>
+                  <option value="mikrotik">{$_('common.deviceMikroTik')}</option>
+                  <option value="cisco">{$_('common.deviceCiscoIos')}</option>
                 </Select>
                 <p class="text-xs text-slate-400">{$_('netops.generator.vendorHelp')}</p>
               </div>
               <div class="space-y-1">
                 <Label title={$_('netops.generator.environmentHelp')}>{$_('netops.generator.environment')}</Label>
                 <Select bind:value={sshPolicy.environment}>
-                  <option value="dev">Dev</option>
-                  <option value="staging">Staging</option>
-                  <option value="prod">Prod</option>
+                  <option value="dev">{$_('common.envDev')}</option>
+                  <option value="staging">{$_('common.envStaging')}</option>
+                  <option value="prod">{$_('common.envProd')}</option>
                 </Select>
                 <p class="text-xs text-slate-400">{$_('netops.generator.environmentHelp')}</p>
               </div>
@@ -2254,7 +2254,7 @@
                                     <Select bind:value={rule.type}>
                                       <option value="snat">SNAT</option>
                                       <option value="dnat">DNAT</option>
-                                      <option value="masquerade">Masquerade</option>
+                                      <option value="masquerade">{$_('toolsHub.natMasquerade')}</option>
                                     </Select>
                                   </td>
                                   <td class="py-2 pr-2"><Input bind:value={rule.src} class="w-full" /></td>
@@ -2755,7 +2755,7 @@
             <div class="space-y-3">
               <div>
                 <Label>{$_('netops.generator.profile.name')}</Label>
-                <Input bind:value={profileName} placeholder="Baseline - Branch Router" />
+                <Input bind:value={profileName} placeholder={$_('toolsHub.baselinePlaceholder')} />
               </div>
               <div class="flex items-center gap-2 text-sm">
                 <Checkbox bind:checked={includeHostnameInProfile} />
@@ -2986,7 +2986,7 @@
                   <Select bind:value={natRuleDraft.type}>
                     <option value="snat">SNAT</option>
                     <option value="dnat">DNAT</option>
-                    <option value="masquerade">Masquerade</option>
+                    <option value="masquerade">{$_('toolsHub.natMasquerade')}</option>
                   </Select>
                 </div>
                 <div>

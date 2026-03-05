@@ -18,12 +18,18 @@
             localStorage.setItem('locale', lang)
         }
     }
+
+    function handleLanguageChange(event: Event) {
+        const select = event.currentTarget as HTMLSelectElement | null
+        if (!select) return
+        changeLanguage(select.value)
+    }
 </script>
 
 <div class="language-switcher">
     <select 
         bind:value={currentLocale} 
-        onchange={() => changeLanguage(currentLocale)}
+        onchange={handleLanguageChange}
         aria-label="Select language"
         class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
     >

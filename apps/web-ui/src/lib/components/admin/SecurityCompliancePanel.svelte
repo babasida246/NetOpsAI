@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Input, Select, Textarea } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { readLocal, writeLocal } from '$lib/admin/storage'
 
     type SecurityPolicy = {
@@ -61,78 +62,78 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Security & Compliance</h3>
-            <p class="text-sm text-slate-500">Define MFA, SSO, IP restrictions, and retention policy.</p>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('securityComp.title')}</h3>
+            <p class="text-sm text-slate-500">{$_('securityComp.subtitle')}</p>
         </div>
         <div class="flex items-center gap-2">
             {#if policy.savedAt}
                 <span class="text-xs text-slate-500">Saved {new Date(policy.savedAt).toLocaleString()}</span>
             {/if}
-            <Button size="sm" onclick={savePolicy}>Save policy</Button>
+            <Button size="sm" onclick={savePolicy}>{$_('securityComp.savePolicy')}</Button>
         </div>
     </div>
 
     <div class="mt-4 grid gap-4 md:grid-cols-2">
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">MFA Requirements</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('securityComp.mfaRequirements')}</h4>
             <div class="mt-3 grid gap-2">
                 <label class="flex items-center gap-2 text-sm text-slate-500">
                     <input type="checkbox" class="rounded border-gray-300" bind:checked={policy.mfa.requireAdmin} />
-                    Require MFA for Admin
+                    {$_('securityComp.requireMfaAdmin')}
                 </label>
                 <label class="flex items-center gap-2 text-sm text-slate-500">
                     <input type="checkbox" class="rounded border-gray-300" bind:checked={policy.mfa.requireSuperAdmin} />
-                    Require MFA for Super Admin
+                    {$_('securityComp.requireMfaSuperAdmin')}
                 </label>
                 <div>
-                    <label class="text-sm text-slate-500" for={mfaGraceId}>Grace period (days)</label>
+                    <label class="text-sm text-slate-500" for={mfaGraceId}>{$_('securityComp.gracePeriod')}</label>
                     <Input id={mfaGraceId} type="number" bind:value={policy.mfa.graceDays} />
                 </div>
             </div>
         </Card>
 
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">SSO Configuration</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('securityComp.ssoConfig')}</h4>
             <div class="mt-3 grid gap-2">
                 <label class="flex items-center gap-2 text-sm text-slate-500">
                     <input type="checkbox" class="rounded border-gray-300" bind:checked={policy.sso.enabled} />
-                    Enable SSO
+                    {$_('securityComp.enableSso')}
                 </label>
                 <div>
-                    <label class="text-sm text-slate-500" for={ssoProviderId}>Provider</label>
+                    <label class="text-sm text-slate-500" for={ssoProviderId}>{$_('securityComp.provider')}</label>
                     <Select id={ssoProviderId} bind:value={policy.sso.provider}>
                         <option value="oidc">OIDC</option>
                         <option value="saml">SAML</option>
                     </Select>
                 </div>
                 <div>
-                    <label class="text-sm text-slate-500" for={ssoIssuerId}>Issuer URL</label>
+                    <label class="text-sm text-slate-500" for={ssoIssuerId}>{$_('securityComp.issuerUrl')}</label>
                     <Input id={ssoIssuerId} bind:value={policy.sso.issuerUrl} placeholder="https://issuer.example.com" />
                 </div>
                 <div>
-                    <label class="text-sm text-slate-500" for={ssoClientId}>Client ID</label>
+                    <label class="text-sm text-slate-500" for={ssoClientId}>{$_('securityComp.clientId')}</label>
                     <Input id={ssoClientId} bind:value={policy.sso.clientId} />
                 </div>
             </div>
         </Card>
 
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">IP Allowlist</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('securityComp.ipAllowlist')}</h4>
             <div class="mt-3 grid gap-2">
                 <label class="flex items-center gap-2 text-sm text-slate-500">
                     <input type="checkbox" class="rounded border-gray-300" bind:checked={policy.ipAllowlist.enabled} />
-                    Enable IP allowlist
+                    {$_('securityComp.enableIpAllowlist')}
                 </label>
-                <Textarea id={ipAllowlistId} rows={4} bind:value={policy.ipAllowlist.entries} placeholder="One CIDR per line" />
+                <Textarea id={ipAllowlistId} rows={4} bind:value={policy.ipAllowlist.entries} placeholder={$_('securityComp.cidrPlaceholder')} />
             </div>
         </Card>
 
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">Geo Restriction</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('securityComp.geoRestriction')}</h4>
             <div class="mt-3 grid gap-2">
                 <label class="flex items-center gap-2 text-sm text-slate-500">
                     <input type="checkbox" class="rounded border-gray-300" bind:checked={policy.geoRestriction.enabled} />
-                    Enable geo restriction
+                    {$_('securityComp.enableGeoRestriction')}
                 </label>
                 <Input id={geoRestrictionId} bind:value={policy.geoRestriction.countries} placeholder="Comma-separated country codes (e.g. US, VN)" />
             </div>
@@ -140,18 +141,18 @@
     </div>
 
     <Card class="w-full max-w-none mt-4 border border-slate-200 dark:border-slate-800">
-        <h4 class="text-md font-semibold text-slate-900 dark:text-white">Data Retention Policy</h4>
+        <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('securityComp.dataRetentionPolicy')}</h4>
         <div class="mt-3 grid gap-3 md:grid-cols-3">
             <div>
-                <label class="text-sm text-slate-500" for={retentionAuditId}>Audit logs (days)</label>
+                <label class="text-sm text-slate-500" for={retentionAuditId}>{$_('securityComp.retentionAudit')}</label>
                 <Input id={retentionAuditId} type="number" bind:value={policy.retention.auditDays} />
             </div>
             <div>
-                <label class="text-sm text-slate-500" for={retentionChatId}>Chat history (days)</label>
+                <label class="text-sm text-slate-500" for={retentionChatId}>{$_('securityComp.retentionChat')}</label>
                 <Input id={retentionChatId} type="number" bind:value={policy.retention.chatDays} />
             </div>
             <div>
-                <label class="text-sm text-slate-500" for={retentionActivityId}>Admin activity (days)</label>
+                <label class="text-sm text-slate-500" for={retentionActivityId}>{$_('securityComp.retentionActivity')}</label>
                 <Input id={retentionActivityId} type="number" bind:value={policy.retention.activityDays} />
             </div>
         </div>

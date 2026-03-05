@@ -473,9 +473,9 @@
             <div class="space-y-1">
               <Label>{$_('netops.mikrotik.environment')}</Label>
               <Select bind:value={environment}>
-                <option value="dev">Dev</option>
-                <option value="staging">Staging</option>
-                <option value="prod">Prod</option>
+                <option value="dev">{$_('common.envDev')}</option>
+                <option value="staging">{$_('common.envStaging')}</option>
+                <option value="prod">{$_('common.envProd')}</option>
               </Select>
               <p class="text-xs text-slate-400">{$_('netops.mikrotik.environmentHelp')}</p>
             </div>
@@ -599,8 +599,8 @@
                 <Label>{$_('netops.mikrotik.publicType')}</Label>
                 <Select bind:value={publicType}>
                   <option value="dhcp">DHCP</option>
-                  <option value="static">Static</option>
-                  <option value="pppoe">PPPoE</option>
+                  <option value="static">{$_('common.typeStatic')}</option>
+                  <option value="pppoe">{$_('common.typePppoe')}</option>
                 </Select>
               </div>
               <div class="space-y-1">

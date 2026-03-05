@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { RefreshCw, Play, Filter, Network, Activity } from 'lucide-svelte';
   import { getTopologyGraph, triggerTopologyDiscovery, getTopologyEdge, getTopologyNode, type TopologyGraph } from '$lib/api/topology';
+  import { _, isLoading } from '$lib/i18n';
 
   let graph = $state<TopologyGraph>({ nodes: [], edges: [] });
   let loading = $state(true);
@@ -192,19 +193,19 @@
       <div>
         <div class="flex items-center gap-2 text-slate-700">
           <Network class="h-5 w-5 text-slate-500" />
-          <span class="text-sm font-semibold uppercase tracking-[0.2em]">Topology</span>
+          <span class="text-sm font-semibold uppercase tracking-[0.2em]">{$_('adminTopology.badge')}</span>
         </div>
-        <h1 class="text-2xl font-semibold text-slate-900">Network discovery workspace</h1>
-        <p class="text-sm text-slate-500">LLDP and bridge-host signals blended into a live graph.</p>
+        <h1 class="text-2xl font-semibold text-slate-900">{$_('adminTopology.title')}</h1>
+        <p class="text-sm text-slate-500">{$_('adminTopology.subtitle')}</p>
       </div>
       <div class="flex flex-wrap gap-2">
         <Button color="alternative" on:click={loadGraph}>
           <RefreshCw class="mr-2 h-4 w-4" />
-          Refresh
+          {$_('common.refresh')}
         </Button>
         <Button on:click={() => showDiscovery = true}>
           <Play class="mr-2 h-4 w-4" />
-          Run discovery
+          {$_('adminTopology.runDiscovery')}
         </Button>
       </div>
     </div>
@@ -213,29 +214,29 @@
       <Card class="border border-slate-200 shadow-none">
         <div class="space-y-4">
           <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <Filter class="h-4 w-4" /> Filters
+            <Filter class="h-4 w-4" /> {$_('adminTopology.filters')}
           </div>
           <div>
-            <Label>Site</Label>
+            <Label>{$_('adminTopology.site')}</Label>
             <Input placeholder="DC1" bind:value={siteFilter} on:change={loadGraph} />
           </div>
           <div>
-            <Label>Zone</Label>
+            <Label>{$_('adminTopology.zone')}</Label>
             <Input placeholder="A" bind:value={zoneFilter} on:change={loadGraph} />
           </div>
           <div class="flex items-center justify-between rounded-lg bg-slate-50 p-3">
             <div>
-              <p class="text-sm font-semibold text-slate-700">Show endpoints</p>
-              <p class="text-xs text-slate-400">Toggle servers & unknown hosts</p>
+              <p class="text-sm font-semibold text-slate-700">{$_('adminTopology.showEndpoints')}</p>
+              <p class="text-xs text-slate-400">{$_('adminTopology.showEndpointsDesc')}</p>
             </div>
             <Toggle bind:checked={showEndpoints} on:change={renderGraph} />
           </div>
           <div class="rounded-xl border border-slate-200 bg-white p-3">
-            <div class="text-xs text-slate-500">Nodes</div>
+            <div class="text-xs text-slate-500">{$_('adminTopology.nodes')}</div>
             <div class="text-lg font-semibold">{graph.nodes.length}</div>
           </div>
           <div class="rounded-xl border border-slate-200 bg-white p-3">
-            <div class="text-xs text-slate-500">Edges</div>
+            <div class="text-xs text-slate-500">{$_('adminTopology.edges')}</div>
             <div class="text-lg font-semibold">{graph.edges.length}</div>
           </div>
         </div>
@@ -244,7 +245,7 @@
       <Card class="border border-slate-200 shadow-none">
         {#if loading}
           <div class="flex h-[520px] items-center justify-center text-slate-500">
-            <Spinner class="mr-3" /> Loading topology...
+            <Spinner class="mr-3" /> {$_('adminTopology.loading')}
           </div>
         {:else}
           <div class="h-[520px] w-full rounded-2xl border border-slate-200" bind:this={container}></div>
@@ -262,7 +263,7 @@
   <div class="grid gap-4 lg:grid-cols-2">
     <Card class="border border-slate-200 shadow-none">
       <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <Activity class="h-4 w-4" /> Node detail
+        <Activity class="h-4 w-4" /> {$_('adminTopology.nodeDetail')}
       </div>
       {#if selectedNode}
         <div class="mt-3 space-y-2 text-sm">
@@ -270,11 +271,11 @@
             <Badge color="blue">{selectedNode.node?.kind ?? selectedNode.kind ?? 'node'}</Badge>
             <span class="font-semibold">{selectedNode.node?.hostname ?? selectedNode.hostname ?? selectedNode.node?.mgmtIp ?? selectedNode.mgmtIp}</span>
           </div>
-          <div class="text-slate-500">Vendor: {selectedNode.node?.vendor ?? selectedNode.vendor ?? 'Unknown'}</div>
-          <div class="text-slate-500">Model: {selectedNode.node?.model ?? selectedNode.model ?? 'Unknown'}</div>
-          <div class="text-slate-500">Last seen: {selectedNode.node?.lastSeenAt ?? selectedNode.lastSeenAt ?? 'n/a'}</div>
+          <div class="text-slate-500">{$_('adminTopology.vendor')}: {selectedNode.node?.vendor ?? selectedNode.vendor ?? 'Unknown'}</div>
+          <div class="text-slate-500">{$_('adminTopology.modelLabel')}: {selectedNode.node?.model ?? selectedNode.model ?? 'Unknown'}</div>
+          <div class="text-slate-500">{$_('adminTopology.lastSeen')}: {selectedNode.node?.lastSeenAt ?? selectedNode.lastSeenAt ?? 'n/a'}</div>
           {#if selectedNode.ports}
-            <div class="mt-3 text-xs uppercase tracking-wide text-slate-400">Ports</div>
+            <div class="mt-3 text-xs uppercase tracking-wide text-slate-400">{$_('adminTopology.ports')}</div>
             <ul class="space-y-1 text-sm text-slate-600">
               {#each selectedNode.ports as port}
                 <li>{port.ifName} {port.mac ? `(${port.mac})` : ''}</li>
@@ -283,20 +284,20 @@
           {/if}
         </div>
       {:else}
-        <p class="mt-3 text-sm text-slate-500">Select a node to inspect interfaces and metadata.</p>
+        <p class="mt-3 text-sm text-slate-500">{$_('adminTopology.selectNode')}</p>
       {/if}
     </Card>
 
     <Card class="border border-slate-200 shadow-none">
       <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <Activity class="h-4 w-4" /> Edge evidence
+        <Activity class="h-4 w-4" /> {$_('adminTopology.edgeEvidence')}
       </div>
       {#if selectedEdge}
         <div class="mt-3 space-y-2 text-sm">
-          <div class="text-slate-500">Confidence: {selectedEdge.confidence ?? 'n/a'}</div>
-          <div class="text-slate-500">Last seen: {selectedEdge.lastSeenAt ?? 'n/a'}</div>
+          <div class="text-slate-500">{$_('adminTopology.confidence')}: {selectedEdge.confidence ?? 'n/a'}</div>
+          <div class="text-slate-500">{$_('adminTopology.lastSeen')}: {selectedEdge.lastSeenAt ?? 'n/a'}</div>
           {#if selectedEdge.evidence}
-            <div class="mt-3 text-xs uppercase tracking-wide text-slate-400">Evidence</div>
+            <div class="mt-3 text-xs uppercase tracking-wide text-slate-400">{$_('adminTopology.evidence')}</div>
             <ul class="space-y-2 text-sm text-slate-600">
               {#each selectedEdge.evidence as ev}
                 <li>
@@ -308,7 +309,7 @@
           {/if}
         </div>
       {:else}
-        <p class="mt-3 text-sm text-slate-500">Select an edge to see evidence and confidence.</p>
+        <p class="mt-3 text-sm text-slate-500">{$_('adminTopology.selectEdge')}</p>
       {/if}
     </Card>
   </div>
@@ -316,9 +317,9 @@
 
 <Modal bind:open={showDiscovery} size="lg">
   <div class="space-y-4">
-    <h3 class="text-lg font-semibold">Run topology discovery</h3>
+    <h3 class="text-lg font-semibold">{$_('adminTopology.runDiscoveryTitle')}</h3>
     <div>
-      <Label>Seed device IDs (comma separated)</Label>
+      <Label>{$_('adminTopology.seedDevicesLabel')}</Label>
       <Input bind:value={seedDevicesText} on:input={(e) => {
         const target = e.currentTarget as HTMLInputElement | null;
         if (!target) return;
@@ -327,7 +328,7 @@
       }} />
     </div>
     <div>
-      <Label>Nmap targets (comma separated)</Label>
+      <Label>{$_('adminTopology.nmapTargetsLabel')}</Label>
       <Input bind:value={nmapTargetsText} on:input={(e) => {
         const target = e.currentTarget as HTMLInputElement | null;
         if (!target) return;
@@ -336,23 +337,23 @@
       }} />
     </div>
     <div>
-      <Label>Mode</Label>
+      <Label>{$_('adminTopology.modeLabel')}</Label>
       <Select bind:value={discoveryPayload.mode}>
-        <option value="fast">Fast</option>
-        <option value="full">Full</option>
+        <option value="fast">{$_('adminTopology.modeFast')}</option>
+        <option value="full">{$_('adminTopology.modeFull')}</option>
       </Select>
     </div>
     <div class="flex items-center gap-3">
       <Toggle bind:checked={discoveryPayload.includeNmap} />
-      <span class="text-sm">Include Nmap enrichment</span>
+      <span class="text-sm">{$_('adminTopology.includeNmap')}</span>
     </div>
     <div class="flex justify-end gap-2">
-      <Button color="alternative" on:click={() => showDiscovery = false}>Cancel</Button>
+      <Button color="alternative" on:click={() => showDiscovery = false}>{$_('common.cancel')}</Button>
       <Button on:click={runDiscovery} disabled={isRunning}>
         {#if isRunning}
           <Spinner class="mr-2" size="sm" />
         {/if}
-        Run discovery
+        {$_('adminTopology.runDiscovery')}
       </Button>
     </div>
   </div>

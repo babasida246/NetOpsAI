@@ -3,6 +3,7 @@
     import { onMount } from 'svelte'
     import { listUsers, createUser, updateUser, resetPassword, deleteUser, type AdminUser } from '$lib/api/admin'
     import { formatAdminError } from '$lib/admin/errors'
+    import { _, isLoading } from '$lib/i18n'
 
     let users = $state<AdminUser[]>([])
     let loading = $state(false)
@@ -132,11 +133,11 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800" data-testid="admin-users-panel">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">User Management</h3>
-            <p class="text-sm text-slate-500">Manage accounts, roles, and access status.</p>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('userMgmt.title')}</h3>
+            <p class="text-sm text-slate-500">{$_('userMgmt.subtitle')}</p>
         </div>
         <Button onclick={() => showCreate = !showCreate}>
-            {showCreate ? 'Close' : 'Add user'}
+            {showCreate ? $_('common.close') : $_('userMgmt.addUser')}
         </Button>
     </div>
 
@@ -148,45 +149,45 @@
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800 mt-4">
             <div class="grid gap-3 md:grid-cols-2">
                 <div>
-                    <Label>Email</Label>
+                    <Label>{$_('common.email')}</Label>
                     <Input bind:value={newUser.email} />
                 </div>
                 <div>
-                    <Label>Name</Label>
+                    <Label>{$_('common.name')}</Label>
                     <Input bind:value={newUser.name} />
                 </div>
                 <div>
-                    <Label>Password</Label>
+                    <Label>{$_('userMgmt.password')}</Label>
                     <Input type="password" bind:value={newUser.password} />
                 </div>
                 <div>
-                    <Label>Role</Label>
+                    <Label>{$_('userMgmt.role')}</Label>
                     <Select bind:value={newUser.role}>
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                        <option value="super_admin">Super Admin</option>
+                        <option value="user">{$_('userMgmt.roles.user')}</option>
+                        <option value="admin">{$_('userMgmt.roles.admin')}</option>
+                        <option value="super_admin">{$_('userMgmt.roles.superAdmin')}</option>
                     </Select>
                 </div>
             </div>
             <div class="mt-3 flex gap-2">
-                <Button onclick={handleCreate} disabled={!newUser.email || !newUser.password}>Create</Button>
-                <Button color="light" onclick={() => showCreate = false}>Cancel</Button>
+                <Button onclick={handleCreate} disabled={!newUser.email || !newUser.password}>{$_('common.create')}</Button>
+                <Button color="light" onclick={() => showCreate = false}>{$_('common.cancel')}</Button>
             </div>
         </Card>
     {/if}
 
     <div class="mt-4 grid gap-2 md:grid-cols-3">
-        <Input placeholder="Search user" bind:value={search} />
+        <Input placeholder={$_('userMgmt.searchPlaceholder')} bind:value={search} />
         <Select bind:value={roleFilter}>
-            <option value="all">All roles</option>
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="super_admin">Super Admin</option>
+            <option value="all">{$_('userMgmt.allRoles')}</option>
+            <option value="user">{$_('userMgmt.roles.user')}</option>
+            <option value="admin">{$_('userMgmt.roles.admin')}</option>
+            <option value="super_admin">{$_('userMgmt.roles.superAdmin')}</option>
         </Select>
         <Select bind:value={statusFilter}>
-            <option value="all">All status</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
+            <option value="all">{$_('userMgmt.allStatus')}</option>
+            <option value="active">{$_('common.active')}</option>
+            <option value="disabled">{$_('userMgmt.disabled')}</option>
         </Select>
     </div>
 
@@ -197,32 +198,32 @@
             checked={selectedUsers.length > 0 && selectedUsers.length === filteredUsers.length}
             onchange={(e) => toggleSelectAll((e.target as HTMLInputElement).checked)}
         />
-        <span class="text-sm text-slate-500">Select all</span>
-        <Badge color="blue">Selected {selectedUsers.length}</Badge>
+        <span class="text-sm text-slate-500">{$_('userMgmt.selectAll')}</span>
+        <Badge color="blue">{$_('userMgmt.selected', { values: { count: selectedUsers.length } })}</Badge>
         <Button size="sm" color="light" onclick={() => bulkUpdateStatus(false)} disabled={bulkLoading || selectedUsers.length === 0}>
-            Lock
+            {$_('userMgmt.lock')}
         </Button>
         <Button size="sm" color="light" onclick={() => bulkUpdateStatus(true)} disabled={bulkLoading || selectedUsers.length === 0}>
-            Unlock
+            {$_('userMgmt.unlock')}
         </Button>
         <Select size="sm" bind:value={bulkRole}>
-            <option value="user">Role: User</option>
-            <option value="admin">Role: Admin</option>
-            <option value="super_admin">Role: Super Admin</option>
+            <option value="user">{$_('userMgmt.roleUser')}</option>
+            <option value="admin">{$_('userMgmt.roleAdmin')}</option>
+            <option value="super_admin">{$_('userMgmt.roleSuperAdmin')}</option>
         </Select>
         <Button size="sm" color="light" onclick={bulkUpdateRole} disabled={bulkLoading || selectedUsers.length === 0}>
-            Apply Role
+            {$_('userMgmt.applyRole')}
         </Button>
         <Button size="sm" color="red" onclick={bulkDelete} disabled={bulkLoading || selectedUsers.length === 0}>
-            Delete
+            {$_('common.delete')}
         </Button>
     </div>
 
     <div class="mt-4 grid gap-3">
         {#if loading}
-            <p class="text-sm text-slate-500">Loading users...</p>
+            <p class="text-sm text-slate-500">{$_('userMgmt.loading')}</p>
         {:else if filteredUsers.length === 0}
-            <p class="text-sm text-slate-500">No users found.</p>
+            <p class="text-sm text-slate-500">{$_('userMgmt.noUsers')}</p>
         {:else}
             {#each filteredUsers as user}
                 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
@@ -239,26 +240,26 @@
                                     <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{user.name}</h3>
                                     <Badge color="blue">{user.role}</Badge>
                                     <Badge color={user.isActive ? 'green' : 'red'}>
-                                        {user.isActive ? 'Active' : 'Disabled'}
+                                        {user.isActive ? $_('common.active') : $_('userMgmt.disabled')}
                                     </Badge>
                                 </div>
                                 <p class="text-sm text-slate-500">{user.email}</p>
                                 {#if user.lastLogin}
-                                    <p class="text-xs text-slate-400">Last login: {new Date(user.lastLogin).toLocaleString()}</p>
+                                    <p class="text-xs text-slate-400">{$_('userMgmt.lastLogin')}: {new Date(user.lastLogin).toLocaleString()}</p>
                                 {/if}
                             </div>
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             <Select size="sm" value={user.role} onchange={(e) => changeRole(user, (e.target as HTMLSelectElement).value)}>
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                                <option value="super_admin">Super Admin</option>
+                                <option value="user">{$_('userMgmt.roles.user')}</option>
+                                <option value="admin">{$_('userMgmt.roles.admin')}</option>
+                                <option value="super_admin">{$_('userMgmt.roles.superAdmin')}</option>
                             </Select>
                             <Button size="sm" color={user.isActive ? 'red' : 'green'} onclick={() => toggleActive(user)}>
-                                {user.isActive ? 'Lock' : 'Unlock'}
+                                {user.isActive ? $_('userMgmt.lock') : $_('userMgmt.unlock')}
                             </Button>
-                            <Button size="sm" color="light" onclick={() => handleResetPassword(user)}>Reset password</Button>
-                            <Button size="sm" color="red" onclick={() => handleDelete(user)}>Delete</Button>
+                            <Button size="sm" color="light" onclick={() => handleResetPassword(user)}>{$_('userMgmt.resetPassword')}</Button>
+                            <Button size="sm" color="red" onclick={() => handleDelete(user)}>{$_('common.delete')}</Button>
                         </div>
                     </div>
                 </Card>

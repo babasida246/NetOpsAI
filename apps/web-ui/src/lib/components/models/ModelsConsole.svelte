@@ -514,7 +514,7 @@
         class="px-3 py-2 rounded-lg text-sm font-semibold transition-colors {selectedTab === 'providers' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-100' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}"
       >
         <Zap class="w-4 h-4 inline mr-2" />
-        {$isLoading ? 'Providers' : $_('models.providers')} ({providers.length})
+        {$isLoading ? 'Providers' : $_('models.providersLabel')} ({providers.length})
       </button>
       <button
         onclick={() => selectedTab = 'orchestration'}
@@ -539,7 +539,7 @@
         </div>
       {:else if selectedTab === 'models'}
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div class="text-sm text-slate-500">{$isLoading ? 'Active models:' : $_('models.activeModels')} {summary.activeModels}</div>
+          <div class="text-sm text-slate-500">{$isLoading ? 'Active models:' : $_('models.activeModelsLabel')} {summary.activeModels}</div>
           <div class="flex gap-2">
             <Button size="sm" color="primary" onclick={() => showCreateModel = !showCreateModel}>
               <Plus class="w-4 h-4 mr-1" /> {showCreateModel ? ($isLoading ? 'Close' : $_('common.close')) : ($isLoading ? 'New model' : $_('models.newModel'))}
@@ -902,7 +902,7 @@
         {/if}
       {:else if selectedTab === 'providers'}
         <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <div class="text-sm text-slate-500">{$isLoading ? 'Providers' : $_('models.providers')}: {providers.length}</div>
+          <div class="text-sm text-slate-500">{$isLoading ? 'Providers' : $_('models.providersLabel')}: {providers.length}</div>
           <Button size="sm" color="primary" onclick={() => showCreateProvider = !showCreateProvider}>
             <Plus class="w-4 h-4 mr-1" /> {showCreateProvider ? ($isLoading ? 'Close' : $_('common.close')) : ($isLoading ? 'New provider' : $_('models.createProvider'))}
           </Button>

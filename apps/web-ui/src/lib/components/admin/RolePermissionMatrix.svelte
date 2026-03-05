@@ -39,6 +39,7 @@
         type ScopeType,
         type UserOverride
     } from '$lib/admin/permissionState'
+    import { _, isLoading } from '$lib/i18n'
 
     type PermissionGroupView = {
         id: PermissionGroup
@@ -409,19 +410,19 @@
     <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
         <div class="flex items-start justify-between gap-4 flex-wrap">
             <div>
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Role & Permission Matrix</h3>
-                <p class="text-sm text-slate-500">Configure role access, templates, and approval-sensitive permissions.</p>
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.title')}</h3>
+                <p class="text-sm text-slate-500">{$_('admin.roleMatrix.subtitle')}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 {#if diff.length > 0}
-                    <Badge color="yellow">Unsaved {diff.length}</Badge>
+                    <Badge color="yellow">{$_('admin.roleMatrix.unsaved', { values: { count: diff.length } })}</Badge>
                 {/if}
                 {#if pendingApprovals.length > 0}
-                    <Badge color="red">Pending approvals {pendingApprovals.length}</Badge>
+                    <Badge color="red">{$_('admin.roleMatrix.pendingApprovalsBadge', { values: { count: pendingApprovals.length } })}</Badge>
                 {/if}
-                <Button size="sm" onclick={saveMatrix} disabled={diff.length === 0}>Save</Button>
-                <Button size="sm" color="light" onclick={resetToSaved}>Reset</Button>
-                <Button size="sm" color="light" onclick={resetToDefaults}>Defaults</Button>
+                <Button size="sm" onclick={saveMatrix} disabled={diff.length === 0}>{$_('common.save')}</Button>
+                <Button size="sm" color="light" onclick={resetToSaved}>{$_('common.reset')}</Button>
+                <Button size="sm" color="light" onclick={resetToDefaults}>{$_('admin.roleMatrix.defaults')}</Button>
             </div>
         </div>
 
@@ -433,16 +434,16 @@
             <div class="space-y-3">
                 <div class="flex flex-wrap items-center gap-3">
                     <div class="min-w-[180px]">
-                        <Label>Filter group</Label>
+                        <Label>{$_('admin.roleMatrix.filterGroup')}</Label>
                         <Select bind:value={selectedGroup}>
-                            <option value="all">All groups</option>
+                            <option value="all">{$_('admin.roleMatrix.allGroups')}</option>
                             {#each groupedPermissions as group}
                                 <option value={group.id}>{group.label}</option>
                             {/each}
                         </Select>
                     </div>
                     <div class="min-w-[180px]">
-                        <Label>Template role</Label>
+                        <Label>{$_('admin.roleMatrix.templateRole')}</Label>
                         <Select bind:value={templateRole}>
                             {#each adminRoles as role}
                                 <option value={role.id}>{role.label}</option>
@@ -450,14 +451,14 @@
                         </Select>
                     </div>
                     <div class="min-w-[220px]">
-                        <Label>Apply template</Label>
+                        <Label>{$_('admin.roleMatrix.applyTemplate')}</Label>
                         <div class="flex gap-2">
                             <Select bind:value={templateId}>
                                 {#each roleTemplates as template}
                                     <option value={template.id}>{template.label}</option>
                                 {/each}
                             </Select>
-                            <Button size="sm" color="light" onclick={applyTemplate}>Apply</Button>
+                            <Button size="sm" color="light" onclick={applyTemplate}>{$_('admin.roleMatrix.apply')}</Button>
                         </div>
                     </div>
                 </div>
@@ -472,7 +473,7 @@
                             <table class="min-w-full text-sm">
                                 <thead class="text-xs uppercase text-slate-400">
                                     <tr>
-                                        <th class="text-left px-3 py-2">Permission</th>
+                                        <th class="text-left px-3 py-2">{$_('admin.roleMatrix.permission')}</th>
                                         {#each adminRoles as role}
                                             <th class="px-3 py-2 text-center">{role.label}</th>
                                         {/each}
@@ -485,7 +486,7 @@
                                                 <div class="font-medium text-slate-900 dark:text-white">{permission.label}</div>
                                                 <div class="text-xs text-slate-500">{permission.description}</div>
                                                 {#if permission.sensitive}
-                                                    <Badge color="red" class="mt-1 text-[10px]">Sensitive</Badge>
+                                                    <Badge color="red" class="mt-1 text-[10px]">{$_('admin.roleMatrix.sensitive')}</Badge>
                                                 {/if}
                                             </td>
                                             {#each adminRoles as role}
@@ -510,11 +511,11 @@
 
             <div class="space-y-3">
                 <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
-                    <div class="text-sm font-semibold text-slate-900 dark:text-white">Change summary</div>
-                    <div class="text-xs text-slate-500">{diff.length} pending change(s). Saved: {savedAt ? new Date(savedAt).toLocaleString() : 'Never'}</div>
+                    <div class="text-sm font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.changeSummary')}</div>
+                    <div class="text-xs text-slate-500">{$_('admin.roleMatrix.pendingChangesHint', { values: { count: diff.length } })} {savedAt ? new Date(savedAt).toLocaleString() : $_('common.never')}</div>
                     <div class="mt-2 space-y-2 max-h-48 overflow-y-auto">
                         {#if diff.length === 0}
-                            <p class="text-xs text-slate-500">No pending changes.</p>
+                            <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noPendingChanges')}</p>
                         {:else}
                             {#each diff as change}
                                 <div class="text-xs text-slate-600">
@@ -525,23 +526,23 @@
                     </div>
                 </div>
                 <div class="rounded-lg border border-slate-200 dark:border-slate-800 p-3">
-                    <div class="text-sm font-semibold text-slate-900 dark:text-white">Pending approvals</div>
+                    <div class="text-sm font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.pendingApprovalsTitle')}</div>
                     <div class="mt-2 space-y-2 max-h-48 overflow-y-auto">
                         {#if pendingApprovals.length === 0}
-                            <p class="text-xs text-slate-500">No approval requests.</p>
+                            <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noApprovalRequests')}</p>
                         {:else}
                             {#each pendingApprovals as approval}
                                 <div class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">
                                     <div class="font-semibold">{approval.permissionId}</div>
                                     <div class="text-slate-500">{approval.targetType} · {approval.desiredEffect}</div>
                                     {#if approval.reason}
-                                        <div class="text-slate-400">Reason: {approval.reason}</div>
+                                        <div class="text-slate-400">{$_('common.reason')}: {approval.reason}</div>
                                     {/if}
-                                    <div class="text-slate-400">Requested {new Date(approval.requestedAt).toLocaleString()}</div>
+                                    <div class="text-slate-400">{$_('admin.roleMatrix.requestedLabel')} {new Date(approval.requestedAt).toLocaleString()}</div>
                                     {#if canApprove}
                                         <div class="mt-2 flex gap-2">
-                                            <Button size="xs" onclick={() => handleApprovalDecision(approval, 'approved')}>Approve</Button>
-                                            <Button size="xs" color="light" onclick={() => handleApprovalDecision(approval, 'rejected')}>Reject</Button>
+                                            <Button size="xs" onclick={() => handleApprovalDecision(approval, 'approved')}>{$_('admin.roleMatrix.approve')}</Button>
+                                            <Button size="xs" color="light" onclick={() => handleApprovalDecision(approval, 'rejected')}>{$_('admin.roleMatrix.reject')}</Button>
                                         </div>
                                     {/if}
                                 </div>
@@ -557,14 +558,14 @@
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Scoped Grants</h3>
-                    <p class="text-xs text-slate-500">Override permissions for specific scopes (org, model, asset group).</p>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.scopedGrants')}</h3>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.scopedGrantsDesc')}</p>
                 </div>
                 <Badge color="blue">{scopedGrants.length}</Badge>
             </div>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
                 <div>
-                    <Label>Role</Label>
+                    <Label>{$_('common.role')}</Label>
                     <Select bind:value={scopeRole}>
                         {#each adminRoles as role}
                             <option value={role.id}>{role.label}</option>
@@ -572,7 +573,7 @@
                     </Select>
                 </div>
                 <div>
-                    <Label>Permission</Label>
+                    <Label>{$_('common.permission')}</Label>
                     <Select bind:value={scopePermission}>
                         {#each adminPermissions as permission}
                             <option value={permission.id}>{permission.label}</option>
@@ -580,42 +581,42 @@
                     </Select>
                 </div>
                 <div>
-                    <Label>Effect</Label>
+                    <Label>{$_('common.effect')}</Label>
                     <Select bind:value={scopeEffect}>
-                        <option value="grant">Grant</option>
-                        <option value="deny">Deny</option>
+                        <option value="grant">{$_('common.grant')}</option>
+                        <option value="deny">{$_('common.deny')}</option>
                     </Select>
                 </div>
                 <div>
-                    <Label>Scope type</Label>
+                    <Label>{$_('admin.roleMatrix.scopeType')}</Label>
                     <Select bind:value={scopeType}>
-                        <option value="global">Global</option>
-                        <option value="org">Org</option>
-                        <option value="asset_group">Asset group</option>
-                        <option value="model">Model</option>
+                        <option value="global">{$_('admin.roleMatrix.scopeGlobal')}</option>
+                        <option value="org">{$_('admin.roleMatrix.scopeOrg')}</option>
+                        <option value="asset_group">{$_('admin.roleMatrix.scopeAssetGroup')}</option>
+                        <option value="model">{$_('admin.roleMatrix.scopeModel')}</option>
                     </Select>
                 </div>
                 {#if scopeType !== 'global'}
                     <div class="sm:col-span-2">
-                        <Label>Scope value</Label>
+                        <Label>{$_('admin.roleMatrix.scopeValue')}</Label>
                         <Input bind:value={scopeValue} placeholder="org-123 / model-id / group" />
                     </div>
                 {/if}
                 <div>
-                    <Label>Expires</Label>
+                    <Label>{$_('common.expires')}</Label>
                     <Input type="datetime-local" bind:value={scopeExpiresAt} />
                 </div>
                 <div>
-                    <Label>Reason</Label>
-                    <Input bind:value={scopeReason} placeholder="Change reason" />
+                    <Label>{$_('common.reason')}</Label>
+                    <Input bind:value={scopeReason} placeholder={$_('admin.roleMatrix.changeReasonPlaceholder')} />
                 </div>
             </div>
             <div class="mt-3">
-                <Button size="sm" onclick={addScopedGrant}>Add scope</Button>
+                <Button size="sm" onclick={addScopedGrant}>{$_('admin.roleMatrix.addScope')}</Button>
             </div>
             <div class="mt-4 space-y-2 max-h-64 overflow-y-auto">
                 {#if scopedGrants.length === 0}
-                    <p class="text-xs text-slate-500">No scoped grants.</p>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noScopedGrants')}</p>
                 {:else}
                     {#each scopedGrants as grant}
                         <div class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">
@@ -623,15 +624,15 @@
                                 <div class="font-semibold">{grant.permissionId}</div>
                                 <Badge color={grant.effect === 'grant' ? 'green' : 'red'}>{grant.effect}</Badge>
                             </div>
-                            <div class="text-slate-500">Role: {grant.roleId} · {formatScope(grant)}</div>
+                            <div class="text-slate-500">{$_('common.role')}: {grant.roleId} · {formatScope(grant)}</div>
                             {#if grant.reason}
-                                <div class="text-slate-400">Reason: {grant.reason}</div>
+                                <div class="text-slate-400">{$_('common.reason')}: {grant.reason}</div>
                             {/if}
                             {#if grant.expiresAt}
-                                <div class="text-slate-400">Expires: {new Date(grant.expiresAt).toLocaleString()}</div>
+                                <div class="text-slate-400">{$_('common.expires')}: {new Date(grant.expiresAt).toLocaleString()}</div>
                             {/if}
                             <div class="mt-2">
-                                <Button size="xs" color="light" onclick={() => removeScopedGrant(grant)}>Remove</Button>
+                                <Button size="xs" color="light" onclick={() => removeScopedGrant(grant)}>{$_('common.remove')}</Button>
                             </div>
                         </div>
                     {/each}
@@ -642,18 +643,18 @@
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">User Overrides</h3>
-                    <p class="text-xs text-slate-500">Grant or deny permissions per user with optional expiry.</p>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.userOverrides')}</h3>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.userOverridesDesc')}</p>
                 </div>
                 <Badge color="blue">{overrides.length}</Badge>
             </div>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                    <Label>User id / email</Label>
-                    <Input bind:value={overrideUserId} placeholder="user-123 or admin@company" />
+                    <Label>{$_('admin.roleMatrix.userIdEmail')}</Label>
+                    <Input bind:value={overrideUserId} placeholder={$_('admin.roleMatrix.userIdPlaceholder')} />
                 </div>
                 <div>
-                    <Label>Permission</Label>
+                    <Label>{$_('common.permission')}</Label>
                     <Select bind:value={overridePermission}>
                         {#each adminPermissions as permission}
                             <option value={permission.id}>{permission.label}</option>
@@ -661,27 +662,27 @@
                     </Select>
                 </div>
                 <div>
-                    <Label>Effect</Label>
+                    <Label>{$_('common.effect')}</Label>
                     <Select bind:value={overrideEffect}>
-                        <option value="grant">Grant</option>
-                        <option value="deny">Deny</option>
+                        <option value="grant">{$_('common.grant')}</option>
+                        <option value="deny">{$_('common.deny')}</option>
                     </Select>
                 </div>
                 <div>
-                    <Label>Expires</Label>
+                    <Label>{$_('common.expires')}</Label>
                     <Input type="datetime-local" bind:value={overrideExpiresAt} />
                 </div>
                 <div>
-                    <Label>Reason</Label>
-                    <Input bind:value={overrideReason} placeholder="Incident or support case" />
+                    <Label>{$_('common.reason')}</Label>
+                    <Input bind:value={overrideReason} placeholder={$_('admin.roleMatrix.incidentPlaceholder')} />
                 </div>
             </div>
             <div class="mt-3">
-                <Button size="sm" onclick={addOverride}>Add override</Button>
+                <Button size="sm" onclick={addOverride}>{$_('admin.roleMatrix.addOverride')}</Button>
             </div>
             <div class="mt-4 space-y-2 max-h-64 overflow-y-auto">
                 {#if overrides.length === 0}
-                    <p class="text-xs text-slate-500">No user overrides.</p>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noUserOverrides')}</p>
                 {:else}
                     {#each overrides as override}
                         <div class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">
@@ -689,15 +690,15 @@
                                 <div class="font-semibold">{override.permissionId}</div>
                                 <Badge color={override.effect === 'grant' ? 'green' : 'red'}>{override.effect}</Badge>
                             </div>
-                            <div class="text-slate-500">User: {override.userId}</div>
+                            <div class="text-slate-500">{$_('common.user')}: {override.userId}</div>
                             {#if override.reason}
-                                <div class="text-slate-400">Reason: {override.reason}</div>
+                                <div class="text-slate-400">{$_('common.reason')}: {override.reason}</div>
                             {/if}
                             {#if override.expiresAt}
-                                <div class="text-slate-400">Expires: {new Date(override.expiresAt).toLocaleString()}</div>
+                                <div class="text-slate-400">{$_('common.expires')}: {new Date(override.expiresAt).toLocaleString()}</div>
                             {/if}
                             <div class="mt-2">
-                                <Button size="xs" color="light" onclick={() => removeOverride(override)}>Remove</Button>
+                                <Button size="xs" color="light" onclick={() => removeOverride(override)}>{$_('common.remove')}</Button>
                             </div>
                         </div>
                     {/each}
@@ -710,14 +711,14 @@
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Approval Queue</h3>
-                    <p class="text-xs text-slate-500">Review pending permission changes.</p>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.approvalQueue')}</h3>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.approvalQueueDesc')}</p>
                 </div>
                 <Badge color="blue">{approvals.length}</Badge>
             </div>
             <div class="mt-3 space-y-2 max-h-72 overflow-y-auto">
                 {#if approvals.length === 0}
-                    <p class="text-xs text-slate-500">No approvals logged.</p>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noApprovalsLogged')}</p>
                 {:else}
                     {#each approvals as approval}
                         <div class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">
@@ -732,16 +733,16 @@
                                 {#if approval.scopeType} · {approval.scopeType}{approval.scopeValue ? `:${approval.scopeValue}` : ''}{/if}
                             </div>
                             {#if approval.reason}
-                                <div class="text-slate-400">Reason: {approval.reason}</div>
+                                <div class="text-slate-400">{$_('common.reason')}: {approval.reason}</div>
                             {/if}
-                            <div class="text-slate-400">Requested: {new Date(approval.requestedAt).toLocaleString()}</div>
+                            <div class="text-slate-400">{$_('admin.roleMatrix.requestedLabel')}: {new Date(approval.requestedAt).toLocaleString()}</div>
                             {#if approval.reviewedAt}
-                                <div class="text-slate-400">Reviewed: {new Date(approval.reviewedAt).toLocaleString()}</div>
+                                <div class="text-slate-400">{$_('admin.roleMatrix.reviewedLabel')}: {new Date(approval.reviewedAt).toLocaleString()}</div>
                             {/if}
                             {#if approval.status === 'pending' && canApprove}
                                 <div class="mt-2 flex gap-2">
-                                    <Button size="xs" onclick={() => handleApprovalDecision(approval, 'approved')}>Approve</Button>
-                                    <Button size="xs" color="light" onclick={() => handleApprovalDecision(approval, 'rejected')}>Reject</Button>
+                                    <Button size="xs" onclick={() => handleApprovalDecision(approval, 'approved')}>{$_('admin.roleMatrix.approve')}</Button>
+                                    <Button size="xs" color="light" onclick={() => handleApprovalDecision(approval, 'rejected')}>{$_('admin.roleMatrix.reject')}</Button>
                                 </div>
                             {/if}
                         </div>
@@ -753,17 +754,17 @@
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
             <div class="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">Permission Simulation</h3>
-                    <p class="text-xs text-slate-500">Preview effective permissions for a user and scope.</p>
+                    <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.simulation')}</h3>
+                    <p class="text-xs text-slate-500">{$_('admin.roleMatrix.simulationDesc')}</p>
                 </div>
             </div>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                    <Label>User id / email (optional)</Label>
-                    <Input bind:value={simulateUserId} placeholder="Leave blank for role-only" />
+                    <Label>{$_('admin.roleMatrix.userIdEmailOptional')}</Label>
+                    <Input bind:value={simulateUserId} placeholder={$_('admin.roleMatrix.leaveBlankPlaceholder')} />
                 </div>
                 <div>
-                    <Label>Role</Label>
+                    <Label>{$_('common.role')}</Label>
                     <Select bind:value={simulateRole}>
                         {#each adminRoles as role}
                             <option value={role.id}>{role.label}</option>
@@ -771,17 +772,17 @@
                     </Select>
                 </div>
                 <div>
-                    <Label>Scope type</Label>
+                    <Label>{$_('admin.roleMatrix.scopeType')}</Label>
                     <Select bind:value={simulateScopeType}>
-                        <option value="global">Global</option>
-                        <option value="org">Org</option>
-                        <option value="asset_group">Asset group</option>
-                        <option value="model">Model</option>
+                        <option value="global">{$_('admin.roleMatrix.scopeGlobal')}</option>
+                        <option value="org">{$_('admin.roleMatrix.scopeOrg')}</option>
+                        <option value="asset_group">{$_('admin.roleMatrix.scopeAssetGroup')}</option>
+                        <option value="model">{$_('admin.roleMatrix.scopeModel')}</option>
                     </Select>
                 </div>
                 {#if simulateScopeType !== 'global'}
                     <div class="sm:col-span-2">
-                        <Label>Scope value</Label>
+                        <Label>{$_('admin.roleMatrix.scopeValue')}</Label>
                         <Input bind:value={simulateScopeValue} />
                     </div>
                 {/if}
@@ -791,9 +792,9 @@
                     <div class="flex items-center justify-between rounded border border-slate-200 dark:border-slate-700 px-2 py-1 text-xs">
                         <span>{permission.label}</span>
                         {#if effectivePermissions.has(permission.id)}
-                            <Badge color="green">Granted</Badge>
+                            <Badge color="green">{$_('admin.roleMatrix.granted')}</Badge>
                         {:else}
-                            <Badge color="dark">Denied</Badge>
+                            <Badge color="dark">{$_('admin.roleMatrix.denied')}</Badge>
                         {/if}
                     </div>
                 {/each}
@@ -804,14 +805,14 @@
     <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
         <div class="flex items-center justify-between gap-3 flex-wrap">
             <div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Permission Audit Log</h3>
-                <p class="text-xs text-slate-500">Track sensitive access changes and approvals.</p>
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('admin.roleMatrix.auditLog')}</h3>
+                <p class="text-xs text-slate-500">{$_('admin.roleMatrix.auditLogDesc')}</p>
             </div>
             <Badge color="blue">{auditLog.length}</Badge>
         </div>
         <div class="mt-3 space-y-2 max-h-72 overflow-y-auto">
             {#if auditLog.length === 0}
-                <p class="text-xs text-slate-500">No audit entries yet.</p>
+                <p class="text-xs text-slate-500">{$_('admin.roleMatrix.noAuditEntries')}</p>
             {:else}
                 {#each auditLog as entry}
                     <div class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">

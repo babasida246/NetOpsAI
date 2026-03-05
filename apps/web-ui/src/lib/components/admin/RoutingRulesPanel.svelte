@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Input, Select } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import {
         listOrchestrationRules,
@@ -87,7 +88,7 @@
             <p class="text-sm text-slate-500">Define orchestration strategies and failover order.</p>
         </div>
         <Button size="sm" color="light" onclick={loadData} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh'}
+            {loading ? $_('common.refreshing') : $_('common.refresh')}
         </Button>
     </div>
 
@@ -98,40 +99,40 @@
     <Card class="w-full max-w-none mt-4 border border-slate-200 dark:border-slate-800">
         <div class="grid gap-3 md:grid-cols-2">
             <div>
-                <label class="text-sm text-slate-500" for={ruleNameId}>Rule name</label>
-                <Input id={ruleNameId} bind:value={newRule.name} placeholder="e.g. Default fallback" />
+                <label class="text-sm text-slate-500" for={ruleNameId}>{$_('routingRules.ruleName')}</label>
+                <Input id={ruleNameId} bind:value={newRule.name} placeholder={$_('routingRules.ruleNamePlaceholder')} />
             </div>
             <div>
-                <label class="text-sm text-slate-500" for={strategyId}>Strategy</label>
+                <label class="text-sm text-slate-500" for={strategyId}>{$_('routingRules.strategy')}</label>
                 <Select id={strategyId} bind:value={newRule.strategy}>
-                    <option value="fallback">Fallback</option>
-                    <option value="load_balance">Load balance</option>
-                    <option value="cost_optimize">Cost optimize</option>
-                    <option value="quality_first">Quality first</option>
-                    <option value="custom">Custom</option>
+                    <option value="fallback">{$_('routingRules.strategyFallback')}</option>
+                    <option value="load_balance">{$_('routingRules.strategyLoadBalance')}</option>
+                    <option value="cost_optimize">{$_('routingRules.strategyCostOptimize')}</option>
+                    <option value="quality_first">{$_('routingRules.strategyQualityFirst')}</option>
+                    <option value="custom">{$_('routingRules.strategyCustom')}</option>
                 </Select>
             </div>
             <div class="md:col-span-2">
-                <label class="text-sm text-slate-500" for={modelSequenceId}>Model sequence</label>
+                <label class="text-sm text-slate-500" for={modelSequenceId}>{$_('routingRules.modelSequence')}</label>
                 <Select id={modelSequenceId} multiple bind:value={newRule.modelSequence}>
                     {#each models as model}
                         <option value={model.id}>{model.displayName ?? model.id}</option>
                     {/each}
                 </Select>
-                <p class="text-xs text-slate-400 mt-1">Drag order is not supported in MVP. Selected order follows click order.</p>
+                <p class="text-xs text-slate-400 mt-1">{$_('routingRules.dragOrderNote')}</p>
             </div>
             <div>
-                <label class="text-sm text-slate-500" for={priorityId}>Priority</label>
+                <label class="text-sm text-slate-500" for={priorityId}>{$_('routingRules.priority')}</label>
                 <Input id={priorityId} type="number" bind:value={newRule.priority} />
             </div>
             <div>
-                <label class="text-sm text-slate-500" for={descriptionId}>Description</label>
-                <Input id={descriptionId} bind:value={newRule.description} placeholder="Optional description" />
+                <label class="text-sm text-slate-500" for={descriptionId}>{$_('common.description')}</label>
+                <Input id={descriptionId} bind:value={newRule.description} placeholder={$_('routingRules.descriptionPlaceholder')} />
             </div>
         </div>
         <div class="mt-3">
             <Button onclick={createRule} disabled={!newRule.name || newRule.modelSequence.length === 0}>
-                Create rule
+                {$_('routingRules.createRule')}
             </Button>
         </div>
     </Card>
@@ -140,17 +141,17 @@
         <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
             <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-800 dark:text-gray-400">
                 <tr>
-                    <th class="px-4 py-3">Rule</th>
-                    <th class="px-4 py-3">Strategy</th>
-                    <th class="px-4 py-3">Models</th>
-                    <th class="px-4 py-3">Priority</th>
-                    <th class="px-4 py-3">Enabled</th>
-                    <th class="px-4 py-3">Actions</th>
+                    <th class="px-4 py-3">{$_('routingRules.colRule')}</th>
+                    <th class="px-4 py-3">{$_('routingRules.strategy')}</th>
+                    <th class="px-4 py-3">{$_('routingRules.colModels')}</th>
+                    <th class="px-4 py-3">{$_('routingRules.priority')}</th>
+                    <th class="px-4 py-3">{$_('routingRules.colEnabled')}</th>
+                    <th class="px-4 py-3">{$_('common.actions')}</th>
                 </tr>
             </thead>
             <tbody>
                 {#if rules.length === 0}
-                    <tr><td colspan="6" class="px-4 py-4 text-center text-slate-500">No rules configured.</td></tr>
+                    <tr><td colspan="6" class="px-4 py-4 text-center text-slate-500">{$_('routingRules.noRules')}</td></tr>
                 {:else}
                     {#each rules as rule}
                         <tr class="bg-white border-b dark:bg-gray-900 dark:border-gray-800">
@@ -172,11 +173,11 @@
                             </td>
                             <td class="px-4 py-3">
                                 <Button size="sm" color={rule.enabled ? 'green' : 'red'} onclick={() => toggleRule(rule)}>
-                                    {rule.enabled ? 'Enabled' : 'Disabled'}
+                                    {rule.enabled ? $_('routingRules.enabled') : $_('routingRules.disabled')}
                                 </Button>
                             </td>
                             <td class="px-4 py-3">
-                                <Button size="sm" color="red" onclick={() => removeRule(rule)}>Delete</Button>
+                                <Button size="sm" color="red" onclick={() => removeRule(rule)}>{$_('common.delete')}</Button>
                             </td>
                         </tr>
                     {/each}

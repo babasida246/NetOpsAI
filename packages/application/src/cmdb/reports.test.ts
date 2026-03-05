@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CiInventoryReportService } from './CiInventoryReportService.js'
-import type { CiRecord, IRelRepo, ICiRepo, IRelTypeRepo } from '@contracts/shared'
+import type { CiRecord } from '@contracts/shared'
 
 describe('CMDB Reports - CI Inventory Report', () => {
     let mockCiRepo: any
@@ -11,61 +11,78 @@ describe('CMDB Reports - CI Inventory Report', () => {
     const mockCis: CiRecord[] = [
         {
             id: 'ci-1',
-            ci_code: 'APP-001',
+            ciCode: 'APP-001',
             name: 'Web Application',
-            ci_type_id: 'type-1',
+            typeId: 'type-1',
             status: 'active',
-            source_id: null,
-            asset_id: null,
-            metadata: { environment: 'production' },
-            created_at: new Date('2025-12-01'),
-            updated_at: new Date('2026-01-20')
+            environment: 'prod',
+            assetId: null,
+            locationId: null,
+            ownerTeam: null,
+            notes: null,
+            createdAt: new Date('2025-12-01'),
+            updatedAt: new Date('2026-01-20')
         },
         {
             id: 'ci-2',
-            ci_code: 'DB-001',
+            ciCode: 'DB-001',
             name: 'Database Server',
-            ci_type_id: 'type-2',
+            typeId: 'type-2',
             status: 'active',
-            source_id: null,
-            asset_id: null,
-            metadata: { environment: 'production' },
-            created_at: new Date('2025-11-01'),
-            updated_at: new Date('2026-01-20')
+            environment: 'prod',
+            assetId: null,
+            locationId: null,
+            ownerTeam: null,
+            notes: null,
+            createdAt: new Date('2025-11-01'),
+            updatedAt: new Date('2026-01-20')
         },
         {
             id: 'ci-3',
-            ci_code: 'CACHE-001',
+            ciCode: 'CACHE-001',
             name: 'Cache Server',
-            ci_type_id: 'type-1',
+            typeId: 'type-1',
             status: 'maintenance',
-            source_id: null,
-            asset_id: null,
-            metadata: { environment: 'staging' },
-            created_at: new Date('2026-01-10'),
-            updated_at: new Date('2026-01-20')
+            environment: 'uat',
+            assetId: null,
+            locationId: null,
+            ownerTeam: null,
+            notes: null,
+            createdAt: new Date('2026-01-10'),
+            updatedAt: new Date('2026-01-20')
         }
     ]
 
     beforeEach(() => {
         mockCiRepo = {
-            list: vi.fn().mockResolvedValue(mockCis)
+            list: vi.fn().mockResolvedValue({
+                items: mockCis,
+                total: mockCis.length,
+                page: 1,
+                limit: 100
+            })
         }
         mockRelRepo = {
             list: vi.fn().mockResolvedValue([
                 {
                     id: 'rel-1',
-                    from_ci_id: 'ci-1',
-                    to_ci_id: 'ci-2',
-                    rel_type_id: 'depends_on',
-                    status: 'active'
+                    fromCiId: 'ci-1',
+                    toCiId: 'ci-2',
+                    relTypeId: 'depends_on',
+                    status: 'active',
+                    sinceDate: null,
+                    note: null,
+                    createdAt: new Date()
                 },
                 {
                     id: 'rel-2',
-                    from_ci_id: 'ci-2',
-                    to_ci_id: 'ci-3',
-                    rel_type_id: 'hosts',
-                    status: 'active'
+                    fromCiId: 'ci-2',
+                    toCiId: 'ci-3',
+                    relTypeId: 'hosts',
+                    status: 'active',
+                    sinceDate: null,
+                    note: null,
+                    createdAt: new Date()
                 }
             ])
         }
@@ -108,29 +125,35 @@ describe('CMDB Reports - CI Inventory Report', () => {
         it('should count CIs by environment', async () => {
             const report = await service.generateCiInventoryReport()
 
-            const prod = report.countByEnvironment.find(e => e.environment === 'production')
-            const staging = report.countByEnvironment.find(e => e.environment === 'staging')
+            const prod = report.countByEnvironment.find(e => e.environment === 'prod')
+            const uat = report.countByEnvironment.find(e => e.environment === 'uat')
 
             expect(prod?.count).toBe(2)
-            expect(staging?.count).toBe(1)
+            expect(uat?.count).toBe(1)
         })
 
         it('should identify orphaned CIs', async () => {
-            mockCiRepo.list.mockResolvedValueOnce([
-                ...mockCis,
-                {
-                    id: 'ci-4',
-                    ci_code: 'ORPHAN-001',
-                    name: 'Orphaned CI',
-                    ci_type_id: 'type-1',
-                    status: 'inactive',
-                    source_id: null,
-                    asset_id: null,
-                    metadata: {},
-                    created_at: new Date(),
-                    updated_at: new Date()
-                }
-            ])
+            const orphanCi: CiRecord = {
+                id: 'ci-4',
+                ciCode: 'ORPHAN-001',
+                name: 'Orphaned CI',
+                typeId: 'type-1',
+                status: 'retired',
+                environment: 'dev',
+                assetId: null,
+                locationId: null,
+                ownerTeam: null,
+                notes: null,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+
+            mockCiRepo.list.mockResolvedValueOnce({
+                items: [...mockCis, orphanCi],
+                total: mockCis.length + 1,
+                page: 1,
+                limit: 100
+            })
 
             service = new CiInventoryReportService(mockCiRepo, mockRelRepo, mockRelTypeRepo)
             const report = await service.generateCiInventoryReport()
@@ -151,20 +174,25 @@ describe('CMDB Reports - CI Inventory Report', () => {
         })
 
         it('should identify compliance issues', async () => {
-            mockCiRepo.list.mockResolvedValueOnce([
-                {
+            mockCiRepo.list.mockResolvedValueOnce({
+                items: [{
                     id: 'ci-5',
-                    ci_code: 'BAD-001',
+                    ciCode: 'BAD-001',
                     name: 'Non-compliant CI',
-                    ci_type_id: 'type-1',
+                    typeId: 'type-1',
                     status: 'active',
-                    source_id: null,
-                    asset_id: null,
-                    metadata: {}, // Missing environment
-                    created_at: new Date(),
-                    updated_at: new Date()
-                }
-            ])
+                    environment: '' as any, // Missing environment
+                    assetId: null,
+                    locationId: null,
+                    ownerTeam: null,
+                    notes: null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                }],
+                total: 1,
+                page: 1,
+                limit: 100
+            })
 
             service = new CiInventoryReportService(mockCiRepo, mockRelRepo, mockRelTypeRepo)
             const report = await service.generateCiInventoryReport()

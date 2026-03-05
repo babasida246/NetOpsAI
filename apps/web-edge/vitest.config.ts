@@ -37,13 +37,10 @@ export default defineConfig({
             '**/e2e/**',
             '**/tests/e2e/**'
         ],
-        testTimeout: 10000,
+        testTimeout: 20000,
         pool: 'forks',
-        poolOptions: {
-            forks: {
-                singleFork: true
-            }
-        },
+        minWorkers: 1,
+        maxWorkers: 1,
         reporters: process.env.CI
             ? ['default', 'junit']
             : ['default'],

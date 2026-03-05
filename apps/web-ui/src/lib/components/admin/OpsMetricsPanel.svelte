@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Badge } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { getDailySummary, listUsageLogs, listModels, listProviders } from '$lib/api/chat'
     import { listUsers } from '$lib/api/admin'
@@ -69,7 +70,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">System Metrics</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('opsMetrics.title')}</h3>
             <p class="text-sm text-slate-500">Operational KPIs and technical service signals.</p>
         </div>
         <div class="flex items-center gap-2">
@@ -88,7 +89,7 @@
 
     <div class="mt-4 grid gap-4 md:grid-cols-2">
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">Operational Metrics</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('opsMetrics.operationalMetrics')}</h4>
             <div class="mt-3 grid gap-3 md:grid-cols-2">
                 {#each operationalMetrics as metric}
                     <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
@@ -106,7 +107,7 @@
         </Card>
 
         <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
-            <h4 class="text-md font-semibold text-slate-900 dark:text-white">Technical Metrics</h4>
+            <h4 class="text-md font-semibold text-slate-900 dark:text-white">{$_('opsMetrics.technicalMetrics')}</h4>
             <div class="mt-3 grid gap-3">
                 {#each technicalMetrics as metric}
                     <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">

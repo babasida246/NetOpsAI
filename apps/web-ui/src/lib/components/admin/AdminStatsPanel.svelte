@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Badge, Button, Spinner } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { getDailySummary, getUserStats, type DailySummary, type UserTokenStats } from '$lib/api/chat'
     import { formatAdminError } from '$lib/admin/errors'
@@ -125,22 +126,22 @@
     {:else}
         <div class="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Tokens</p>
+                <p class="text-xs text-slate-500">{$_('adminStats.tokens')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{totals.tokens.toLocaleString()}</p>
                 <p class="text-xs text-slate-500 mt-1">{summary?.modelsUsed ?? 0} models used today</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Cost</p>
+                <p class="text-xs text-slate-500">{$_('adminStats.cost')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{formatCurrency(totals.cost)}</p>
                 <p class="text-xs text-slate-500 mt-1">Avg {formatCurrency(totals.messages ? totals.cost / totals.messages : 0)} / msg</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Messages</p>
+                <p class="text-xs text-slate-500">{$_('adminStats.messages')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{totals.messages.toLocaleString()}</p>
                 <p class="text-xs text-slate-500 mt-1">{totals.conversations} conversations</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Daily cost</p>
+                <p class="text-xs text-slate-500">{$_('adminStats.dailyCost')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">
                     {summary ? formatCurrency(summary.totalCost) : '$0.0000'}
                 </p>
@@ -150,7 +151,7 @@
 
         <div class="mt-6">
             <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Top Models by Spend</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('adminStats.topModelsBySpend')}</h4>
                 <Badge color="blue">Top {topModels.length}</Badge>
             </div>
             <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">

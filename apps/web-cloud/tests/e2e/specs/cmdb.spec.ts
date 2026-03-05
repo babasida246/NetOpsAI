@@ -14,24 +14,26 @@ test.describe('CMDB - Dashboard', () => {
         await page.goto('/cmdb');
         await page.waitForLoadState('domcontentloaded');
 
-        // Page loaded successfully
-        expect(true).toBe(true);
+        const heading = page.locator('h1, h2, [data-testid="page-header"]').first();
+        await expect(heading).toBeVisible({ timeout: 5000 });
     });
 
     test('should show CI Type tabs', async ({ page }) => {
         await page.goto('/cmdb');
         await page.waitForLoadState('domcontentloaded');
 
-        // Page loaded successfully
-        expect(true).toBe(true);
+        const tabs = page.locator('[role="tablist"], [role="tab"], .ci-type-tab, nav button');
+        const tabCount = await tabs.count();
+        expect(tabCount).toBeGreaterThan(0);
     });
 
     test('should display CI list', async ({ page }) => {
         await page.goto('/cmdb');
         await page.waitForLoadState('domcontentloaded');
 
-        // Page loaded successfully
-        expect(true).toBe(true);
+        const tableOrEmpty = page.locator('table, [data-testid="empty-state"], .text-slate-500');
+        const count = await tableOrEmpty.count();
+        expect(count).toBeGreaterThan(0);
     });
 });
 
@@ -45,8 +47,9 @@ test.describe('CMDB - CI Management', () => {
         await page.goto('/cmdb');
         await page.waitForLoadState('domcontentloaded');
 
-        // Page loaded successfully
-        expect(true).toBe(true);
+        const addBtn = page.locator('button:has-text("Add"), button:has-text("Thêm"), button:has-text("Create"), button:has-text("Tạo"), a:has-text("Add")');
+        const btnCount = await addBtn.count();
+        expect(btnCount).toBeGreaterThan(0);
     });
 
     test('should open create CI form', async ({ page }) => {
@@ -224,8 +227,11 @@ test.describe('CMDB - Reports', () => {
         await page.goto('/cmdb/reports');
         await page.waitForLoadState('domcontentloaded');
 
-        // Page loaded successfully
-        expect(true).toBe(true);
+        const heading = page.locator('h1, h2, [data-testid="page-header"]').first();
+        await expect(heading).toBeVisible({ timeout: 5000 });
+        const content = page.locator('section, .card, .report-card, dl, table, .grid');
+        const contentCount = await content.count();
+        expect(contentCount).toBeGreaterThan(0);
     });
 });
 

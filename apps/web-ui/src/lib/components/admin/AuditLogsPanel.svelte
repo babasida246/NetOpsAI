@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Button, Input, Badge } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { listAuditLogs, type AuditLogEntry } from '$lib/api/admin'
     import { formatAdminError } from '$lib/admin/errors'
@@ -113,7 +114,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between gap-4 flex-wrap">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Audit Logs</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('auditLogs.title')}</h3>
             <p class="text-sm text-slate-500">Search, filter, and export admin activity.</p>
         </div>
         <div class="flex items-center gap-2">
@@ -121,7 +122,7 @@
                 {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button size="sm" color="light" onclick={exportCsv} disabled={filteredLogs.length === 0}>
-                Export CSV
+                {$_('auditLogs.exportCsv')}
             </Button>
         </div>
     </div>
@@ -131,10 +132,10 @@
     {/if}
 
     <div class="mt-4 grid gap-2 md:grid-cols-3">
-        <Input placeholder="Search keyword" bind:value={filters.search} />
-        <Input placeholder="Actor" bind:value={filters.actor} />
-        <Input placeholder="Action" bind:value={filters.action} />
-        <Input placeholder="Resource" bind:value={filters.resource} />
+        <Input placeholder={$_('auditLogs.searchKeyword')} bind:value={filters.search} />
+        <Input placeholder={$_('auditLogs.actor')} bind:value={filters.actor} />
+        <Input placeholder={$_('auditLogs.action')} bind:value={filters.action} />
+        <Input placeholder={$_('auditLogs.resource')} bind:value={filters.resource} />
         <Input type="date" bind:value={filters.startDate} />
         <Input type="date" bind:value={filters.endDate} />
     </div>

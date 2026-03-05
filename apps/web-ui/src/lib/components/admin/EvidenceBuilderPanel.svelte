@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from '$lib/i18n';
   import { Alert, Badge, Button, Card, Input, Textarea } from 'flowbite-svelte';
   import { governanceApi, type EvidenceCase } from '$lib/netops/api/governanceApi';
 
@@ -38,21 +39,21 @@
 <Card class="space-y-3">
   <div class="flex items-center justify-between">
     <div>
-      <h3 class="text-base font-semibold text-slate-900 dark:text-white">Evidence Builder</h3>
+      <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('evidenceBuilder.title')}</h3>
       <p class="text-sm text-slate-500">Collect snapshots and notes for compliance reviews.</p>
     </div>
-    <Badge color="blue">Compliance</Badge>
+    <Badge color="blue">{$_('evidenceBuilder.badgeCompliance')}</Badge>
   </div>
 
   <div class="grid lg:grid-cols-2 gap-3">
     <div class="space-y-2">
-      <Input bind:value={deviceId} placeholder="Device ID" />
-      <Input bind:value={ticketId} placeholder="Ticket ID" />
+      <Input bind:value={deviceId} placeholder={$_('baseline.deviceIdPlaceholder')} />
+      <Input bind:value={ticketId} placeholder={$_('evidenceBuilder.ticketIdPlaceholder')} />
       <Input bind:value={snapshotIds} placeholder="Snapshot IDs (comma separated)" />
     </div>
     <div class="space-y-2">
-      <Textarea rows={3} bind:value={summary} placeholder="Summary and findings" />
-      <Button size="sm" onclick={createEvidence} disabled={!deviceId.trim() || !ticketId.trim()}>Create evidence</Button>
+      <Textarea rows={3} bind:value={summary} placeholder={$_('evidenceBuilder.summaryPlaceholder')} />
+      <Button size="sm" onclick={createEvidence} disabled={!deviceId.trim() || !ticketId.trim()}>{$_('evidenceBuilder.createEvidence')}</Button>
       {#if status}
         <span class="text-xs text-slate-500">{status}</span>
       {/if}

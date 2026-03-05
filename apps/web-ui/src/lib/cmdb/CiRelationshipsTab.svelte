@@ -1,5 +1,7 @@
 <script lang="ts">
   import { Button, Badge, Modal, Select, Label, Table, TableHead, TableHeadCell, TableBody, TableBodyRow, TableBodyCell, Checkbox } from 'flowbite-svelte';
+  import { _, isLoading } from '$lib/i18n';
+  import { _, isLoading } from '$lib/i18n';
   import { Plus, Trash2 } from 'lucide-svelte';
   import { 
     listCiRelationships, 
@@ -162,14 +164,14 @@
   <!-- Header -->
   <div class="mb-4 flex items-center justify-between">
     <div>
-      <h3 class="text-lg font-semibold">Relationships for {ciName}</h3>
+      <h3 class="text-lg font-semibold">{$_('ciRel.headerTitle', { values: { name: ciName } })}</h3>
       <p class="text-sm text-gray-500">
         {relationships.length} relationship{relationships.length !== 1 ? 's' : ''}
       </p>
     </div>
     <Button size="sm" onclick={openCreateModal}>
       <Plus class="mr-2 h-4 w-4" />
-      New Relationship
+      {$_('ciRel.newRelationship')}
     </Button>
   </div>
 
@@ -182,26 +184,26 @@
 
   <!-- Relationships Table -->
   {#if loading}
-    <div class="py-8 text-center text-gray-500">Loading relationships...</div>
+    <div class="py-8 text-center text-gray-500">{$_('ciRel.loading')}</div>
   {:else if relationships.length === 0}
     <div class="rounded-lg border border-dashed border-gray-300 py-12 text-center">
-      <p class="text-gray-500">No relationships defined</p>
-      <Button class="mt-4" size="sm" onclick={openCreateModal}>Create First Relationship</Button>
+      <p class="text-gray-500">{$_('ciRel.noRelationships')}</p>
+      <Button class="mt-4" size="sm" onclick={openCreateModal}>{$_('ciRel.createFirst')}</Button>
     </div>
   {:else}
     <Table>
       <TableHead>
-        <TableHeadCell>Direction</TableHeadCell>
-        <TableHeadCell>Type</TableHeadCell>
-        <TableHeadCell>Related CI</TableHeadCell>
-        <TableHeadCell>Note</TableHeadCell>
-        <TableHeadCell>Created</TableHeadCell>
-        <TableHeadCell>Actions</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.direction')}</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.type')}</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.relatedCi')}</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.note')}</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.created')}</TableHeadCell>
+        <TableHeadCell>{$_('ciRel.actions')}</TableHeadCell>
       </TableHead>
       <TableBody>
         {#each relationships as rel}
           {@const isSource = rel.fromCiId === ciId}
-          {@const direction = isSource ? 'Outgoing →' : 'Incoming ←'}
+          {@const direction = isSource ? $_('ciRel.outgoing') : $_('ciRel.incoming')}
           {@const typeName = isSource ? getRelTypeName(rel.relTypeId) : getRelTypeReverseName(rel.relTypeId)}
           {@const targetCiId = isSource ? rel.toCiId : rel.fromCiId}
           {@const targetCiName = getCiName(targetCiId)}
@@ -231,11 +233,11 @@
   {/if}
 
   <!-- Create Relationship Modal -->
-  <Modal title="Create Relationship" bind:open={showModal} size="md">
+  <Modal title={$_('ciRel.modalTitle')} bind:open={showModal} size="md">
     <div class="space-y-4">
       <!-- Direction Selection -->
       <div>
-        <Label>Direction</Label>
+        <Label>{$_('ciRel.direction')}</Label>
         <div class="mt-2 flex gap-4">
           <label class="flex items-center">
             <input
@@ -244,7 +246,7 @@
               value={true}
               class="mr-2"
             />
-            Outgoing (this CI → target)
+            {$_('ciRel.outgoingDesc')}
           </label>
           <label class="flex items-center">
             <input
@@ -253,18 +255,18 @@
               value={false}
               class="mr-2"
             />
-            Incoming (target → this CI)
+            {$_('ciRel.incomingDesc')}
           </label>
         </div>
       </div>
 
       <!-- Relationship Type -->
       <div>
-        <Label for="relType">Relationship Type</Label>
+        <Label for="relType">{$_('ciRel.relType')}</Label>
         <Select
           id="relType"
           bind:value={selectedRelTypeId}
-          placeholder="Select type..."
+          placeholder={$_('ciRel.selectType')}
           items={relTypeOptions}
           class="mt-2"
         />
@@ -280,11 +282,11 @@
 
       <!-- Target CI -->
       <div>
-        <Label for="targetCi">Related CI</Label>
+        <Label for="targetCi">{$_('ciRel.relatedCi')}</Label>
         <Select
           id="targetCi"
           bind:value={selectedTargetCiId}
-          placeholder="Select CI..."
+          placeholder={$_('ciRel.selectCi')}
           items={ciOptions}
           class="mt-2"
         />
@@ -292,13 +294,13 @@
 
       <!-- Note -->
       <div>
-        <Label for="note">Note (optional)</Label>
+        <Label for="note">{$_('ciRel.noteOptional')}</Label>
         <textarea
           id="note"
           bind:value={relationshipNote}
           rows="3"
           class="mt-2 block w-full rounded-lg border border-gray-300 p-2.5 text-sm"
-          placeholder="Add context about this relationship..."
+          placeholder={$_('ciRel.addContext')}
         ></textarea>
       </div>
 
@@ -311,9 +313,9 @@
 
     <svelte:fragment slot="footer">
       
-        <Button color="alternative" onclick={() => (showModal = false)}>Cancel</Button>
+        <Button color="alternative" onclick={() => (showModal = false)}>{$_('common.cancel')}</Button>
         <Button onclick={handleCreate} disabled={saving}>
-          {saving ? 'Creating...' : 'Create'}
+          {saving ? $_('ciRel.creating') : $_('ciRel.create')}
         </Button>
       
       </svelte:fragment>

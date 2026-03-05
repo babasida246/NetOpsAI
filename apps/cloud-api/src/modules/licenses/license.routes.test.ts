@@ -111,7 +111,8 @@ describe('License Routes', () => {
             verifyAccessToken: vi.fn().mockResolvedValue({
                 sub: TEST_USER_ID,
                 email: 'test@example.com',
-                role: 'admin'
+                role: 'admin',
+                tenantId: TEST_ORG_ID
             })
         }
 

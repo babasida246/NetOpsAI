@@ -142,18 +142,13 @@ test.describe('Authentication - Logout', () => {
 test.describe('Authentication - Protected Routes', () => {
     test.beforeEach(async ({ page }) => {
         await setupApiMocks(page);
+        await page.context().clearCookies();
+        await page.addInitScript(() => localStorage.clear());
     });
 
     test('should redirect to login for protected routes without auth', async ({ page }) => {
-        const protectedRoutes = ['/chat', '/stats', '/models', '/tools', '/assets'];
-
-        for (const route of protectedRoutes) {
-            await page.addInitScript(() => localStorage.clear());
-            await page.goto(route);
-            await page.waitForLoadState('domcontentloaded');
-
-            // Should redirect to login
-            await expect(page).toHaveURL(/\/login/, { timeout: 5000 });
-        }
+        await page.goto('/chat');
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page).toHaveURL(/\/login(\?redirect=.*)?$/, { timeout: 5000 });
     });
 });

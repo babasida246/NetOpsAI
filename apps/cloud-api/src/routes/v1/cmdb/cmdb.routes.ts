@@ -217,8 +217,7 @@ export async function cmdbRoutes(
     fastify.get('/cmdb/cis/:id/relationships', async (request, reply) => {
         getUserContext(request)
         const { id } = cmdbCiIdParamsSchema.parse(request.params)
-        // TODO: Implement listCiRelationships method - using listRelationshipTypes for now
-        const relationships = await relationshipService.listRelationshipTypes()
+        const relationships = await relationshipService.listRelationshipsByCi(id)
         return reply.send({ data: relationships })
     })
 

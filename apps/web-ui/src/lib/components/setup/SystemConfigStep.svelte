@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from '$lib/i18n';
     
     let { onNext, onBack, setupData } = $props<{
         onNext: () => Promise<void>;
@@ -159,7 +160,7 @@
                     id="companyName"
                     type="text" 
                     bind:value={formData.companyName}
-                    placeholder="TechCorp Vietnam"
+                    placeholder={$_('setup.companyNamePlaceholder')}
                     required 
                 />
             </div>

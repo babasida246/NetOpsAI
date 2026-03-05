@@ -236,7 +236,7 @@
         </div>
         <div class="space-y-1">
           <Label>{$isLoading ? 'Model' : $_('common.model')}</Label>
-          <Input bind:value={model} placeholder="Model name" />
+          <Input bind:value={model} placeholder={$_('adminDrivers.modelNamePlaceholder')} />
         </div>
         <div class="space-y-1">
           <Label>{$isLoading ? 'Component' : $_('drivers.fields.component')}</Label>

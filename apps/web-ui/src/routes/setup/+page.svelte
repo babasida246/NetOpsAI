@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import FirstTimeSetup from '$lib/components/setup/FirstTimeSetup.svelte';
+	import { _, isLoading } from '$lib/i18n';
 
 	let checking = $state(true);
 	let needsSetup = $state(true);
@@ -92,8 +93,8 @@
 	<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
 		<div class="text-center">
 			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-			<h2 class="text-lg font-medium text-gray-900 mb-2">Checking system status...</h2>
-			<p class="text-gray-500">Please wait while we verify the system setup.</p>
+			<h2 class="text-lg font-medium text-gray-900 mb-2">{$_('setup.checkingStatus')}</h2>
+			<p class="text-gray-500">{$_('setup.checkingDesc')}</p>
 		</div>
 	</div>
 {:else if error && !needsSetup}
@@ -105,20 +106,20 @@
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
 				</svg>
 			</div>
-			<h2 class="text-xl font-semibold text-gray-900 mb-2">Setup Check Failed</h2>
+			<h2 class="text-xl font-semibold text-gray-900 mb-2">{$_('setup.checkFailed')}</h2>
 			<p class="text-gray-600 mb-6">{error}</p>
 			<div class="space-y-3">
 				<button 
 					onclick={checkSetupStatus}
 					class="w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
 				>
-					Retry
+					{$_('setup.retry')}
 				</button>
 				<button 
 					onclick={() => needsSetup = true}
 					class="w-full bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
 				>
-					Proceed with Setup
+					{$_('setup.proceedSetup')}
 				</button>
 			</div>
 		</div>
@@ -132,8 +133,8 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="bg-white rounded-lg shadow-lg p-8">
 				<div class="mb-8">
-					<h1 class="text-3xl font-bold text-gray-900 mb-2">System Configuration</h1>
-					<p class="text-gray-600">Manage system settings and configuration</p>
+					<h1 class="text-3xl font-bold text-gray-900 mb-2">{$_('setup.configTitle')}</h1>
+					<p class="text-gray-600">{$_('setup.configSubtitle')}</p>
 				</div>
 
 				<div class="space-y-6">
@@ -144,8 +145,8 @@
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
 							</svg>
 							<div class="ml-3">
-								<h3 class="text-lg font-medium text-green-900">System Setup Completed</h3>
-								<p class="text-green-700 mt-1">Your system is fully configured and operational.</p>
+							<h3 class="text-lg font-medium text-green-900">{$_('setup.setupCompleted')}</h3>
+							<p class="text-green-700 mt-1">{$_('setup.setupCompletedDesc')}</p>
 							</div>
 						</div>
 					</div>
@@ -158,11 +159,11 @@
 								<svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
 								</svg>
-								<h3 class="ml-3 text-lg font-semibold text-gray-900">Database</h3>
-							</div>
-							<p class="text-gray-600 mb-4">Configure database connection settings</p>
-							<button class="text-blue-600 hover:text-blue-700 font-medium">
-								Manage Settings →
+							<h3 class="ml-3 text-lg font-semibold text-gray-900">{$_('setup.database')}</h3>
+						</div>
+						<p class="text-gray-600 mb-4">{$_('setup.databaseDesc')}</p>
+						<button class="text-blue-600 hover:text-blue-700 font-medium">
+							{$_('setup.manageSettings')}
 							</button>
 						</div>
 
@@ -172,11 +173,11 @@
 								<svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"></path>
 								</svg>
-								<h3 class="ml-3 text-lg font-semibold text-gray-900">Redis Cache</h3>
-							</div>
-							<p class="text-gray-600 mb-4">Configure Redis cache connection</p>
-							<button class="text-blue-600 hover:text-blue-700 font-medium">
-								Manage Settings →
+							<h3 class="ml-3 text-lg font-semibold text-gray-900">{$_('setup.redis')}</h3>
+						</div>
+						<p class="text-gray-600 mb-4">{$_('setup.redisDesc')}</p>
+						<button class="text-blue-600 hover:text-blue-700 font-medium">
+							{$_('setup.manageSettings')}
 							</button>
 						</div>
 
@@ -186,11 +187,11 @@
 								<svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
 								</svg>
-								<h3 class="ml-3 text-lg font-semibold text-gray-900">Admin Password</h3>
-							</div>
-							<p class="text-gray-600 mb-4">Change administrator password</p>
-							<button class="text-blue-600 hover:text-blue-700 font-medium">
-								Change Password →
+							<h3 class="ml-3 text-lg font-semibold text-gray-900">{$_('setup.adminPassword')}</h3>
+						</div>
+						<p class="text-gray-600 mb-4">{$_('setup.adminPasswordDesc')}</p>
+						<button class="text-blue-600 hover:text-blue-700 font-medium">
+							{$_('setup.changePassword')}
 							</button>
 						</div>
 
@@ -201,24 +202,24 @@
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
 								</svg>
-								<h3 class="ml-3 text-lg font-semibold text-gray-900">System Settings</h3>
-							</div>
-							<p class="text-gray-600 mb-4">Configure general system settings</p>
-							<button class="text-blue-600 hover:text-blue-700 font-medium">
-								Manage Settings →
+							<h3 class="ml-3 text-lg font-semibold text-gray-900">{$_('setup.systemSettings')}</h3>
+						</div>
+						<p class="text-gray-600 mb-4">{$_('setup.systemSettingsDesc')}</p>
+						<button class="text-blue-600 hover:text-blue-700 font-medium">
+							{$_('setup.manageSettings')}
 							</button>
 						</div>
 					</div>
 
 					<!-- Danger Zone -->
 					<div class="border-2 border-red-200 rounded-lg p-6 bg-red-50">
-						<h3 class="text-lg font-semibold text-red-900 mb-2">Danger Zone</h3>
-						<p class="text-red-700 mb-4">Reset the system to factory defaults. This action cannot be undone.</p>
-						<button 
-							onclick={handleResetSystem}
-							class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
-						>
-							Reset System to Default
+					<h3 class="text-lg font-semibold text-red-900 mb-2">{$_('setup.dangerZone')}</h3>
+					<p class="text-red-700 mb-4">{$_('setup.dangerDesc')}</p>
+					<button 
+						onclick={handleResetSystem}
+						class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
+					>
+						{$_('setup.resetSystem')}
 						</button>
 					</div>
 
@@ -231,7 +232,7 @@
 							<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
 							</svg>
-							Back to Dashboard
+							{$_('setup.backToDashboard')}
 						</a>
 					</div>
 				</div>
@@ -242,8 +243,8 @@
 	<!-- Fallback (shouldn't reach here normally) -->
 	<div class="min-h-screen bg-gray-50 flex items-center justify-center">
 		<div class="text-center">
-			<h2 class="text-xl font-semibold text-gray-900 mb-2">Redirecting...</h2>
-			<p class="text-gray-500">Please wait while we redirect you to the appropriate page.</p>
+		<h2 class="text-xl font-semibold text-gray-900 mb-2">{$_('setup.redirecting')}</h2>
+		<p class="text-gray-500">{$_('setup.redirectingDesc')}</p>
 		</div>
 	</div>
 {/if}

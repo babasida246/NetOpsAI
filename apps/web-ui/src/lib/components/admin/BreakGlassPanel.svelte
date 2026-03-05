@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from '$lib/i18n';
   import { Alert, Badge, Button, Card, Textarea } from 'flowbite-svelte';
   import { governanceApi, type BreakGlassEvent } from '$lib/netops/api/governanceApi';
 
@@ -30,10 +31,10 @@
       <h3 class="text-base font-semibold text-slate-900 dark:text-white">Break-glass Access</h3>
       <p class="text-sm text-slate-500">Emergency access with mandatory audit trail.</p>
     </div>
-    <Badge color="red">Security</Badge>
+    <Badge color="red">{$_('breakGlass.badgeSecurity')}</Badge>
   </div>
 
-  <Textarea rows={3} bind:value={reason} placeholder="Reason for break-glass action" />
+  <Textarea rows={3} bind:value={reason} placeholder={$_('breakGlass.reasonPlaceholder')} />
   <div class="flex items-center gap-2">
     <Button size="sm" color="red" onclick={triggerBreakGlass} disabled={!reason.trim()}>Record break-glass</Button>
     {#if status}

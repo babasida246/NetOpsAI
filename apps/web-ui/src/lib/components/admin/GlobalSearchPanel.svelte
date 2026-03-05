@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Input, Badge, Button } from 'flowbite-svelte'
+    import { _, isLoading } from '$lib/i18n'
     import { onMount } from 'svelte'
     import { listUsers, listAuditLogs, type AdminUser, type AuditLogEntry } from '$lib/api/admin'
     import { listProviders, listModels, type AIProvider, type ModelConfig } from '$lib/api/chat'
@@ -59,11 +60,11 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Global Search</h3>
-            <p class="text-sm text-slate-500">Search across users, logs, providers, and models.</p>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('globalSearch.title')}</h3>
+            <p class="text-sm text-slate-500">{$_('globalSearch.subtitle')}</p>
         </div>
         <Button size="sm" color="light" onclick={loadData} disabled={loading}>
-            {loading ? 'Refreshing...' : 'Refresh'}
+            {loading ? $_('tools.fieldKit.refreshing') : $_('common.refresh')}
         </Button>
     </div>
 
@@ -72,18 +73,18 @@
     {/if}
 
     <div class="mt-4">
-        <Input placeholder="Search everything..." bind:value={query} />
+        <Input placeholder={$_('globalSearch.placeholder')} bind:value={query} />
     </div>
 
     <div class="mt-4 grid gap-3 md:grid-cols-2">
         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Users</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('globalSearch.users')}</h4>
                 <Badge color="blue">{results.users.length}</Badge>
             </div>
             <div class="mt-2 text-sm text-slate-500 space-y-1">
                 {#if results.users.length === 0}
-                    <p>No matches</p>
+                    <p>{$_('globalSearch.noMatches')}</p>
                 {:else}
                     {#each results.users.slice(0, 5) as user}
                         <p>{user.name} • {user.email}</p>
@@ -94,12 +95,12 @@
 
         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Audit Logs</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('globalSearch.auditLogs')}</h4>
                 <Badge color="blue">{results.logs.length}</Badge>
             </div>
             <div class="mt-2 text-sm text-slate-500 space-y-1">
                 {#if results.logs.length === 0}
-                    <p>No matches</p>
+                    <p>{$_('globalSearch.noMatches')}</p>
                 {:else}
                     {#each results.logs.slice(0, 5) as log}
                         <p>{log.action} • {log.resource}</p>
@@ -110,12 +111,12 @@
 
         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Providers</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('globalSearch.providers')}</h4>
                 <Badge color="blue">{results.providers.length}</Badge>
             </div>
             <div class="mt-2 text-sm text-slate-500 space-y-1">
                 {#if results.providers.length === 0}
-                    <p>No matches</p>
+                    <p>{$_('globalSearch.noMatches')}</p>
                 {:else}
                     {#each results.providers.slice(0, 5) as provider}
                         <p>{provider.name}</p>
@@ -126,12 +127,12 @@
 
         <div class="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
             <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Models</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('globalSearch.models')}</h4>
                 <Badge color="blue">{results.models.length}</Badge>
             </div>
             <div class="mt-2 text-sm text-slate-500 space-y-1">
                 {#if results.models.length === 0}
-                    <p>No matches</p>
+                    <p>{$_('globalSearch.noMatches')}</p>
                 {:else}
                     {#each results.models.slice(0, 5) as model}
                         <p>{model.displayName ?? model.id}</p>

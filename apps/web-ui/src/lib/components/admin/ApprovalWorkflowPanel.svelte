@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { _ } from '$lib/i18n';
   import { Alert, Badge, Button, Card } from 'flowbite-svelte';
   import { governanceApi, type ApprovalRequest } from '$lib/netops/api/governanceApi';
 
@@ -25,10 +26,10 @@
 <Card class="space-y-3">
   <div class="flex items-center justify-between">
     <div>
-      <h3 class="text-base font-semibold text-slate-900 dark:text-white">Approval Workflow</h3>
+      <h3 class="text-base font-semibold text-slate-900 dark:text-white">{$_('approvalWf.title')}</h3>
       <p class="text-sm text-slate-500">Gate high-risk actions before execution.</p>
     </div>
-    <Badge color="blue">Core</Badge>
+    <Badge color="blue">{$_('approvalWf.badgeCore')}</Badge>
   </div>
 
   {#if status}

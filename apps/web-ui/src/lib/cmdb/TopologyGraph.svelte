@@ -3,6 +3,7 @@
   import { Button, Badge, Card, Spinner, Modal, Heading } from 'flowbite-svelte';
   import { RefreshCw, Maximize2, Download, ZoomIn, ZoomOut, Zap, AlertTriangle } from 'lucide-svelte';
   import { getCmdbGraph, getCiDependencyPath, getCiImpact, type CiGraph } from '$lib/api/cmdb';
+  import { _, isLoading } from '$lib/i18n';
 
   interface Props {
     depth?: number;
@@ -363,38 +364,38 @@
   <!-- Toolbar -->
   <div class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <h3 class="text-lg font-semibold">CMDB Topology</h3>
+      <h3 class="text-lg font-semibold">{$_('topology.title')}</h3>
       {#if !loading}
         <div class="flex gap-2 text-sm text-gray-600">
-          <Badge color="blue">{stats.nodes} CIs</Badge>
-          <Badge color="green">{stats.edges} Relationships</Badge>
+          <Badge color="blue">{stats.nodes} {$_('topology.cis')}</Badge>
+          <Badge color="green">{stats.edges} {$_('topology.relationships')}</Badge>
         </div>
       {/if}
     </div>
     
     <div class="flex gap-2">
-      <Button size="xs" color="light" onclick={handleZoomIn} title="Zoom In">
+      <Button size="xs" color="light" onclick={handleZoomIn} title={$_('topology.zoomIn')}>
         <ZoomIn class="h-4 w-4" />
       </Button>
-      <Button size="xs" color="light" onclick={handleZoomOut} title="Zoom Out">
+      <Button size="xs" color="light" onclick={handleZoomOut} title={$_('topology.zoomOut')}>
         <ZoomOut class="h-4 w-4" />
       </Button>
-      <Button size="xs" color="light" onclick={handleFit} title="Fit to View">
+      <Button size="xs" color="light" onclick={handleFit} title={$_('topology.fitToView')}>
         <Maximize2 class="h-4 w-4" />
       </Button>
-      <Button size="xs" color="light" onclick={() => changeLayout('circle')} title="Circle Layout">
-        Circle
+      <Button size="xs" color="light" onclick={() => changeLayout('circle')} title={$_('topology.circleLayout')}>
+        {$_('topology.circle')}
       </Button>
-      <Button size="xs" color="light" onclick={() => changeLayout('breadthfirst')} title="Hierarchical">
-        Tree
+      <Button size="xs" color="light" onclick={() => changeLayout('breadthfirst')} title={$_('topology.hierarchical')}>
+        {$_('topology.tree')}
       </Button>
-      <Button size="xs" color="light" onclick={() => changeLayout('cose')} title="Force-directed">
-        Force
+      <Button size="xs" color="light" onclick={() => changeLayout('cose')} title={$_('topology.forceDirected')}>
+        {$_('topology.force')}
       </Button>
-      <Button size="xs" color="light" onclick={handleExport} title="Export PNG">
+      <Button size="xs" color="light" onclick={handleExport} title={$_('topology.exportPng')}>
         <Download class="h-4 w-4" />
       </Button>
-      <Button size="xs" color="light" onclick={handleRefresh} title="Refresh">
+      <Button size="xs" color="light" onclick={handleRefresh} title={$_('common.refresh')}>
         <RefreshCw class="h-4 w-4" />
       </Button>
     </div>
@@ -412,7 +413,7 @@
     {#if loading}
       <div class="flex h-full items-center justify-center">
         <Spinner size="12" />
-        <span class="ml-3 text-gray-600">Loading topology...</span>
+        <span class="ml-3 text-gray-600">{$_('topology.loading')}</span>
       </div>
     {:else}
       <div bind:this={container} class="h-full w-full rounded-lg"></div>
@@ -422,14 +423,14 @@
   <!-- Selected Node Details -->
   {#if selectedNode}
     <Card class="mt-4">
-      <h4 class="mb-3 font-semibold">Selected CI: {selectedNode.label}</h4>
+      <h4 class="mb-3 font-semibold">{$_('topology.selectedCI')}: {selectedNode.label}</h4>
       <dl class="mb-4 grid grid-cols-2 gap-2 text-sm">
         <div>
-          <dt class="text-gray-500">Type</dt>
-          <dd class="font-medium">{selectedNode.type || 'Unknown'}</dd>
+          <dt class="text-gray-500">{$_('common.type')}</dt>
+          <dd class="font-medium">{selectedNode.type || $_('topology.unknown')}</dd>
         </div>
         <div>
-          <dt class="text-gray-500">Status</dt>
+          <dt class="text-gray-500">{$_('common.status')}</dt>
           <dd>
             <Badge color={selectedNode.status === 'active' ? 'green' : 'dark'}>
               {selectedNode.status}
@@ -438,20 +439,20 @@
         </div>
         {#if selectedNode.environment}
           <div>
-            <dt class="text-gray-500">Environment</dt>
+            <dt class="text-gray-500">{$_('topology.environment')}</dt>
             <dd class="font-medium">{selectedNode.environment}</dd>
           </div>
         {/if}
       </dl>
       <div class="flex flex-wrap gap-2">
-        <Button size="xs" href="/cmdb/cis/{selectedNode.id}">View Details</Button>
+        <Button size="xs" href="/cmdb/cis/{selectedNode.id}">{$_('topology.viewDetails')}</Button>
         <Button size="xs" color="light" disabled={analyzing} onclick={() => handleShowDependencies(selectedNode.id, 'downstream')}>
           {#if analyzing}
             <Spinner size="3" class="mr-2" />
           {:else}
             <Zap class="h-3 w-3 mr-2" />
           {/if}
-          Downstream
+          {$_('topology.downstream')}
         </Button>
         <Button size="xs" color="light" disabled={analyzing} onclick={() => handleShowDependencies(selectedNode.id, 'upstream')}>
           {#if analyzing}
@@ -459,7 +460,7 @@
           {:else}
             <Zap class="h-3 w-3 mr-2" />
           {/if}
-          Upstream
+          {$_('topology.upstream')}
         </Button>
         <Button size="xs" color="red" disabled={analyzing} onclick={() => handleShowImpact(selectedNode.id)}>
           {#if analyzing}
@@ -467,16 +468,16 @@
           {:else}
             <AlertTriangle class="h-3 w-3 mr-2" />
           {/if}
-          Impact
+          {$_('topology.impact')}
         </Button>
         {#if dependencyChain.length > 0}
-          <Button size="xs" color="blue" onclick={() => clearHighlighting()}>Clear</Button>
+          <Button size="xs" color="blue" onclick={() => clearHighlighting()}>{$_('topology.clear')}</Button>
         {/if}
       </div>
       
       {#if dependencyChain.length > 0}
         <div class="mt-3 rounded bg-blue-50 p-3 text-sm">
-          <p class="mb-2 font-semibold text-blue-900">Dependency Path:</p>
+          <p class="mb-2 font-semibold text-blue-900">{$_('topology.dependencyPath')}:</p>
           <p class="text-blue-800">{dependencyChain.join(' → ')}</p>
         </div>
       {/if}
@@ -485,60 +486,60 @@
 
   <!-- Legend -->
   <Card class="mt-4">
-    <h4 class="mb-3 text-sm font-semibold">Legend</h4>
+    <h4 class="mb-3 text-sm font-semibold">{$_('topology.legend')}</h4>
     <div class="mb-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
       <div class="flex items-center gap-2">
         <div class="h-4 w-4 rounded bg-blue-500"></div>
-        <span>Server</span>
+        <span>{$_('topology.nodeTypes.server')}</span>
       </div>
       <div class="flex items-center gap-2">
         <div class="h-4 w-4 rounded bg-green-500"></div>
-        <span>Database</span>
+        <span>{$_('topology.nodeTypes.database')}</span>
       </div>
       <div class="flex items-center gap-2">
         <div class="h-4 w-4 rounded bg-purple-500"></div>
-        <span>Application</span>
+        <span>{$_('topology.nodeTypes.application')}</span>
       </div>
       <div class="flex items-center gap-2">
         <div class="h-4 w-4 rounded bg-orange-500"></div>
-        <span>Network</span>
+        <span>{$_('topology.nodeTypes.network')}</span>
       </div>
     </div>
     <div class="border-t pt-3">
-      <p class="mb-2 text-xs font-semibold text-gray-600">Highlighting:</p>
+      <p class="mb-2 text-xs font-semibold text-gray-600">{$_('topology.highlighting')}:</p>
       <div class="grid grid-cols-2 gap-2 text-xs md:grid-cols-3">
         <div class="flex items-center gap-2">
           <div class="h-4 w-4 rounded border-2 border-cyan-600 bg-cyan-400"></div>
-          <span>Dependency Path</span>
+          <span>{$_('topology.dependencyPath')}</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="h-4 w-4 rounded border-2 border-red-600 bg-red-400"></div>
-          <span>Impact Zone</span>
+          <span>{$_('topology.impactZone')}</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="h-4 w-4 border-2 border-orange-400"></div>
-          <span>Selected</span>
+          <span>{$_('topology.selectedLabel')}</span>
         </div>
       </div>
     </div>
   </Card>
 
   <!-- Impact Modal -->
-  <Modal bind:open={showImpactModal} size="md" title="Impact Analysis">
+  <Modal bind:open={showImpactModal} size="md" title={$_('topology.impactAnalysis')}>
     {#if impactAnalysis}
       <div class="space-y-4">
         <div class="rounded-lg bg-red-50 p-4">
           <div class="mb-2 flex items-center gap-2">
             <AlertTriangle class="h-5 w-5 text-red-600" />
-            <h3 class="font-semibold text-red-900">Impact Summary</h3>
+            <h3 class="font-semibold text-red-900">{$_('topology.impactSummary')}</h3>
           </div>
           <p class="text-sm text-red-800">
-            If <strong>{selectedNode?.label}</strong> fails, <strong>{impactAnalysis.count}</strong> CI(s) across <strong>{impactAnalysis.depth}</strong> level(s) will be affected.
+            {$_('topology.impactMessage', { values: { node: selectedNode?.label ?? '', count: impactAnalysis.count, depth: impactAnalysis.depth } })}
           </p>
         </div>
         
         <div>
-          <h4 class="mb-2 font-semibold text-sm">Affected CIs:</h4>
+          <h4 class="mb-2 font-semibold text-sm">{$_('topology.affectedCIs')}:</h4>
           <div class="max-h-64 overflow-y-auto">
             <div class="space-y-2">
               {#each impactAnalysis.affected as ci}

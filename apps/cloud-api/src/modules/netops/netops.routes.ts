@@ -9,6 +9,7 @@ import type { AuthService } from '../auth/index.js'
 import { AdminRepository } from '../admin/admin.repository.js'
 import type { EntitlementService } from '../entitlements/entitlement.service.js'
 import { createFeatureGate } from '../../shared/middleware/feature-gate.js'
+import { UnauthorizedError } from '../../shared/errors/http-errors.js'
 import { registerFieldRoutes } from './field.routes.js'
 import { registerSshRoutes } from './ssh.routes.js'
 import { registerToolsRoutes } from './tools.routes.js'
@@ -80,8 +81,26 @@ export async function netopsRoutes(
     const service = new NetOpsService(db)
     const adminRepo = new AdminRepository(db)
     const requireNetOps = createFeatureGate(entitlementService, 'netops.backup')
+    const requireAuth = typeof app.authenticate === 'function'
+        ? app.authenticate.bind(app)
+        : async (req: FastifyRequest, _reply: FastifyReply) => {
+            const authHeader = req.headers.authorization
+            if (!authHeader?.startsWith('Bearer ')) {
+                throw new UnauthorizedError('Missing or invalid authorization header')
+            }
+            const token = authHeader.substring(7)
+            const payload = authService.verifyAccessToken(token)
+            req.user = {
+                id: payload.sub,
+                sub: payload.sub,
+                email: payload.email,
+                role: payload.role,
+                tenantId: payload.tenantId ?? null,
+                permissions: []
+            }
+        }
 
-    app.addHook('preHandler', app.authenticate)
+    app.addHook('preHandler', requireAuth)
     app.addHook('preHandler', requireNetOps)
 
     // ====================

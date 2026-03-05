@@ -50,7 +50,7 @@
     <TabItem open={activeTab === 'services'} onclick={() => setTab('services')} title={$isLoading ? 'Services' : $_('cmdb.tabs.services')}>
       <CmdbServicesPanel />
     </TabItem>
-    <TabItem open={activeTab === 'topology'} onclick={() => setTab('topology')} title="Topology">
+    <TabItem open={activeTab === 'topology'} onclick={() => setTab('topology')} title={$_('topology.title')}>
       <TopologyGraph />
     </TabItem>
   </Tabs>

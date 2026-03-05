@@ -3,18 +3,34 @@
  * Tests user management, audit logs, and admin settings
  */
 import { test, expect, setupAuthenticatedSession, setupApiMocks } from './fixtures';
+import { mockAuthTokens } from './fixtures';
+import type { Page } from '@playwright/test';
+
+async function forceAuthSession(page: Page): Promise<void> {
+    await page.goto('/login');
+    await page.evaluate((tokens) => {
+        localStorage.setItem('authToken', tokens.accessToken);
+        localStorage.setItem('refreshToken', tokens.refreshToken);
+        localStorage.setItem('userEmail', tokens.user.email);
+        localStorage.setItem('userRole', tokens.user.role);
+        localStorage.setItem('userName', tokens.user.name);
+        localStorage.setItem('userId', tokens.user.id);
+        localStorage.setItem('user', JSON.stringify(tokens.user));
+    }, mockAuthTokens);
+}
 
 test.describe('Admin - User Management', () => {
     test.beforeEach(async ({ page }) => {
         await setupAuthenticatedSession(page);
         await setupApiMocks(page);
+        await forceAuthSession(page);
     });
 
     test('should display admin dashboard', async ({ page }) => {
         await page.goto('/admin');
-        await page.waitForLoadState('domcontentloaded');
-
-        await expect(page.getByTestId('admin-title')).toBeVisible();
+        await page.waitForLoadState('networkidle');
+        await expect(page).toHaveURL(/\/admin/);
+        await expect(page.getByTestId('admin-users-panel')).toBeVisible({ timeout: 15000 });
     });
 
     test('should display users list', async ({ page }) => {
@@ -103,6 +119,7 @@ test.describe('Admin - Audit Logs', () => {
     test.beforeEach(async ({ page }) => {
         await setupAuthenticatedSession(page);
         await setupApiMocks(page);
+        await forceAuthSession(page);
     });
 
     test('should display audit logs tab', async ({ page }) => {
@@ -162,6 +179,7 @@ test.describe('Admin - Role-based Access', () => {
     test.beforeEach(async ({ page }) => {
         await setupAuthenticatedSession(page);
         await setupApiMocks(page);
+        await forceAuthSession(page);
     });
 
     test('should display role options in user form', async ({ page }) => {
@@ -182,6 +200,7 @@ test.describe('Admin - Search and Filter', () => {
     test.beforeEach(async ({ page }) => {
         await setupAuthenticatedSession(page);
         await setupApiMocks(page);
+        await forceAuthSession(page);
     });
 
     test('should search users by name or email', async ({ page }) => {

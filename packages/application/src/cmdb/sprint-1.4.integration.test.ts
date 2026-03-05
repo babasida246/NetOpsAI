@@ -1,4 +1,122 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { RedisClientType } from 'redis'
+
+type MockRedisEntry = { value: string; expiresAt?: number }
+
+function createMockRedisClient(): RedisClientType {
+    const store = new Map<string, MockRedisEntry>()
+    const listeners = new Map<string, Array<(...args: any[]) => void>>()
+
+    const cleanupExpired = () => {
+        const now = Date.now()
+        for (const [key, entry] of store.entries()) {
+            if (entry.expiresAt !== undefined && entry.expiresAt <= now) {
+                store.delete(key)
+            }
+        }
+    }
+
+    const client: any = {
+        on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+            const handlers = listeners.get(event) ?? []
+            handlers.push(handler)
+            listeners.set(event, handlers)
+            return client
+        }),
+        connect: vi.fn(async () => {
+            const handlers = listeners.get('connect') ?? []
+            handlers.forEach((handler) => handler())
+        }),
+        disconnect: vi.fn(async () => { }),
+        get: vi.fn(async (key: string) => {
+            cleanupExpired()
+            return store.get(key)?.value ?? null
+        }),
+        setEx: vi.fn(async (key: string, ttlSeconds: number, value: string) => {
+            store.set(key, {
+                value,
+                expiresAt: Date.now() + ttlSeconds * 1000
+            })
+        }),
+        del: vi.fn(async (keys: string | string[]) => {
+            const keyList = Array.isArray(keys) ? keys : [keys]
+            let deleted = 0
+            for (const key of keyList) {
+                if (store.delete(key)) deleted += 1
+            }
+            return deleted
+        }),
+        keys: vi.fn(async (pattern: string) => {
+            cleanupExpired()
+            if (pattern.endsWith('*')) {
+                const prefix = pattern.slice(0, -1)
+                return Array.from(store.keys()).filter((key) => key.startsWith(prefix))
+            }
+            return store.has(pattern) ? [pattern] : []
+        })
+    }
+
+    return client
+}
+
+vi.mock('redis', () => ({
+    createClient: vi.fn(() => createMockRedisClient())
+}))
+
+vi.mock('bull', () => {
+    class MockBullQueue {
+        private repeatableJobs: Array<{ key: string; id: string; name: string; cron?: string }> = []
+        private processor: ((job: any) => Promise<any>) | null = null
+        private jobCounter = 0
+
+        client = {
+            ping: vi.fn(async () => 'PONG')
+        }
+
+        on = vi.fn(() => this)
+
+        async add(name: string, data: any, opts: any = {}): Promise<any> {
+            const job = {
+                id: String(++this.jobCounter),
+                name,
+                data,
+                opts
+            }
+
+            if (opts?.repeat?.cron) {
+                const key = `${name}:${opts.repeat.cron}`
+                this.repeatableJobs = this.repeatableJobs.filter((existing) => existing.key !== key)
+                this.repeatableJobs.push({ key, id: job.id, name, cron: opts.repeat.cron })
+            } else if (this.processor) {
+                await this.processor(job)
+            }
+
+            return job
+        }
+
+        async process(handler: (job: any) => Promise<any>): Promise<void> {
+            this.processor = handler
+        }
+
+        async getRepeatableJobs(): Promise<Array<{ key: string; id: string; name: string; cron?: string }>> {
+            return [...this.repeatableJobs]
+        }
+
+        async removeRepeatableByKey(key: string): Promise<void> {
+            this.repeatableJobs = this.repeatableJobs.filter((job) => job.key !== key)
+        }
+
+        async getActiveCount(): Promise<number> { return 0 }
+        async getWaitingCount(): Promise<number> { return 0 }
+        async getCompletedCount(): Promise<number> { return 0 }
+        async getFailedCount(): Promise<number> { return 0 }
+        async getDelayedCount(): Promise<number> { return 0 }
+        async close(): Promise<void> { }
+    }
+
+    return { default: MockBullQueue }
+})
+
 import { ReportCachingService } from './ReportCachingService.js'
 import { ReportScheduler } from './ReportScheduler.js'
 import { ReportEmailService, CachedEmailService } from './ReportEmailService.js'
@@ -42,10 +160,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
 
     beforeEach(async () => {
         // Initialize all services
-        cachingService = new ReportCachingService({
-            host: 'localhost',
-            port: 6379
-        })
+        cachingService = new ReportCachingService({ enabled: true })
 
         scheduler = new ReportScheduler(
             mockCiInventoryService as any,
@@ -87,11 +202,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
         it('generates report, caches it, and sends to subscribers', async () => {
             try {
                 // Step 1: Initialize services
-                await cachingService.initialize(
-                    mockCiInventoryService as any,
-                    mockAnalyticsService as any,
-                    mockAuditTrailService as any
-                )
+                await cachingService.initialize('redis://localhost:6379')
 
                 // Step 2: Subscribe users
                 const sub1 = emailService.subscribeUser(
@@ -133,11 +244,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
 
         it('caches reports and reuses from cache on subsequent calls', async () => {
             try {
-                await cachingService.initialize(
-                    mockCiInventoryService as any,
-                    mockAnalyticsService as any,
-                    mockAuditTrailService as any
-                )
+                await cachingService.initialize('redis://localhost:6379')
 
                 // First call - generates report
                 const report1 = await mockCiInventoryService.generateCiInventoryReport()
@@ -187,11 +294,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
     describe('Performance: Caching Benefits', () => {
         it('demonstrates cache performance improvement', async () => {
             try {
-                await cachingService.initialize(
-                    mockCiInventoryService as any,
-                    mockAnalyticsService as any,
-                    mockAuditTrailService as any
-                )
+                await cachingService.initialize('redis://localhost:6379')
 
                 const iterations = 5
 
@@ -238,11 +341,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
 
         it('handles scheduler failure without affecting caching', async () => {
             try {
-                await cachingService.initialize(
-                    mockCiInventoryService as any,
-                    mockAnalyticsService as any,
-                    mockAuditTrailService as any
-                )
+                await cachingService.initialize('redis://localhost:6379')
 
                 // Don't initialize scheduler
                 const report = await mockCiInventoryService.generateCiInventoryReport()
@@ -256,11 +355,7 @@ describe('Sprint 1.4 - Integration: Caching + Scheduling + Email', () => {
 
         it('handles email service failure without affecting reporting', async () => {
             try {
-                await cachingService.initialize(
-                    mockCiInventoryService as any,
-                    mockAnalyticsService as any,
-                    mockAuditTrailService as any
-                )
+                await cachingService.initialize('redis://localhost:6379')
 
                 // Don't initialize email service
                 const report = await mockCiInventoryService.generateCiInventoryReport()

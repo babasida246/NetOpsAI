@@ -76,3 +76,18 @@ export {
     type ReportType,
     type ReportEmailData
 } from './cmdb/ReportEmailService.js'
+
+// Feature 1: Workflow Automation
+export { AutomationService } from './automation/AutomationService.js'
+
+// Feature 2 & 6: Analytics & AI Insights
+export { AnalyticsService } from './analytics/AnalyticsService.js'
+
+// Feature 3: CMDB Enhancement
+export { CmdbEnhancementService } from './cmdb/CmdbEnhancementService.js'
+
+// Feature 4: Integration Hub
+export { IntegrationService } from './integration/IntegrationService.js'
+
+// Feature 7: Security & Compliance
+export { SecurityService } from './compliance/SecurityService.js'

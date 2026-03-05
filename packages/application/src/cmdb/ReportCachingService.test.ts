@@ -1,4 +1,68 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { RedisClientType } from 'redis'
+
+type MockRedisEntry = { value: string; expiresAt?: number }
+
+function createMockRedisClient(): RedisClientType {
+    const store = new Map<string, MockRedisEntry>()
+    const listeners = new Map<string, Array<(...args: any[]) => void>>()
+
+    const cleanupExpired = () => {
+        const now = Date.now()
+        for (const [key, entry] of store.entries()) {
+            if (entry.expiresAt !== undefined && entry.expiresAt <= now) {
+                store.delete(key)
+            }
+        }
+    }
+
+    const client: any = {
+        on: vi.fn((event: string, handler: (...args: any[]) => void) => {
+            const handlers = listeners.get(event) ?? []
+            handlers.push(handler)
+            listeners.set(event, handlers)
+            return client
+        }),
+        connect: vi.fn(async () => {
+            const handlers = listeners.get('connect') ?? []
+            handlers.forEach((handler) => handler())
+        }),
+        disconnect: vi.fn(async () => { }),
+        get: vi.fn(async (key: string) => {
+            cleanupExpired()
+            return store.get(key)?.value ?? null
+        }),
+        setEx: vi.fn(async (key: string, ttlSeconds: number, value: string) => {
+            store.set(key, {
+                value,
+                expiresAt: Date.now() + ttlSeconds * 1000
+            })
+        }),
+        del: vi.fn(async (keys: string | string[]) => {
+            const keyList = Array.isArray(keys) ? keys : [keys]
+            let deleted = 0
+            for (const key of keyList) {
+                if (store.delete(key)) deleted += 1
+            }
+            return deleted
+        }),
+        keys: vi.fn(async (pattern: string) => {
+            cleanupExpired()
+            if (pattern.endsWith('*')) {
+                const prefix = pattern.slice(0, -1)
+                return Array.from(store.keys()).filter((key) => key.startsWith(prefix))
+            }
+            return store.has(pattern) ? [pattern] : []
+        })
+    }
+
+    return client
+}
+
+vi.mock('redis', () => ({
+    createClient: vi.fn(() => createMockRedisClient())
+}))
+
 import {
     ReportCachingService,
     CachedCiInventoryReportService,

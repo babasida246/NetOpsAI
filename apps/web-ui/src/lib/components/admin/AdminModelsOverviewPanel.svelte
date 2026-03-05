@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Card, Badge, Button, Spinner } from 'flowbite-svelte'
+    import { _ } from '$lib/i18n'
     import { onMount } from 'svelte'
     import {
         listModels,
@@ -55,7 +56,7 @@
 <Card class="w-full max-w-none border border-slate-200 dark:border-slate-800">
     <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Models Overview</h3>
+            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{$_('adminModels.title')}</h3>
             <p class="text-sm text-slate-500">Snapshot of active models, providers, and routing rules.</p>
         </div>
         <Button size="sm" color="light" onclick={loadOverview} disabled={loading}>
@@ -74,26 +75,26 @@
     {:else}
         <div class="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Total models</p>
+                <p class="text-xs text-slate-500">{$_('adminModels.totalModels')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{summary.totalModels}</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Active models</p>
+                <p class="text-xs text-slate-500">{$_('adminModels.activeModels')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{summary.activeModels}</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Providers</p>
+                <p class="text-xs text-slate-500">{$_('adminModels.providers')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{summary.providers}</p>
             </div>
             <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white/70 dark:bg-slate-900/70">
-                <p class="text-xs text-slate-500">Routing rules</p>
+                <p class="text-xs text-slate-500">{$_('adminModels.routingRules')}</p>
                 <p class="text-xl font-semibold text-slate-900 dark:text-white">{summary.rules}</p>
             </div>
         </div>
 
         <div class="mt-6">
             <div class="flex items-center justify-between mb-3">
-                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">Top Priority Models</h4>
+                <h4 class="text-sm font-semibold text-slate-900 dark:text-white">{$_('adminModels.topPriorityModels')}</h4>
                 <Badge color="blue">{topPriority.length}</Badge>
             </div>
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

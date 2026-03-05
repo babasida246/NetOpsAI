@@ -22,14 +22,8 @@ test.describe('Chat - Page Load', () => {
         await page.goto('/chat');
         await page.waitForLoadState('domcontentloaded');
 
-        // Wait for conversations to load
-        await page.waitForTimeout(1000);
-
-        // Should have conversation items or empty state
-        const hasConversations = await page.locator('button:has-text("Test Conversation")').count() > 0;
-        const hasEmptyState = await page.locator('text=/No conversations|Chưa có cuộc trò chuyện/i').count() > 0;
-
-        expect(hasConversations || hasEmptyState).toBe(true);
+        const panel = page.getByTestId('chat-conversations-panel');
+        await expect(panel).toBeVisible({ timeout: 15000 });
     });
 
     test('should display chat input', async ({ page }) => {

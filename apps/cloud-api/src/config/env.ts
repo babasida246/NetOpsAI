@@ -51,8 +51,14 @@ const envSchema = z.object({
     // License and edge signing
     LICENSE_SIGNING_SECRET: z.string().min(32).default('your-license-signing-secret-min-32'),
     LICENSE_TOKEN_TTL_HOURS: z.coerce.number().default(24),
-    EDGE_JOB_SIGNING_PRIVATE_KEY: z.string().min(32),
-    EDGE_JOB_SIGNING_PUBLIC_KEY: z.string().min(32),
+    EDGE_JOB_SIGNING_PRIVATE_KEY: z
+        .string()
+        .min(32)
+        .default('dev-edge-signing-private-key-placeholder-32-chars'),
+    EDGE_JOB_SIGNING_PUBLIC_KEY: z
+        .string()
+        .min(32)
+        .default('dev-edge-signing-public-key-placeholder-32-chars'),
 
     // LLM Providers
     OPENROUTER_API_KEY: z.string().optional(),
@@ -118,7 +124,25 @@ const envSchema = z.object({
 export type Env = z.infer<typeof envSchema>
 
 function validateEnv(): Env {
-    const parsed = envSchema.safeParse(process.env)
+    const isProduction = process.env.NODE_ENV === 'production'
+    const fallbackPrivateKey = 'dev-edge-signing-private-key-placeholder-32-chars'
+    const fallbackPublicKey = 'dev-edge-signing-public-key-placeholder-32-chars'
+
+    const normalizedEnv = {
+        ...process.env,
+        EDGE_JOB_SIGNING_PRIVATE_KEY: isProduction
+            ? process.env.EDGE_JOB_SIGNING_PRIVATE_KEY
+            : (process.env.EDGE_JOB_SIGNING_PRIVATE_KEY?.length ?? 0) >= 32
+                ? process.env.EDGE_JOB_SIGNING_PRIVATE_KEY
+                : fallbackPrivateKey,
+        EDGE_JOB_SIGNING_PUBLIC_KEY: isProduction
+            ? process.env.EDGE_JOB_SIGNING_PUBLIC_KEY
+            : (process.env.EDGE_JOB_SIGNING_PUBLIC_KEY?.length ?? 0) >= 32
+                ? process.env.EDGE_JOB_SIGNING_PUBLIC_KEY
+                : fallbackPublicKey
+    }
+
+    const parsed = envSchema.safeParse(normalizedEnv)
 
     if (!parsed.success) {
         console.error('❌ Invalid environment variables:')

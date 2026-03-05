@@ -385,7 +385,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
       <div class="space-y-1 md:col-span-2">
         <Label>{$_('docs.fields.title')}</Label>
-        <Input bind:value={newTitle} placeholder="SOP: Printer onboarding" />
+        <Input bind:value={newTitle} placeholder={$_('adminDocs.sopPlaceholder')} />
       </div>
       <div class="space-y-1">
         <Label>{$_('docs.fields.type')}</Label>

@@ -3,22 +3,14 @@ import type { EdgeService } from './edge.service.js'
 import { UnauthorizedError } from '../../shared/errors/http-errors.js'
 import { requirePermission } from '../../shared/security/netops-guard.js'
 
-interface AuthenticatedRequest extends FastifyRequest {
-    user?: {
-        id: string
-        role: string
-        tenantId?: string
-    }
-}
-
-const requireRole = (roles: string[]) => async (request: AuthenticatedRequest) => {
+const requireRole = (roles: string[]) => async (request: FastifyRequest) => {
     const role = request.user?.role
     if (!role || !roles.includes(role)) {
         throw new UnauthorizedError('Insufficient permissions')
     }
 }
 
-const requireTenant = (request: AuthenticatedRequest): string => {
+const requireTenant = (request: FastifyRequest): string => {
     const tenantId = request.user?.tenantId
     if (!tenantId) {
         throw new UnauthorizedError('Tenant context missing')
@@ -44,7 +36,7 @@ export async function edgeRoutes(fastify: FastifyInstance, service: EdgeService)
                 summary: 'Create a pairing code'
             },
             preHandler: [requireRole(['admin', 'super_admin'])]
-        }, async (request: AuthenticatedRequest) => {
+        }, async (request: FastifyRequest) => {
             const tenantId = requireTenant(request)
             requirePermission(request.user ?? {}, 'netops.change.request')
             const { ttlMinutes } = (request.body as { ttlMinutes?: number }) ?? {}
@@ -57,7 +49,7 @@ export async function edgeRoutes(fastify: FastifyInstance, service: EdgeService)
                 summary: 'Create an edge job'
             },
             preHandler: [requireRole(['admin', 'super_admin'])]
-        }, async (request: AuthenticatedRequest) => {
+        }, async (request: FastifyRequest) => {
             const tenantId = requireTenant(request)
             requirePermission(request.user ?? {}, 'netops.change.execute')
             const body = request.body as {

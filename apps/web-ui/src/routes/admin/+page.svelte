@@ -113,7 +113,7 @@
   {#if impersonation}
     <Alert color="yellow">
       <div class="flex items-center gap-2">
-        <Badge color="yellow">Impersonation</Badge>
+        <Badge color="yellow">{$_('impersonation.title')}</Badge>
         <span>Active session for {impersonation.email} since {new Date(impersonation.startedAt).toLocaleString()}</span>
       </div>
     </Alert>

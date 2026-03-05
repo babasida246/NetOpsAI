@@ -1,4 +1,58 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+vi.mock('bull', () => {
+    class MockBullQueue {
+        private repeatableJobs: Array<{ key: string; id: string; name: string; cron?: string }> = []
+        private processor: ((job: any) => Promise<any>) | null = null
+        private jobCounter = 0
+
+        client = {
+            ping: vi.fn(async () => 'PONG')
+        }
+
+        on = vi.fn(() => this)
+
+        async add(name: string, data: any, opts: any = {}): Promise<any> {
+            const job = {
+                id: String(++this.jobCounter),
+                name,
+                data,
+                opts
+            }
+
+            if (opts?.repeat?.cron) {
+                const key = `${name}:${opts.repeat.cron}`
+                this.repeatableJobs = this.repeatableJobs.filter((existing) => existing.key !== key)
+                this.repeatableJobs.push({ key, id: job.id, name, cron: opts.repeat.cron })
+            } else if (this.processor) {
+                await this.processor(job)
+            }
+
+            return job
+        }
+
+        async process(handler: (job: any) => Promise<any>): Promise<void> {
+            this.processor = handler
+        }
+
+        async getRepeatableJobs(): Promise<Array<{ key: string; id: string; name: string; cron?: string }>> {
+            return [...this.repeatableJobs]
+        }
+
+        async removeRepeatableByKey(key: string): Promise<void> {
+            this.repeatableJobs = this.repeatableJobs.filter((job) => job.key !== key)
+        }
+
+        async getActiveCount(): Promise<number> { return 0 }
+        async getWaitingCount(): Promise<number> { return 0 }
+        async getCompletedCount(): Promise<number> { return 0 }
+        async getFailedCount(): Promise<number> { return 0 }
+        async getDelayedCount(): Promise<number> { return 0 }
+        async close(): Promise<void> { }
+    }
+
+    return { default: MockBullQueue }
+})
+
 import { ReportScheduler, ScheduledReportStorage } from './ReportScheduler.js'
 
 // Mock services
@@ -178,8 +232,8 @@ describe('CMDB Reports - Scheduled Generation', () => {
             const reportData = { totalCiCount: 100 }
             await storage.storeReport('ci-inventory', reportData)
 
-            // Clear reports older than 0 minutes (should clear all)
-            await storage.clearOldReports(0)
+            // Use a negative cutoff so newly inserted records are treated as old.
+            await storage.clearOldReports(-1)
 
             const latest = await storage.getLatestReport('ci-inventory')
             expect(latest).toBeNull()

@@ -261,7 +261,7 @@ describe('CMDB Reports - Export Utilities', () => {
             expect(lines.length).toBeGreaterThan(3)
 
             // Should have title
-            expect(lines[0]).toContain('SUMMARY')
+            expect(lines[0]).toContain('CI INVENTORY REPORT')
 
             // Should have headers
             expect(csv).toContain('Metric,Value')

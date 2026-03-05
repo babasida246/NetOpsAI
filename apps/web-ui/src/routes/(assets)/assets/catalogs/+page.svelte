@@ -81,7 +81,7 @@
           onerror={handleError}
         />
       </TabItem>
-      <TabItem open={activeTab === 'status'} onclick={() => activeTab = 'status'} title={$isLoading ? 'Statuses' : $_('assets.statuses')}>
+      <TabItem open={activeTab === 'status'} onclick={() => activeTab = 'status'} title={$isLoading ? 'Statuses' : $_('assets.statusesTitle')}>
         <StatusCatalog />
       </TabItem>
     </Tabs>
